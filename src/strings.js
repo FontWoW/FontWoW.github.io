@@ -70,6 +70,7 @@ export const STRINGS = {
     textCopied: 'متن کپی شد',
     writeFirst: 'اول یک متن بنویس',
     savedToGallery: 'در گالری ذخیره شد',
+    storageFull: 'حافظه‌ی مرورگر پر شده — یک طرح یا فونت قدیمی رو حذف کن',
   },
   en: {
     save: 'Save',
@@ -142,5 +143,6 @@ export const STRINGS = {
     textCopied: 'Text copied',
     writeFirst: 'Write some text first',
     savedToGallery: 'Saved to gallery',
+    storageFull: 'Browser storage is full — delete an old design or font',
   },
 }

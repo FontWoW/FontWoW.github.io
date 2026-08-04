@@ -33,6 +33,16 @@ function fileToDataUrl(file) {
   })
 }
 
+function safeSetJSON(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value))
+    return true
+  } catch (err) {
+    console.warn(`localStorage write failed for ${key}`, err)
+    return false
+  }
+}
+
 function boxStyleFor(styleId, color) {
   switch (styleId) {
     case 'box':
@@ -163,6 +173,7 @@ export default function App() {
   const previewRef = useRef(null)
   const textRef = useRef(null)
   const tabsRef = useRef(null)
+  const saveTimer = useRef(null)
 
   const t = key => STRINGS[appSettings.lang]?.[key] ?? STRINGS.fa[key] ?? key
 
@@ -181,11 +192,15 @@ export default function App() {
   }, [toast])
 
   useEffect(() => {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(state))
+    clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(() => {
+      if (!safeSetJSON(SETTINGS_KEY, state)) setToast(t('storageFull'))
+    }, 400)
+    return () => clearTimeout(saveTimer.current)
   }, [state])
 
   useEffect(() => {
-    localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(appSettings))
+    safeSetJSON(APP_SETTINGS_KEY, appSettings)
   }, [appSettings])
 
   useEffect(() => {
@@ -240,10 +255,13 @@ export default function App() {
       const id = `custom-${Date.now()}`
       const entry = { id, label: name, family: `'${name}-${id}'`, rtl: true, dataUrl }
       const next = [...customFonts, entry]
-      setCustomFonts(next)
-      localStorage.setItem(CUSTOM_FONTS_KEY, JSON.stringify(next))
-      update({ fontId: id })
-      setToast(t('fontAdded'))
+      if (safeSetJSON(CUSTOM_FONTS_KEY, next)) {
+        setCustomFonts(next)
+        update({ fontId: id })
+        setToast(t('fontAdded'))
+      } else {
+        setToast(t('storageFull'))
+      }
     } catch {
       setToast(t('fontError'))
     }
@@ -478,9 +496,12 @@ export default function App() {
     }
     const entry = { ...state, id: `${Date.now()}` }
     const next = [entry, ...saved].slice(0, 40)
-    setSaved(next)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
-    setToast(t('savedToGallery'))
+    if (safeSetJSON(STORAGE_KEY, next)) {
+      setSaved(next)
+      setToast(t('savedToGallery'))
+    } else {
+      setToast(t('storageFull'))
+    }
     setShowSave(false)
   }
 
