@@ -50,6 +50,23 @@ function loadJSON(key, fallback) {
   }
 }
 
+// Migrate legacy flat gallery entries ({ ...state, id }) to the versioned schema:
+// { id, createdAt, updatedAt, versions: [{ vId, savedAt, design }] }
+function normalizeSaved(raw) {
+  if (!Array.isArray(raw)) return raw ?? []
+  const now = Date.now()
+  return raw.map(entry => {
+    if (Array.isArray(entry.versions) && entry.versions.length) return entry
+    const { id, ...design } = entry
+    return {
+      id: typeof id === 'string' ? id : `d${now}`,
+      createdAt: entry.createdAt ?? now,
+      updatedAt: entry.updatedAt ?? now,
+      versions: [{ vId: `v${now}`, savedAt: now, design }],
+    }
+  })
+}
+
 function fileToDataUrl(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -249,7 +266,8 @@ export default function App() {
   const [contributorsError, setContributorsError] = useState(false)
   const [donations, setDonations] = useState(null)
   const [donationsError, setDonationsError] = useState(false)
-  const [saved, setSaved] = useState(() => loadJSON(STORAGE_KEY, []))
+  const [saved, setSaved] = useState(() => normalizeSaved(loadJSON(STORAGE_KEY, [])))
+  const [expandedEntry, setExpandedEntry] = useState(null)
   const [customFonts, setCustomFonts] = useState(() => loadJSON(CUSTOM_FONTS_KEY, []))
   const [customTemplates, setCustomTemplates] = useState(() => loadJSON(CUSTOM_TEMPLATES_KEY, []))
   const [showStyleStudio, setShowStyleStudio] = useState(false)
@@ -1212,24 +1230,49 @@ export default function App() {
     }
     logger.info('Gallery', 'ذخیره در گالری برنامه')
     logger.preflightCheck('save_gallery')
-    const entry = { ...state, id: `${Date.now()}` }
-    const next = [entry, ...saved].slice(0, 40)
-    setSaved(next)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
-    logger.info('Gallery', `طرح با شناسه ${entry.id} در گالری داخلی برنامه ذخیره شد.`)
-    setToast(t('savedToGallery'))
+    const snapshot = { ...state }
+    const existing = saved.find(
+      entry => entry.versions.length && entry.versions[entry.versions.length - 1].design.text === state.text,
+    )
+    if (existing) {
+      const updated = {
+        ...existing,
+        updatedAt: Date.now(),
+        versions: [...existing.versions, { vId: `v${Date.now()}`, savedAt: Date.now(), design: snapshot }],
+      }
+      const next = saved.map(e => (e.id === existing.id ? updated : e))
+      setSaved(next)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+      logger.info('Gallery', `نسخه جدید برای طرح ${existing.id} ذخیره شد.`)
+      setToast(t('versionAdded'))
+    } else {
+      const entry = {
+        id: `d${Date.now()}`,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        versions: [{ vId: `v${Date.now()}`, savedAt: Date.now(), design: snapshot }],
+      }
+      const next = [entry, ...saved].slice(0, 40)
+      setSaved(next)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+      logger.info('Gallery', `طرح با شناسه ${entry.id} در گالری داخلی برنامه ذخیره شد.`)
+      setToast(t('savedToGallery'))
+    }
     setShowSave(false)
   }
 
-  function loadEntry(entry) {
-    commitState({ ...defaultState, ...entry })
-    if (textRef.current) textRef.current.innerText = entry.text
+  function loadEntry(entry, version) {
+    const versions = Array.isArray(entry.versions) && entry.versions.length ? entry.versions : []
+    const design = version ? version.design : (versions[versions.length - 1]?.design ?? entry)
+    commitState({ ...defaultState, ...design })
+    if (textRef.current) textRef.current.innerText = design.text
     setShowGallery(false)
   }
 
   function deleteEntry(id, e) {
     e.stopPropagation()
-    const next = saved.filter((s) => s.id !== id)
+    setExpandedEntry(null)
+    const next = saved.filter(s => s.id !== id)
     setSaved(next)
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
   }
@@ -2090,12 +2133,14 @@ export default function App() {
           )}
           <div className="gallery-grid">
             {saved.map((entry) => {
-              const f = allFonts.find((x) => x.id === entry.fontId) ?? allFonts[0]
-              const b = ALL_BACKGROUNDS.find((x) => x.id === entry.bgId) ?? ALL_BACKGROUNDS[0]
+              const versions = Array.isArray(entry.versions) && entry.versions.length ? entry.versions : []
+              const latest = versions[versions.length - 1]?.design ?? entry
+              const f = allFonts.find((x) => x.id === latest.fontId) ?? allFonts[0]
+              const b = ALL_BACKGROUNDS.find((x) => x.id === latest.bgId) ?? ALL_BACKGROUNDS[0]
               const cardStyle =
-                entry.bgId === 'custom-image' && entry.customBgUrl
+                latest.bgId === 'custom-image' && latest.customBgUrl
                   ? {
-                      backgroundImage: `url(${entry.customBgUrl})`,
+                      backgroundImage: `url(${latest.customBgUrl})`,
                       backgroundSize: 'cover',
                       backgroundPosition: 'center',
                     }
@@ -2111,17 +2156,55 @@ export default function App() {
                     className="gallery-text"
                     style={{
                       fontFamily: f.family,
-                      color: entry.color,
-                      direction: entry.direction,
-                      fontWeight: entry.bold ? 700 : 400,
-                      fontStyle: entry.italic ? 'italic' : 'normal',
+                      color: latest.color,
+                      direction: latest.direction,
+                      fontWeight: latest.bold ? 700 : 400,
+                      fontStyle: latest.italic ? 'italic' : 'normal',
                     }}
                   >
-                    {entry.text}
+                    {latest.text}
                   </span>
                   <button className="delete-btn" onClick={(e) => deleteEntry(entry.id, e)}>
                     <I.IconX size={11} />
                   </button>
+                  {versions.length > 1 && (
+                    <button
+                      className={`versions-btn ${expandedEntry === entry.id ? 'on' : ''}`}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setExpandedEntry((cur) => (cur === entry.id ? null : entry.id))
+                      }}
+                      title={t('versions')}
+                    >
+                      <I.IconHistory size={11} /> {versions.length}
+                    </button>
+                  )}
+                  {expandedEntry === entry.id && (
+                    <div className="version-list" onClick={(e) => e.stopPropagation()}>
+                      {versions.map((v, i) => {
+                        const vd = v.design ?? v
+                        const vf = allFonts.find((x) => x.id === vd.fontId) ?? allFonts[0]
+                        const isCurrent = i === versions.length - 1
+                        return (
+                          <button
+                            key={v.vId ?? i}
+                            className={`version-row ${isCurrent ? 'current' : ''}`}
+                            onClick={() => loadEntry(entry, v)}
+                          >
+                            <span
+                              className="version-row-text"
+                              style={{ fontFamily: vf.family, color: vd.color, direction: vd.direction }}
+                            >
+                              {vd.text}
+                            </span>
+                            <span className="version-meta">
+                              {isCurrent ? t('loadLatest') : new Date(v.savedAt).toLocaleDateString()}
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
               )
             })}

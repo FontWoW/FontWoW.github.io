@@ -126,6 +126,10 @@ export const STRINGS = {
     textCopied: 'متن کپی شد',
     writeFirst: 'اول یک متن بنویس',
     savedToGallery: 'در گالری ذخیره شد',
+    versionAdded: 'نسخه جدید ذخیره شد',
+    versions: 'نسخه',
+    saveNewVersion: 'ذخیره به‌عنوان نسخه جدید',
+    loadLatest: 'آخرین نسخه',
     newStyle: 'استایل جدید',
     styleStudio: 'استودیوی استایل',
     styleStudioHint:
@@ -308,6 +312,10 @@ export const STRINGS = {
     textCopied: 'Text copied',
     writeFirst: 'Write some text first',
     savedToGallery: 'Saved to gallery',
+    versionAdded: 'New version saved',
+    versions: 'Versions',
+    saveNewVersion: 'Save as new version',
+    loadLatest: 'Latest version',
     newStyle: 'New Style',
     styleStudio: 'Style Studio',
     styleStudioHint:
