@@ -56,17 +56,9 @@
   top: -20vmax;
   inset-inline-start: -12vmax;
   background: radial-gradient(circle at center, var(--accent-glow), transparent 62%);
-  top: -20vmax;
-  inset-inline-start: -12vmax;
-  background: radial-gradient(circle at center, var(--accent-glow), transparent 62%);
-  animation: drift1 52s ease-in-out infinite alternate;
 }
 
 .aurora i:nth-child(2) {
-  bottom: -22vmax;
-  inset-inline-end: -14vmax;
-  background: radial-gradient(circle at center, rgba(126, 20, 255, 0.16), transparent 60%);
-  animation: drift2 64s ease-in-out infinite alternate;
   bottom: -22vmax;
   inset-inline-end: -14vmax;
   background: radial-gradient(circle at center, rgba(126, 20, 255, 0.16), transparent 60%);
@@ -199,6 +191,24 @@
   display: flex;
   gap: 6px;
   align-items: center;
+}
+
+.topbar-left {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.topbar-left .pill-btn {
+  flex-shrink: 0;
+}
+
+.pill-btn:disabled {
+  opacity: 0.38;
+  cursor: default;
+  box-shadow: none;
+  transform: none !important;
 }
 
 /* ===== Stage ===== */
@@ -1455,6 +1465,13 @@
 /* ===== Utilities ===== */
 [dir='rtl'] .flip-rtl {
   transform: scaleX(-1);
+}
+
+/* Keep the topbar tidy on narrow phones: drop decorative right-side icon buttons */
+@media (max-width: 380px) {
+  .header-actions .ghost {
+    display: none;
+  }
 }
 
 @media (hover: hover) {

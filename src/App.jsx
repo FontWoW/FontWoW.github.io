@@ -643,6 +643,28 @@ export default function App() {
     loadFont(font)
   }, [font, loadFont])
 
+  useEffect(() => {
+    function onKeyDown(e) {
+      if (!(e.ctrlKey || e.metaKey)) return
+      const k = e.key.toLowerCase()
+      if (k === 'z') {
+        e.preventDefault()
+        if (e.shiftKey) redo()
+        else undo()
+      } else if (k === 'y') {
+        e.preventDefault()
+        redo()
+      } else if (k === 's') {
+        e.preventDefault()
+        setShowSave(true)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+    // undo/redo/setShowSave only touch refs and stable setters, so capture once.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   async function onUploadFont(e) {
     const file = e.target.files?.[0]
     e.target.value = ''
