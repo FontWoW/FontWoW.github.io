@@ -281,6 +281,9 @@ export default function App() {
   const previewRef = useRef(null)
   const textRef = useRef(null)
   const tabsRef = useRef(null)
+  // Keep the selected layer id fresh for the once-bound keydown handler.
+  const activeLayerIdRef = useRef(state.activeLayerId)
+  activeLayerIdRef.current = state.activeLayerId
 
   const [showIOSPrompt, setShowIOSPrompt] = useState(() => {
     if (isNative()) return false
@@ -663,6 +666,18 @@ export default function App() {
 
   useEffect(() => {
     function onKeyDown(e) {
+      // Delete/Backspace removes the selected layer — but never while the user is
+      // typing in editable content (main text canvas, inputs, textareas).
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        const t = e.target
+        const editing = t && (t.isContentEditable || t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')
+        const selectedId = activeLayerIdRef.current
+        if (!editing && selectedId) {
+          e.preventDefault()
+          deleteLayer(selectedId)
+        }
+        return
+      }
       if (!(e.ctrlKey || e.metaKey)) return
       const k = e.key.toLowerCase()
       if (k === 'z') {

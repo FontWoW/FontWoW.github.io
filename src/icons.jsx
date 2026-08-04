@@ -215,18 +215,6 @@ export const IconGrid = icon(
     <rect x="14" y="14" width="7" height="7" rx="1.5" />
   </>,
 )
-export const IconUndo = icon(
-  <>
-    <path d="M3 7v6h6" />
-    <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
-  </>,
-)
-export const IconRedo = icon(
-  <>
-    <path d="M21 7v6h-6" />
-    <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7" />
-  </>,
-)
 export const IconChevronDown = icon(<path d="m6 9 6 6 6-6" />)
 export const IconHistory = icon(
   <>
