@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { toPng, toBlob } from 'html-to-image'
 import { isNative, saveImageNative, copyImageNative, copyTextNative } from './native'
 import {
@@ -19,9 +19,9 @@ import {
 } from './fonts'
 import * as I from './icons'
 import { STRINGS } from './strings'
+import { useProjectPersistence } from './db/useProjectPersistence'
 import './App.css'
 
-const STORAGE_KEY = 'fontwow_saved_v1'
 const SETTINGS_KEY = 'fontwow_settings_v1'
 const CUSTOM_FONTS_KEY = 'fontwow_custom_fonts_v1'
 const CUSTOM_TEMPLATES_KEY = 'fontwow_custom_templates_v1'
@@ -162,7 +162,7 @@ function Sheet({ title, onClose, tall, children }) {
   )
 }
 
-function SliderRow({ label, value, display, min, max, step, onChange }) {
+function SliderRow({ label, value, display, min, max, step, onChange, onGestureStart, onGestureEnd }) {
   const pct = ((value - min) / (max - min)) * 100
   return (
     <div className="row">
@@ -175,6 +175,10 @@ function SliderRow({ label, value, display, min, max, step, onChange }) {
         value={value}
         style={{ '--p': `${pct}%` }}
         onChange={onChange}
+        onPointerDown={onGestureStart}
+        onPointerUp={onGestureEnd}
+        onPointerCancel={onGestureEnd}
+        onBlur={onGestureEnd}
       />
       <span className="val">{display ?? value}</span>
     </div>
@@ -183,10 +187,8 @@ function SliderRow({ label, value, display, min, max, step, onChange }) {
 
 export default function App() {
   const [cssElement, setCssElement] = useState('h1')
-  const [state, setState] = useState(() => ({
-    ...defaultState,
-    ...loadJSON(SETTINGS_KEY, {}),
-  }))
+  // Design state starts as defaults; event-sourced draft hydrates from IndexedDB.
+  const [state, setState] = useState(() => ({ ...defaultState }))
   const [appSettings, setAppSettings] = useState(() => ({
     ...defaultAppSettings,
     ...loadJSON(APP_SETTINGS_KEY, {}),
@@ -199,7 +201,6 @@ export default function App() {
   const [showDonate, setShowDonate] = useState(false)
   const [fontSuggestion, setFontSuggestion] = useState('')
   const [showSettings, setShowSettings] = useState(false)
-  const [saved, setSaved] = useState(() => loadJSON(STORAGE_KEY, []))
   const [customFonts, setCustomFonts] = useState(() => loadJSON(CUSTOM_FONTS_KEY, []))
   const [customTemplates, setCustomTemplates] = useState(() => loadJSON(CUSTOM_TEMPLATES_KEY, []))
   const [showStyleStudio, setShowStyleStudio] = useState(false)
@@ -209,8 +210,42 @@ export default function App() {
   const previewRef = useRef(null)
   const textRef = useRef(null)
   const tabsRef = useRef(null)
+  const stateRef = useRef(state)
+  stateRef.current = state
+
+  const onHydrateState = useCallback((next) => {
+    setState({ ...defaultState, ...next })
+    // contentEditable is uncontrolled for caret UX — sync DOM text on load
+    if (textRef.current) textRef.current.innerText = next.text ?? ''
+  }, [])
+
+  const {
+    gallery: saved,
+    saveToGallery: persistGalleryProject,
+    openProject,
+    removeFromGallery,
+    beginGesture,
+    endGesture,
+  } = useProjectPersistence({
+    defaultState,
+    onHydrateState,
+    getState: () => stateRef.current,
+    state,
+  })
 
   const t = (key) => STRINGS[appSettings.lang]?.[key] ?? STRINGS.fa[key] ?? key
+
+  // Sliders only persist on finger/mouse release (not on every tick)
+  const AppSliderRow = useCallback(
+    (props) => (
+      <SliderRow
+        {...props}
+        onGestureStart={beginGesture}
+        onGestureEnd={endGesture}
+      />
+    ),
+    [beginGesture, endGesture],
+  )
 
   const allFonts = useMemo(() => [...FONTS, ...customFonts], [customFonts])
   const visibleFonts = useMemo(
@@ -411,6 +446,7 @@ export default function App() {
 
   function handleLayerResize(e, layer) {
     e.stopPropagation()
+    beginGesture()
     const startX = e.clientX
     const origWidth = layer.width
     function onMove(ev) {
@@ -420,9 +456,12 @@ export default function App() {
     function onUp() {
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', onUp)
+      endGesture() // one IndexedDB event with final size
     }
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', onUp)
   }
 
   function updateLayer(id, patch) {
@@ -441,8 +480,12 @@ export default function App() {
 
   function handleLayerDrag(e, layer) {
     e.stopPropagation()
+    beginGesture()
     update({ activeLayerId: layer.id })
-    if (!previewRef.current) return
+    if (!previewRef.current) {
+      endGesture()
+      return
+    }
     const rect = previewRef.current.getBoundingClientRect()
     const startX = e.clientX
     const startY = e.clientY
@@ -459,15 +502,19 @@ export default function App() {
     function onUp() {
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', onUp)
+      endGesture() // one event with final position
     }
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', onUp)
   }
 
   function handleLayerRotate(e, layer) {
     e.stopPropagation()
     const layerEl = e.currentTarget.closest('.text-layer')
     if (!layerEl) return
+    beginGesture()
     const rect = layerEl.getBoundingClientRect()
     const cx = rect.left + rect.width / 2
     const cy = rect.top + rect.height / 2
@@ -478,9 +525,12 @@ export default function App() {
     function onUp() {
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', onUp)
+      endGesture() // one event with final rotation
     }
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', onUp)
   }
 
   function applyTemplate(tpl) {
@@ -746,30 +796,41 @@ export default function App() {
     setShowSave(false)
   }
 
-  function saveToGallery() {
+  async function saveToGallery() {
     if (!state.text.trim()) {
       setToast(t('writeFirst'))
       return
     }
-    const entry = { ...state, id: `${Date.now()}` }
-    const next = [entry, ...saved].slice(0, 40)
-    setSaved(next)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
-    setToast(t('savedToGallery'))
-    setShowSave(false)
+    try {
+      // Event-sourced gallery project (project.created + full state payload)
+      await persistGalleryProject()
+      setToast(t('savedToGallery'))
+      setShowSave(false)
+    } catch (err) {
+      console.error('saveToGallery failed:', err)
+      setToast(errorToast('imageError', err))
+    }
   }
 
-  function loadEntry(entry) {
-    setState({ ...defaultState, ...entry })
-    if (textRef.current) textRef.current.innerText = entry.text
-    setShowGallery(false)
+  async function loadEntry(entry) {
+    try {
+      // Replay the project's event log into a new draft and hydrate the editor
+      await openProject(entry.id)
+      setShowGallery(false)
+    } catch (err) {
+      console.error('loadEntry failed:', err)
+      setToast(errorToast('imageError', err))
+    }
   }
 
-  function deleteEntry(id, e) {
+  async function deleteEntry(id, e) {
     e.stopPropagation()
-    const next = saved.filter((s) => s.id !== id)
-    setSaved(next)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+    try {
+      await removeFromGallery(id)
+    } catch (err) {
+      console.error('deleteEntry failed:', err)
+      setToast(errorToast('imageError', err))
+    }
   }
 
   function clearAll() {
@@ -1292,7 +1353,7 @@ export default function App() {
                 )}
               </div>
               <div className="layout-panel">
-                <SliderRow
+                <AppSliderRow
                   label={t('brightness')}
                   min={50}
                   max={150}
@@ -1307,7 +1368,7 @@ export default function App() {
                     })
                   }
                 />
-                <SliderRow
+                <AppSliderRow
                   label={t('contrast')}
                   min={50}
                   max={150}
@@ -1322,7 +1383,7 @@ export default function App() {
                     })
                   }
                 />
-                <SliderRow
+                <AppSliderRow
                   label={t('blur')}
                   min={0}
                   max={20}
@@ -1336,7 +1397,7 @@ export default function App() {
                     })
                   }
                 />
-                <SliderRow
+                <AppSliderRow
                   label={t('grayscale')}
                   min={0}
                   max={100}
@@ -1391,21 +1452,21 @@ export default function App() {
 
           {tab === 'layout' && (
             <div className="layout-panel">
-              <SliderRow
+              <AppSliderRow
                 label={t('size')}
                 min={16}
                 max={120}
                 value={state.fontSize}
                 onChange={(e) => update({ fontSize: +e.target.value })}
               />
-              <SliderRow
+              <AppSliderRow
                 label={t('letterSpacing')}
                 min={-4}
                 max={20}
                 value={state.letterSpacing}
                 onChange={(e) => update({ letterSpacing: +e.target.value })}
               />
-              <SliderRow
+              <AppSliderRow
                 label={t('lineHeight')}
                 min={0.8}
                 max={2.4}
@@ -1413,7 +1474,7 @@ export default function App() {
                 value={state.lineHeight}
                 onChange={(e) => update({ lineHeight: +e.target.value })}
               />
-              <SliderRow
+              <AppSliderRow
                 label={t('strokeWidth')}
                 min={0.5}
                 max={6}
@@ -1421,7 +1482,7 @@ export default function App() {
                 value={state.strokeWidth}
                 onChange={(e) => update({ strokeWidth: +e.target.value })}
               />
-              <SliderRow
+              <AppSliderRow
                 label={t('opacity')}
                 min={10}
                 max={100}
@@ -1429,7 +1490,7 @@ export default function App() {
                 display={`${state.opacity}%`}
                 onChange={(e) => update({ opacity: +e.target.value })}
               />
-              <SliderRow
+              <AppSliderRow
                 label={t('margin')}
                 min={0}
                 max={60}
