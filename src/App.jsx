@@ -19,6 +19,7 @@ import {
 } from './fonts'
 import * as I from './icons'
 import { STRINGS } from './strings'
+import { useDesignHistory } from './useDesignHistory'
 import './App.css'
 
 const STORAGE_KEY = 'fontwow_saved_v1'
@@ -183,10 +184,15 @@ function SliderRow({ label, value, display, min, max, step, onChange }) {
 
 export default function App() {
   const [cssElement, setCssElement] = useState('h1')
-  const [state, setState] = useState(() => ({
-    ...defaultState,
-    ...loadJSON(SETTINGS_KEY, {}),
-  }))
+  const {
+    state,
+    commit: commitState,
+    patch: update,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+  } = useDesignHistory({ ...defaultState, ...loadJSON(SETTINGS_KEY, {}) })
   const [appSettings, setAppSettings] = useState(() => ({
     ...defaultAppSettings,
     ...loadJSON(APP_SETTINGS_KEY, {}),
@@ -240,6 +246,27 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(appSettings))
   }, [appSettings])
+
+  useEffect(() => {
+    function onKeyDown(e) {
+      if (!((e.metaKey || e.ctrlKey) && !e.altKey)) return
+      if (e.target instanceof Element && e.target.closest('input, textarea, select')) return
+
+      if (e.key.toLowerCase() === 'z') {
+        if (e.shiftKey ? canRedo : canUndo) {
+          e.preventDefault()
+          if (e.shiftKey) redo()
+          else undo()
+        }
+      } else if (e.key.toLowerCase() === 'y' && canRedo) {
+        e.preventDefault()
+        redo()
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [canRedo, canUndo, redo, undo])
 
   useEffect(() => {
     document.documentElement.dir = appSettings.lang === 'en' ? 'ltr' : 'rtl'
@@ -371,10 +398,6 @@ export default function App() {
     update({ customBgUrl: null, bgId: 'grad-1' })
   }
 
-  function update(patch) {
-    setState((s) => ({ ...s, ...patch }))
-  }
-
   function onTextInput(e) {
     update({ text: e.currentTarget.innerText })
   }
@@ -426,9 +449,8 @@ export default function App() {
   }
 
   function updateLayer(id, patch) {
-    setState((s) => ({
-      ...s,
-      layers: s.layers.map((l) => (l.id === id ? { ...l, ...patch } : l)),
+    update((current) => ({
+      layers: current.layers.map((layer) => (layer.id === id ? { ...layer, ...patch } : layer)),
     }))
   }
 
@@ -441,7 +463,7 @@ export default function App() {
 
   function handleLayerDrag(e, layer) {
     e.stopPropagation()
-    update({ activeLayerId: layer.id })
+    update({ activeLayerId: layer.id }, { record: false })
     if (!previewRef.current) return
     const rect = previewRef.current.getBoundingClientRect()
     const startX = e.clientX
@@ -760,7 +782,7 @@ export default function App() {
   }
 
   function loadEntry(entry) {
-    setState({ ...defaultState, ...entry })
+    commitState({ ...defaultState, ...entry })
     if (textRef.current) textRef.current.innerText = entry.text
     setShowGallery(false)
   }
@@ -773,7 +795,7 @@ export default function App() {
   }
 
   function clearAll() {
-    setState({ ...defaultState })
+    commitState({ ...defaultState })
     if (textRef.current) textRef.current.innerText = ''
     textRef.current?.focus()
   }
@@ -826,7 +848,7 @@ export default function App() {
         <button
           className="pill-btn"
           onClick={() => {
-            update({ activeLayerId: null })
+            update({ activeLayerId: null }, { record: false })
             setShowSave(true)
           }}
         >
@@ -837,6 +859,24 @@ export default function App() {
           <span className="brand-name">FontWoW</span>
         </div>
         <div className="header-actions">
+          <button
+            className="pill-btn ghost icon-only"
+            onClick={undo}
+            aria-label={t('undo')}
+            title={`${t('undo')} (Ctrl/Cmd + Z)`}
+            disabled={!canUndo}
+          >
+            <I.IconUndo size={16} />
+          </button>
+          <button
+            className="pill-btn ghost icon-only"
+            onClick={redo}
+            aria-label={t('redo')}
+            title={`${t('redo')} (Ctrl/Cmd + Shift + Z)`}
+            disabled={!canRedo}
+          >
+            <I.IconRedo size={16} />
+          </button>
           <button
             className="pill-btn ghost icon-only"
             onClick={() => setShowSettings(true)}
@@ -862,7 +902,7 @@ export default function App() {
           className="stage-inner"
           ref={previewRef}
           style={previewStyle}
-          onClick={() => state.activeLayerId && update({ activeLayerId: null })}
+          onClick={() => state.activeLayerId && update({ activeLayerId: null }, { record: false })}
         >
           <div className="bg-layer" style={bgLayerStyle} />
           <div

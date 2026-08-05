@@ -88,6 +88,8 @@ export const IconRotate = icon(
     <path d="M21 3v5h-5" />
   </>,
 )
+export const IconUndo = icon(<path d="M9 14 4 9l5-5M4 9h9a7 7 0 1 1-7 7" />)
+export const IconRedo = icon(<path d="m15 14 5-5-5-5m5 5h-9a7 7 0 1 0 7 7" />)
 export const IconShadow = icon(
   <>
     <rect x="4" y="4" width="12" height="12" rx="2.5" />

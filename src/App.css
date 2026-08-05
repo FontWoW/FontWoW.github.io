@@ -138,6 +138,11 @@
   padding: 9px 11px;
 }
 
+.pill-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.38;
+}
+
 .brand {
   display: flex;
   align-items: center;
