@@ -229,6 +229,13 @@ export function ToastCheck({ size = 20 }) {
   )
 }
 
+export const IconSearch = icon(
+  <>
+    <circle cx="11" cy="11" r="8" />
+    <path d="m21 21-4.3-4.3" />
+  </>
+)
+
 export function EmptyArt() {
   return (
     <svg viewBox="0 0 120 92" width="132" height="101" fill="none" className="empty-art" aria-hidden="true">

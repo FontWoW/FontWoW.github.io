@@ -1,0 +1,197 @@
+.sharekit-page {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-fa);
+  overflow-y: auto;
+}
+
+.sharekit-page[dir="ltr"] {
+  font-family: var(--font-en);
+}
+
+.sharekit-header {
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.sharekit-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 1.25rem;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.sharekit-back {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+}
+
+.sharekit-back:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.sharekit-content {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 4rem;
+  padding: 3rem 2rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.sharekit-info {
+  flex: 1;
+  max-width: 500px;
+}
+
+.sharekit-info h1 {
+  font-size: 2.5rem;
+  margin: 0 0 1rem 0;
+  line-height: 1.2;
+  background: linear-gradient(to right, #fff, var(--accent));
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.sharekit-info p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  opacity: 0.8;
+  margin: 0 0 2rem 0;
+}
+
+.sharekit-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--accent);
+  color: #000;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.2s, opacity 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.sharekit-download-btn:hover {
+  transform: translateY(-2px);
+  opacity: 0.9;
+}
+
+.sharekit-contact {
+  margin-top: 3rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+}
+
+.sharekit-contact h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  color: var(--accent);
+}
+
+.sharekit-contact p {
+  font-size: 0.95rem;
+  margin: 0 0 1rem 0;
+}
+
+.sharekit-email {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.sharekit-email:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.sharekit-preview {
+  flex: 0 0 auto;
+  position: relative;
+}
+
+.sharekit-preview-img {
+  width: 320px;
+  border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  display: block;
+  transition: transform 0.3s;
+}
+
+.sharekit-preview-img:hover {
+  transform: scale(1.02) rotate(1deg);
+}
+
+.sharekit-preview-decoration {
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 100px;
+  height: 100px;
+  background: var(--accent);
+  filter: blur(60px);
+  opacity: 0.3;
+  z-index: -1;
+  border-radius: 50%;
+}
+
+@media (max-width: 800px) {
+  .sharekit-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 2rem;
+    padding: 2rem 1rem;
+  }
+  
+  .sharekit-contact {
+    text-align: right;
+  }
+  .sharekit-page[dir="ltr"] .sharekit-contact {
+    text-align: left;
+  }
+  
+  .sharekit-preview-img {
+    width: 280px;
+  }
+}

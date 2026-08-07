@@ -4,30 +4,36 @@ import { Capacitor } from '@capacitor/core'
 import './index.css'
 import App from './App.jsx'
 import Landing from './Landing.jsx'
+import ShareKit from './ShareKit.jsx'
 
-function isAppHash() {
-  return window.location.hash.replace(/^#\/?/, '') === 'app'
+function getRoute() {
+  const hash = window.location.hash.replace(/^#\/?/, '')
+  if (hash === 'app') return 'app'
+  if (hash === 'share') return 'share'
+  return 'landing'
 }
 
 // The native app has no landing page to show — always boot straight into the editor.
-if (Capacitor.isNativePlatform() && !isAppHash()) {
+if (Capacitor.isNativePlatform() && getRoute() !== 'app') {
   window.location.hash = '#/app'
 }
 
 function Root() {
-  const [landing, setLanding] = useState(!isAppHash())
+  const [route, setRoute] = useState(getRoute)
 
   useEffect(() => {
-    const onHashChange = () => setLanding(!isAppHash())
+    const onHashChange = () => setRoute(getRoute())
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)
   }, [])
 
   useEffect(() => {
-    document.body.classList.toggle('landing-mode', landing)
-  }, [landing])
+    document.body.classList.toggle('landing-mode', route === 'landing')
+  }, [route])
 
-  return landing ? <Landing /> : <App />
+  if (route === 'share') return <ShareKit />
+  if (route === 'app') return <App />
+  return <Landing />
 }
 
 createRoot(document.getElementById('root')).render(

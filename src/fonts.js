@@ -14,6 +14,8 @@ export const FONT_CATEGORIES = [
 export const FONTS = [
   // فارسی
   { id: 'vazirmatn', label: 'وزیرمتن', family: "'Vazirmatn', sans-serif", rtl: true, lang: 'fa', google: 'Vazirmatn:wght@400;700', license: 'OFL-1.1' },
+  { id: 'estedad', label: 'استعداد', family: "'Estedad', sans-serif", rtl: true, lang: 'fa', google: 'Estedad:wght@400;700', license: 'OFL-1.1' },
+  { id: 'oi', label: 'Oi', family: "'Oi', cursive", rtl: true, lang: 'fa', google: 'Oi:wght@400', license: 'OFL-1.1' },
   { id: 'naskh', label: 'نسخ', family: "'Noto Naskh Arabic', serif", rtl: true, lang: 'fa', google: 'Noto+Naskh+Arabic:wght@400;700', license: 'OFL-1.1' },
   { id: 'amiri', label: 'امیری', family: "'Amiri', serif", rtl: true, lang: 'fa', google: 'Amiri:wght@400;700', license: 'OFL-1.1' },
   { id: 'lalezar', label: 'لاله‌زار', family: "'Lalezar', cursive", rtl: true, lang: 'fa', google: 'Lalezar:wght@400', license: 'OFL-1.1' },

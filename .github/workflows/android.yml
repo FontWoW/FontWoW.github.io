@@ -19,6 +19,50 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check for Android changes
+        id: android-changed
+        run: |
+          if git diff --name-only HEAD~1 | grep -q '^android/'; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Android changes detected."
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No Android changes detected."
+          fi
+
+      - name: Bump Version Code and Version Name
+        if: steps.android-changed.outputs.changed == 'true' && github.actor != 'github-actions[bot]'
+        run: |
+          node -e "
+            const fs = require('fs');
+            const file = 'android/app/build.gradle';
+            let content = fs.readFileSync(file, 'utf8');
+            content = content.replace(/versionCode (\d+)/, (m, c) => 'versionCode ' + (parseInt(c, 10) + 1));
+            content = content.replace(/versionName \"([^\"]+)\"/, (m, n) => {
+              const parts = n.split('.');
+              if (parts.length >= 2) {
+                const last = parseInt(parts[parts.length - 1], 10);
+                if (!isNaN(last)) {
+                  parts[parts.length - 1] = last + 1;
+                  return 'versionName \"' + parts.join('.') + '\"';
+                }
+              }
+              return 'versionName \"' + n + '.1\"';
+            });
+            fs.writeFileSync(file, content, 'utf8');
+          "
+
+      - name: Commit and Push Version Bump
+        if: steps.android-changed.outputs.changed == 'true' && github.actor != 'github-actions[bot]'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add android/app/build.gradle
+          git commit -m "chore: bump Android version [skip ci]" || echo "No changes to commit"
+          git push
 
       - uses: actions/setup-node@v4
         with:

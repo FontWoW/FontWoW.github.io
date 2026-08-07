@@ -172,6 +172,9 @@ export default function Landing() {
         <a href="https://fonts.google.com/attribution" target="_blank" rel="noreferrer">
           فونت‌ها از Google Fonts، با لایسنس متن‌باز (عمدتاً SIL OFL) <I.IconExternal size={11} />
         </a>
+        <a href="#/share">
+          پک رسانه‌ای و اشتراک‌گذاری
+        </a>
         <a href={APP_URL}>بازگشت به برنامه</a>
       </footer>
     </div>
