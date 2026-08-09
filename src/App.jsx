@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { toPng, toBlob } from 'html-to-image'
-import { isNative, saveImageNative, copyImageNative, copyTextNative, openExternalUrl } from './native'
+import { isNative, saveImageNative, shareFileNative, copyImageNative, copyTextNative, openExternalUrl } from './native'
 import {
   FONTS,
   FONT_CATEGORIES,
@@ -59,6 +59,73 @@ function fileToDataUrl(file) {
   })
 }
 
+function imageFromUrl(src) {
+  return new Promise((resolve, reject) => {
+    const image = new Image()
+    image.onload = () => resolve(image)
+    image.onerror = reject
+    image.src = src
+  })
+}
+
+function bytesToBase64(bytes) {
+  let binary = ''
+  for (let index = 0; index < bytes.length; index += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(index, index + 0x8000))
+  }
+  return btoa(binary)
+}
+
+function setAnimationProgress(node, progress) {
+  node.style.setProperty('--animation-progress', String(progress))
+  node.style.setProperty('--animation-offset', `${(1 - progress) * 44}px`)
+  node.style.setProperty('--animation-scale', String(0.72 + progress * 0.28))
+  node.style.setProperty('--animation-reveal', `${(1 - progress) * 100}%`)
+}
+
+function clearAnimationProgress(node) {
+  delete node.dataset.animation
+  node.style.removeProperty('--animation-progress')
+  node.style.removeProperty('--animation-offset')
+  node.style.removeProperty('--animation-scale')
+  node.style.removeProperty('--animation-reveal')
+}
+
+function applyKashida(text, amount) {
+  if (!amount) return text
+  const joins = /([\u0626-\u063A\u0641-\u064A])(?=[\u0626-\u064A])/g
+  return text.replace(joins, `$1${'ـ'.repeat(amount)}`)
+}
+
+function longShadow(color, depth, angle) {
+  if (!depth) return 'none'
+  const radians = (angle * Math.PI) / 180
+  return Array.from({ length: depth }, (_, index) => {
+    const distance = index + 1
+    const x = Math.cos(radians) * distance
+    const y = Math.sin(radians) * distance
+    return `${x.toFixed(2)}px ${y.toFixed(2)}px 0 ${color}`
+  }).join(', ')
+}
+
+function CurvedText({ text, mode, bend, style }) {
+  const pathId = `fontwow-path-${mode}`
+  const curve = Math.max(-90, Math.min(90, bend))
+  const paths = {
+    arc: `M 12 ${112 + curve * 0.25} Q 150 ${112 - curve * 0.65} 288 ${112 + curve * 0.25}`,
+    wave: `M 8 108 Q 78 ${108 - curve * 0.72} 150 108 T 292 108`,
+    circle: 'M 45 106 A 105 76 0 1 1 255 106 A 105 76 0 1 1 45 106',
+  }
+  return (
+    <svg className="curved-text" viewBox="0 0 300 210" role="img" aria-label={text}>
+      <defs><path id={pathId} d={paths[mode] ?? paths.arc} /></defs>
+      <text style={style} textAnchor="middle">
+        <textPath href={`#${pathId}`} startOffset="50%" textLength={mode === 'circle' ? 430 : 255} lengthAdjust="spacingAndGlyphs">{text}</textPath>
+      </text>
+    </svg>
+  )
+}
+
 function boxStyleFor(styleId, color) {
   switch (styleId) {
     case 'box':
@@ -111,6 +178,14 @@ const defaultState = {
   textGradient: 'g1',
   aspectRatio: 'free',
   bgFilter: { brightness: 100, contrast: 100, blur: 0, grayscale: 0 },
+  warpMode: 'none',
+  warpBend: 42,
+  longShadowDepth: 0,
+  longShadowAngle: 45,
+  longShadowColor: '#2b164f',
+  textMaskUrl: null,
+  kashidaAmount: 0,
+  animationType: 'rise',
   layers: [],
   activeLayerId: null,
 }
@@ -260,6 +335,8 @@ export default function App() {
   const [showGoogleFontsSearch, setShowGoogleFontsSearch] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [promptState, setPromptState] = useState(null)
+  const [isExportingGif, setIsExportingGif] = useState(false)
+  const [isExportingVideo, setIsExportingVideo] = useState(false)
   const previewRef = useRef(null)
   const textRef = useRef(null)
   const tabsRef = useRef(null)
@@ -724,13 +801,25 @@ export default function App() {
     }
   }
 
+  async function onUploadTextMask(e) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    try {
+      update({ textMaskUrl: await fileToDataUrl(file), warpMode: 'none' })
+      setToast(t('textMaskAdded'))
+    } catch {
+      setToast(t('bgError'))
+    }
+  }
+
   function removeBgImage(e) {
     e.stopPropagation()
     update({ customBgUrl: null, bgId: 'grad-1' })
   }
 
   function onTextInput(e) {
-    update({ text: e.currentTarget.innerText })
+    update({ text: e.currentTarget.innerText.replace(/ـ/g, '') })
   }
 
   function addLayer() {
@@ -747,6 +836,54 @@ export default function App() {
       fontSize: 28,
     }
     update({ layers: [...state.layers, newLayer], activeLayerId: id })
+  }
+
+  function applyMagicLayout() {
+    const variants = [
+      { fontSize: 64, align: 'center', margin: 28, letterSpacing: -1, lineHeight: 1.15, textBoxStyle: 'none' },
+      { fontSize: 52, align: 'right', margin: 34, letterSpacing: 1, lineHeight: 1.35, textBoxStyle: 'glass' },
+      { fontSize: 72, align: 'center', margin: 18, letterSpacing: 2, lineHeight: 1.05, textBoxStyle: 'frame' },
+      { fontSize: 46, align: 'left', margin: 40, letterSpacing: 0, lineHeight: 1.5, textBoxStyle: 'box' },
+    ]
+    const current = variants.findIndex((variant) => variant.fontSize === state.fontSize && variant.align === state.align)
+    const variant = variants[(current + 1) % variants.length]
+    const layers = state.layers.map((layer, index) => ({
+      ...layer,
+      x: index % 2 === 0 ? 25 : 75,
+      y: Math.min(82, 24 + index * 18),
+      rotation: index % 2 === 0 ? -4 : 4,
+    }))
+    update({ ...variant, layers })
+    setToast(t('magicLayoutApplied'))
+  }
+
+  async function removeSelectedImageBackground() {
+    const layer = state.layers.find((item) => item.id === state.activeLayerId && item.type === 'image')
+    if (!layer) return
+    try {
+      const image = await imageFromUrl(layer.src)
+      const canvas = document.createElement('canvas')
+      canvas.width = image.naturalWidth
+      canvas.height = image.naturalHeight
+      const context = canvas.getContext('2d', { willReadFrequently: true })
+      context.drawImage(image, 0, 0)
+      const frame = context.getImageData(0, 0, canvas.width, canvas.height)
+      const corners = [[0, 0], [canvas.width - 1, 0], [0, canvas.height - 1], [canvas.width - 1, canvas.height - 1]]
+      const background = corners.reduce((sum, [x, y]) => {
+        const offset = (y * canvas.width + x) * 4
+        return [sum[0] + frame.data[offset], sum[1] + frame.data[offset + 1], sum[2] + frame.data[offset + 2]]
+      }, [0, 0, 0]).map((value) => value / corners.length)
+      for (let offset = 0; offset < frame.data.length; offset += 4) {
+        const distance = Math.hypot(frame.data[offset] - background[0], frame.data[offset + 1] - background[1], frame.data[offset + 2] - background[2])
+        if (distance < 72) frame.data[offset + 3] = Math.round((distance / 72) * frame.data[offset + 3])
+      }
+      context.putImageData(frame, 0, 0)
+      updateLayer(layer.id, { src: canvas.toDataURL('image/png') })
+      setToast(t('backgroundRemoved'))
+    } catch (error) {
+      logger.error('Image', 'خطا در حذف پس‌زمینه تصویر', error?.message)
+      setToast(t('backgroundRemoveFailed'))
+    }
   }
 
   function addLabel(asset) {
@@ -979,6 +1116,21 @@ export default function App() {
     }
   }
 
+  if (state.textMaskUrl) {
+    effectStyle = {
+      backgroundImage: `url(${state.textMaskUrl})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      WebkitBackgroundClip: 'text',
+      backgroundClip: 'text',
+      color: 'transparent',
+      WebkitTextFillColor: 'transparent',
+    }
+  }
+
+  const depthShadow = longShadow(state.longShadowColor, state.longShadowDepth, state.longShadowAngle)
+  const baseShadow = state.shadow ? '0 4px 18px rgba(0,0,0,0.55), 0 1px 0 rgba(0,0,0,0.3)' : ''
+
   const textStyle = {
     fontFamily: font.family,
     fontSize: `${state.fontSize}px`,
@@ -991,11 +1143,11 @@ export default function App() {
     lineHeight: state.lineHeight,
     direction: state.direction,
     opacity: state.opacity / 100,
-    textShadow: state.shadow ? '0 4px 18px rgba(0,0,0,0.55), 0 1px 0 rgba(0,0,0,0.3)' : 'none',
     WebkitTextStroke: state.stroke ? `${state.strokeWidth}px ${strokeColor}` : 'none',
     position: 'relative',
     zIndex: 1,
     ...effectStyle,
+    textShadow: [effectStyle.textShadow, baseShadow, depthShadow !== 'none' ? depthShadow : ''].filter(Boolean).join(', ') || 'none',
     ...boxStyleFor(state.textBoxStyle, state.color),
     ...(state.textBoxStyle !== 'none'
       ? {
@@ -1005,6 +1157,20 @@ export default function App() {
           marginInlineEnd: state.align !== 'right' ? 'auto' : 0,
         }
       : {}),
+  }
+  const displayText = applyKashida(state.text, state.kashidaAmount)
+  const curvedTextStyle = {
+    fontFamily: font.family,
+    fontSize: `${Math.min(72, state.fontSize)}px`,
+    fontWeight: state.bold ? 700 : 400,
+    fontStyle: state.italic ? 'italic' : 'normal',
+    fill: state.color,
+    opacity: state.opacity / 100,
+    letterSpacing: `${state.letterSpacing}px`,
+    textShadow: textStyle.textShadow,
+    paintOrder: 'stroke fill',
+    stroke: state.stroke ? strokeColor : 'none',
+    strokeWidth: state.stroke ? state.strokeWidth : 0,
   }
 
   const generatedCSS = `
@@ -1128,6 +1294,119 @@ export default function App() {
       setToast(errorToast('imageError', err))
     }
     setShowSave(false)
+  }
+
+  async function exportGif() {
+    if (!previewRef.current || isExportingGif) return
+    setIsExportingGif(true)
+    setShowSave(false)
+    const node = previewRef.current
+    try {
+      await ensureFontPainted()
+      const { GIFEncoder, quantize, applyPalette } = await import('gifenc')
+      const encoder = GIFEncoder()
+      const frameCanvas = document.createElement('canvas')
+      const width = Math.max(320, Math.round(node.getBoundingClientRect().width))
+      const height = Math.max(180, Math.round(node.getBoundingClientRect().height))
+      frameCanvas.width = width
+      frameCanvas.height = height
+      const context = frameCanvas.getContext('2d', { willReadFrequently: true })
+      node.dataset.animation = state.animationType
+      for (let frameIndex = 0; frameIndex < 18; frameIndex += 1) {
+        const progress = frameIndex / 17
+        setAnimationProgress(node, progress)
+        const frameUrl = await toPng(node, { pixelRatio: 1, cacheBust: false, skipFonts: true, width, height })
+        const image = await imageFromUrl(frameUrl)
+        context.clearRect(0, 0, width, height)
+        context.drawImage(image, 0, 0, width, height)
+        const pixels = context.getImageData(0, 0, width, height).data
+        const palette = quantize(pixels, 128)
+        encoder.writeFrame(applyPalette(pixels, palette), width, height, { palette, delay: 70 })
+      }
+      encoder.finish()
+      const bytes = encoder.bytes()
+      const fileName = `fontwow-${Date.now()}.gif`
+      if (isNative()) {
+        await shareFileNative(bytesToBase64(bytes), fileName)
+      } else {
+        const url = URL.createObjectURL(new Blob([bytes], { type: 'image/gif' }))
+        const link = document.createElement('a')
+        link.href = url
+        link.download = fileName
+        link.click()
+        setTimeout(() => URL.revokeObjectURL(url), 1000)
+      }
+      setToast(t('gifSaved'))
+    } catch (error) {
+      logger.error('Export', 'خطا در خروجی GIF', error?.stack || error?.message)
+      setToast(errorToast('gifError', error))
+    } finally {
+      clearAnimationProgress(node)
+      setIsExportingGif(false)
+    }
+  }
+
+  async function exportVideo() {
+    if (!previewRef.current || isExportingVideo) return
+    if (typeof MediaRecorder === 'undefined' || !HTMLCanvasElement.prototype.captureStream) {
+      setToast(t('videoUnsupported'))
+      return
+    }
+    setIsExportingVideo(true)
+    setShowSave(false)
+    const node = previewRef.current
+    try {
+      await ensureFontPainted()
+      const frameCanvas = document.createElement('canvas')
+      const width = Math.max(320, Math.round(node.getBoundingClientRect().width))
+      const height = Math.max(180, Math.round(node.getBoundingClientRect().height))
+      frameCanvas.width = width
+      frameCanvas.height = height
+      const context = frameCanvas.getContext('2d')
+      const stream = frameCanvas.captureStream(12)
+      const mimeType = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'].find((type) => MediaRecorder.isTypeSupported(type))
+      if (!mimeType) throw new Error(t('videoUnsupported'))
+      const chunks = []
+      const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 4_000_000 })
+      recorder.ondataavailable = (event) => event.data.size && chunks.push(event.data)
+      const stopped = new Promise((resolve, reject) => {
+        recorder.onstop = resolve
+        recorder.onerror = () => reject(recorder.error ?? new Error('MediaRecorder failed'))
+      })
+      recorder.start(250)
+      node.dataset.animation = state.animationType
+      for (let frameIndex = 0; frameIndex < 24; frameIndex += 1) {
+        const progress = frameIndex / 23
+        setAnimationProgress(node, progress)
+        const frameUrl = await toPng(node, { pixelRatio: 1, cacheBust: false, skipFonts: true, width, height })
+        const image = await imageFromUrl(frameUrl)
+        context.clearRect(0, 0, width, height)
+        context.drawImage(image, 0, 0, width, height)
+        await new Promise((resolve) => setTimeout(resolve, 84))
+      }
+      recorder.stop()
+      await stopped
+      stream.getTracks().forEach((track) => track.stop())
+      const video = new Blob(chunks, { type: mimeType })
+      const fileName = `fontwow-${Date.now()}.webm`
+      if (isNative()) {
+        await shareFileNative(bytesToBase64(new Uint8Array(await video.arrayBuffer())), fileName)
+      } else {
+        const url = URL.createObjectURL(video)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = fileName
+        link.click()
+        setTimeout(() => URL.revokeObjectURL(url), 1000)
+      }
+      setToast(t('videoSaved'))
+    } catch (error) {
+      logger.error('Export', 'خطا در خروجی ویدئو', error?.stack || error?.message)
+      setToast(errorToast('videoError', error))
+    } finally {
+      clearAnimationProgress(node)
+      setIsExportingVideo(false)
+    }
   }
 
   async function copyImage() {
@@ -1257,6 +1536,7 @@ export default function App() {
     { id: 'color', label: t('tabColor'), Icon: I.IconPalette },
     { id: 'bg', label: t('tabBg'), Icon: I.IconImage },
     { id: 'layout', label: t('tabLayout'), Icon: I.IconSliders },
+    { id: 'magic', label: t('tabMagic'), Icon: I.IconSparkles },
     { id: 'templates', label: t('tabTemplates'), Icon: I.IconGrid },
     { id: 'assets', label: t('tabAssets'), Icon: I.IconTag },
     {
@@ -1339,15 +1619,19 @@ export default function App() {
           onClick={() => state.activeLayerId && update({ activeLayerId: null }, { record: false })}
         >
           <div className="bg-layer" style={bgLayerStyle} />
-          <div
-            className={`text-canvas tb-${state.textBoxStyle}`}
-            ref={textRef}
-            style={textStyle}
-            contentEditable
-            suppressContentEditableWarning
-            data-placeholder={t('placeholder')}
-            onInput={onTextInput}
-          />
+          {state.warpMode === 'none' ? (
+            <div
+              className={`text-canvas tb-${state.textBoxStyle}`}
+              ref={textRef}
+              style={textStyle}
+              contentEditable
+              suppressContentEditableWarning
+              data-placeholder={t('placeholder')}
+              onInput={onTextInput}
+            >{displayText}</div>
+          ) : (
+            <CurvedText text={displayText || t('placeholder')} mode={state.warpMode} bend={state.warpBend} style={curvedTextStyle} />
+          )}
           {state.layers.map((layer) => {
             if (layer.type === 'label') {
               const layerFont = allFonts.find((f) => f.id === layer.fontId) ?? font
@@ -1732,6 +2016,73 @@ export default function App() {
             </>
           )}
 
+          {tab === 'magic' && (
+            <div className="layout-panel magic-panel">
+              <button className="sheet-item recommended" onClick={applyMagicLayout}>
+                <I.IconSparkles size={17} /> {t('magicLayout')}
+              </button>
+
+              <p className="settings-label">{t('warpText')}</p>
+              <textarea
+                className="text-input magic-text-input"
+                rows={2}
+                value={state.text}
+                placeholder={t('placeholder')}
+                onChange={(event) => update({ text: event.target.value })}
+              />
+              <div className="chip-row">
+                {['none', 'arc', 'wave', 'circle'].map((mode) => (
+                  <button key={mode} className={`chip ${state.warpMode === mode ? 'selected' : ''}`} onClick={() => update({ warpMode: mode, textMaskUrl: mode === 'none' ? state.textMaskUrl : null })}>
+                    <span className="chip-label">{t(`warp_${mode}`)}</span>
+                  </button>
+                ))}
+              </div>
+              {state.warpMode !== 'none' && (
+                <SliderRow label={t('warpBend')} min={-90} max={90} value={state.warpBend} display={`${state.warpBend}°`} onChange={(event) => update({ warpBend: +event.target.value })} />
+              )}
+
+              <p className="settings-label">{t('longShadow')}</p>
+              <SliderRow label={t('shadowDepth')} min={0} max={28} value={state.longShadowDepth} onChange={(event) => update({ longShadowDepth: +event.target.value })} />
+              {state.longShadowDepth > 0 && (
+                <>
+                  <SliderRow label={t('shadowAngle')} min={0} max={360} value={state.longShadowAngle} display={`${state.longShadowAngle}°`} onChange={(event) => update({ longShadowAngle: +event.target.value })} />
+                  <label className="inline-color-field">{t('shadowColor')}<input type="color" value={state.longShadowColor} onChange={(event) => update({ longShadowColor: event.target.value })} /></label>
+                </>
+              )}
+
+              <p className="settings-label">{t('textMask')}</p>
+              <div className="magic-actions">
+                <label className="sheet-item">
+                  <input type="file" accept="image/*" onChange={onUploadTextMask} hidden />
+                  <I.IconImage size={17} /> {t('chooseMaskImage')}
+                </label>
+                {state.textMaskUrl && <button className="sheet-item" onClick={() => update({ textMaskUrl: null })}><I.IconX size={15} /> {t('removeMask')}</button>}
+              </div>
+
+              <p className="settings-label">{t('smartKashida')}</p>
+              <SliderRow label={t('kashidaAmount')} min={0} max={4} value={state.kashidaAmount} onChange={(event) => update({ kashidaAmount: +event.target.value })} />
+
+              {state.layers.some((layer) => layer.type === 'image') && (
+                <>
+                  <p className="settings-label">{t('removeBackground')}</p>
+                  <button className="sheet-item" disabled={!state.layers.some((layer) => layer.id === state.activeLayerId && layer.type === 'image')} onClick={removeSelectedImageBackground}>
+                    <I.IconSparkles size={17} /> {t('removeSelectedBackground')}
+                  </button>
+                  <p className="feature-hint">{t('removeBackgroundHint')}</p>
+                </>
+              )}
+
+              <p className="settings-label">{t('animation')}</p>
+              <div className="chip-row">
+                {['rise', 'fade', 'zoom', 'type'].map((animation) => (
+                  <button key={animation} className={`chip ${state.animationType === animation ? 'selected' : ''}`} onClick={() => update({ animationType: animation })}>
+                    <span className="chip-label">{t(`animation_${animation}`)}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {tab === 'box' && (
             <div className="chip-row">
               {TEXT_BOX_STYLES.map((s) => (
@@ -2032,6 +2383,12 @@ export default function App() {
         <Sheet title={t('save')} onClose={() => setShowSave(false)}>
           <button className="sheet-item recommended" onClick={exportPng}>
             <I.IconDownload size={17} /> {t('saveToDevice')}
+          </button>
+          <button className="sheet-item" onClick={exportGif} disabled={isExportingGif}>
+            <I.IconSparkles size={17} /> {isExportingGif ? t('gifExporting') : t('saveAnimatedGif')}
+          </button>
+          <button className="sheet-item" onClick={exportVideo} disabled={isExportingVideo}>
+            <I.IconDownload size={17} /> {isExportingVideo ? t('videoExporting') : t('saveAnimatedVideo')}
           </button>
           <button className="sheet-item" onClick={copyImage}>
             <I.IconCopy size={17} /> {t('copyImageBtn')}

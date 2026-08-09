@@ -20,6 +20,13 @@ export async function saveImageNative(dataUrl, fileName) {
   await FontWowNative.saveImage({ data: dataUrlToBase64(dataUrl), fileName })
 }
 
+export async function shareFileNative(data, fileName) {
+  const { Filesystem, Directory } = await import('@capacitor/filesystem')
+  const { Share } = await import('@capacitor/share')
+  const file = await Filesystem.writeFile({ path: fileName, data, directory: Directory.Cache })
+  await Share.share({ url: file.uri })
+}
+
 /**
  * Returns 'clipboard' when the image is really on the clipboard, 'shared' when we fell back to
  * the share sheet, or 'canceled' when the user dismissed that sheet themselves.

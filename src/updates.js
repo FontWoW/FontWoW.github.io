@@ -5,6 +5,28 @@
 // build once that release goes out.
 export const UPDATES = [
   {
+    version: '1.5.0',
+    date: '2026-08-09',
+    fa: {
+      title: 'استودیوی جادویی تایپوگرافی',
+      changes: [
+        'افزودن متن روی مسیر با حالت‌های قوس، موج و دایره و کنترل شدت خمیدگی.',
+        'افزودن سایهٔ سه‌بعدی، ماسک تصویر داخل متن و کشیدهٔ هوشمند فارسی.',
+        'افزودن چیدمان جادویی و حذف محلی پس‌زمینهٔ سادهٔ عکس‌ها و استیکرها.',
+        'افزودن خروجی GIF و ویدئوی WebM با افکت‌های ورود، محوشدن، بزرگ‌نمایی و تایپ.'
+      ]
+    },
+    en: {
+      title: 'Magic Typography Studio',
+      changes: [
+        'Add text-on-a-path with arc, wave, and circle modes plus adjustable curvature.',
+        'Add 3D long shadows, image-filled text, and smart Persian kashida.',
+        'Add one-tap magic layouts and local background removal for simple sticker images.',
+        'Add animated GIF and WebM video export with rise, fade, zoom, and typing effects.'
+      ]
+    }
+  },
+  {
     version: '1.4.2',
     date: '2026-08-09',
     fa: {
