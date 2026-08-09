@@ -34,7 +34,7 @@ jobs:
           git commit -m "chore: bump Android version [skip ci]" || echo "No changes to commit"
           git push
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
