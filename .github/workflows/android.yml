@@ -90,7 +90,7 @@ jobs:
 #          } >> release-notes.txt
 
       - name: Publish versioned release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ steps.sync-version.outputs.app_version }}
           name: FontWoW v${{ steps.sync-version.outputs.app_version }}
@@ -107,7 +107,7 @@ jobs:
           done || true
 
       - name: Publish rolling release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: latest
           name: FontWoW (Android - latest build)
