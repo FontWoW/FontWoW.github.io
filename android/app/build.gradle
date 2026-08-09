@@ -7,7 +7,7 @@ android {
         applicationId "ir.m4tinbeigi.fontwow"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 24
+        versionCode 25
         versionName "1.4.2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
