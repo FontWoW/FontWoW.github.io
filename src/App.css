@@ -445,14 +445,10 @@
 }
 
 .snap-guide-v {
-  top: 0;
-  bottom: 0;
   width: 1px;
 }
 
 .snap-guide-h {
-  left: 0;
-  right: 0;
   height: 1px;
 }
 

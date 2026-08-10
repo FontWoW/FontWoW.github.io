@@ -71,3 +71,4 @@ QWEN.md
 docs/AI_GUIDE.md
 .playwright-cli/
 
+*.patch

@@ -322,7 +322,7 @@ export default function App() {
   }))
   const [tab, setTab] = useState('font')
   const [fontLang, setFontLang] = useState('fa')
-  const [dragGuides, setDragGuides] = useState({ x: null, y: null })
+  const [dragGuides, setDragGuides] = useState({ x: null, y: null, rect: null })
   const [bgCategory, setBgCategory] = useState('colors')
   const [showSave, setShowSave] = useState(false)
   const [showGallery, setShowGallery] = useState(false)
@@ -1056,12 +1056,12 @@ export default function App() {
       }
 
       updateLayer(layer.id, { x, y })
-      setDragGuides({ x: guideX, y: guideY })
+      setDragGuides({ x: guideX, y: guideY, rect })
     }
     function onUp() {
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
-      setDragGuides({ x: null, y: null })
+      setDragGuides({ x: null, y: null, rect: null })
     }
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
@@ -1860,11 +1860,17 @@ export default function App() {
             )
           })}
         </div>
-        {dragGuides.x != null && (
-          <div className="snap-guide snap-guide-v" style={{ left: dragGuides.x }} />
+        {dragGuides.x != null && dragGuides.rect && (
+          <div
+            className="snap-guide snap-guide-v"
+            style={{ left: dragGuides.x, top: dragGuides.rect.top, height: dragGuides.rect.height }}
+          />
         )}
-        {dragGuides.y != null && (
-          <div className="snap-guide snap-guide-h" style={{ top: dragGuides.y }} />
+        {dragGuides.y != null && dragGuides.rect && (
+          <div
+            className="snap-guide snap-guide-h"
+            style={{ top: dragGuides.y, left: dragGuides.rect.left, width: dragGuides.rect.width }}
+          />
         )}
         <button className="add-layer-btn" onClick={addLayer} aria-label={t('addLayer')}>
           <I.IconPlus size={12} /> Aa
