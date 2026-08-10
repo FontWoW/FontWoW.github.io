@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import * as I from './icons'
-import { STRINGS } from './strings'
-import { APP_VERSION } from './updates'
+import * as I from '../shared/icons'
+import { STRINGS } from '../shared/strings'
+import { APP_VERSION } from '../shared/updates'
 import './ShareKit.css'
 
 const SETTINGS_KEY = 'fontwow_app_settings_v1'

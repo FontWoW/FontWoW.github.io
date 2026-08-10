@@ -2,7 +2,7 @@
 
 ## منبع نسخه
 
-`src/updates.js` منبع اصلی نسخه برنامه است. `UPDATES[0].version` نسخه جاری را تعیین می‌کند و
+`src/shared/updates.js` منبع اصلی نسخه برنامه است. `UPDATES[0].version` نسخه جاری را تعیین می‌کند و
 `APP_VERSION` از آن مشتق می‌شود. گردش‌کار Android همین مقدار را برای `versionName` و Release
 استفاده می‌کند.
 

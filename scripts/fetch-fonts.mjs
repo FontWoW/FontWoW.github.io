@@ -1,7 +1,7 @@
-// One-off script: downloads local woff2 copies of every font referenced in src/fonts.js
+// One-off script: downloads local woff2 copies of every font referenced in src/shared/fonts.js
 // and generates src/fonts-local.css with @font-face rules pointing at /fonts/*.woff2.
 // Run with: node scripts/fetch-fonts.mjs
-import { FONTS } from '../src/fonts.js'
+import { FONTS } from '../src/shared/fonts.js'
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 

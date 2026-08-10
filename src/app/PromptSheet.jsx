@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import * as I from './icons'
+import * as I from '../shared/icons'
 
 /**
  * A lightweight modal prompt that replaces window.prompt().

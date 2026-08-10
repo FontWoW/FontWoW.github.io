@@ -57,10 +57,10 @@ several qualify. Don't take on multiple issues in one pass; one issue → one fo
 ## 3. Implement it
 
 - Read the issue fully (`gh issue view <N>`) before touching code — comments may add constraints.
-- Work directly in this repo's normal structure (`src/App.jsx`, `src/Landing.jsx`,
-  `src/features.js`, etc.). If the change adds/changes a user-facing editor capability, the
-  **sync-site-app** skill's rule applies: implement it for real in the app AND reflect it in
-  `src/features.js` — never just one side.
+- Work directly in this repo's feature folders (`src/app/App.jsx`, `src/landing/Landing.jsx`,
+  `src/landing/features.js`, `src/shared/…`). If the change adds/changes a user-facing editor
+  capability, the **sync-site-app** skill's rule applies: implement it for real in the app AND
+  reflect it in `src/landing/features.js` — never just one side.
 - Keep the change scoped to the issue. Don't bundle unrelated fixes or refactors into the same PR.
 - Test the change (dev server / browser check for UI changes) before opening a PR — see this
   repo's `run` skill or `npm run dev` + the browser preview tools.

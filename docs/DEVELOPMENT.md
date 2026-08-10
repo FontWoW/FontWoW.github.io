@@ -44,13 +44,28 @@ cd android
 خروجی debug در مسیر build اپ Android تولید می‌شود و نباید commit شود. فایل
 `android/local.properties` مختص دستگاه توسعه‌دهنده است.
 
+## ساختار `src/`
+
+جزئیات پوشه‌ها در [`src/README.md`](../src/README.md) است. خلاصه:
+
+| مسیر | نقش |
+| --- | --- |
+| `src/app/` | ادیتور (`#/app`) |
+| `src/landing/` | لندینگ + `features.js` |
+| `src/share/` | پک اشتراک‌گذاری |
+| `src/stats/` | داشبورد آمار |
+| `src/shared/` | فونت، رشته‌ها، native، updates، icons |
+
+Aliasهای Vite: `@app`, `@landing`, `@share`, `@stats`, `@shared`.
+
 ## قراردادهای مهم
 
-- متن UI فقط در `src/strings.js` و هم‌زمان برای `fa` و `en` تعریف شود.
+- متن UI فقط در `src/shared/strings.js` و هم‌زمان برای `fa` و `en` تعریف شود.
 - استایل جدید از توکن‌های موجود استفاده کند و در موبایل، دسکتاپ، RTL و LTR بررسی شود.
-- عملیات پلتفرمی از `src/native.js` عبور کند و fallback وب داشته باشد.
+- عملیات پلتفرمی از `src/shared/native.js` عبور کند و fallback وب داشته باشد.
 - شکل داده ذخیره‌شده در `localStorage` سازگاری نسخه‌های قبل را حفظ کند.
 - کنترل UI داخل `.stage-inner` قرار نگیرد، چون وارد خروجی تصویر می‌شود.
+- قابلیت کاربرمحور ادیتور را هم در `src/app/` و هم در `src/landing/features.js` همگام کن.
 - وابستگی، درخواست شبکه یا permission جدید باید دلیل روشن و بررسی حریم خصوصی داشته باشد.
 
 ## عیب‌یابی

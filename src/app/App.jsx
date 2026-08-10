@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { toPng, toBlob } from 'html-to-image'
-import { isNative, saveImageNative, shareFileNative, copyImageNative, copyTextNative, openExternalUrl } from './native'
+import { isNative, saveImageNative, shareFileNative, copyImageNative, copyTextNative, openExternalUrl } from '../shared/native'
 import {
   FONTS,
   FONT_CATEGORIES,
@@ -16,21 +16,21 @@ import {
   TEXT_GRADIENTS,
   ASPECT_RATIOS,
   TEMPLATES,
-} from './fonts'
-import * as I from './icons'
-import { STRINGS } from './strings'
+} from '../shared/fonts'
+import * as I from '../shared/icons'
+import { STRINGS } from '../shared/strings'
 import { LABEL_ASSETS, LabelArtwork } from './labels'
 import { useDesignHistory } from './useDesignHistory'
-import googleFontsList from './google-fonts.json'
-import { UPDATES, APP_VERSION } from './updates'
-import { checkForUpdate, dismissUpdate } from './updateCheck'
-import { FEATURES } from './features'
+import googleFontsList from '../shared/google-fonts.json'
+import { UPDATES, APP_VERSION } from '../shared/updates'
+import { checkForUpdate, dismissUpdate } from '../shared/updateCheck'
+import { FEATURES } from '../landing/features'
 import PromptSheet from './PromptSheet'
-import MediaSupporters from './MediaSupporters'
-import FontGoals from './FontGoals'
-import logger from './logger'
+import MediaSupporters from '../landing/MediaSupporters'
+import FontGoals from '../landing/FontGoals'
+import logger from '../shared/logger'
 import './App.css'
-import './Landing.css'
+import '../landing/Landing.css'
 
 const STORAGE_KEY = 'fontwow_saved_v1'
 const SETTINGS_KEY = 'fontwow_settings_v1'
@@ -355,6 +355,7 @@ export default function App() {
   const [promptState, setPromptState] = useState(null)
   const [isExportingGif, setIsExportingGif] = useState(false)
   const [isExportingVideo, setIsExportingVideo] = useState(false)
+  const deepLinkTemplateApplied = useRef(false)
   const previewRef = useRef(null)
   const textRef = useRef(null)
   const tabsRef = useRef(null)
@@ -475,6 +476,26 @@ export default function App() {
       })
     return () => { cancelled = true }
   }, [showAbout, donations, donationsError])
+
+  // Open a built-in/custom template from `#/app?template=t2` (landing demo & share links).
+  useEffect(() => {
+    if (deepLinkTemplateApplied.current) return
+    const hash = window.location.hash.replace(/^#\/?/, '')
+    const query = hash.includes('?') ? hash.slice(hash.indexOf('?') + 1) : ''
+    const templateId = new URLSearchParams(query).get('template')
+    if (!templateId) return
+    const tpl = [...TEMPLATES, ...loadJSON(CUSTOM_TEMPLATES_KEY, [])].find((item) => item.id === templateId)
+    if (!tpl) return
+    deepLinkTemplateApplied.current = true
+    update({
+      fontId: tpl.fontId,
+      color: tpl.color,
+      textBoxStyle: tpl.textBoxStyle,
+      bgId: tpl.bgId,
+      effect: tpl.effect,
+      ...(tpl.textGradient ? { textGradient: tpl.textGradient } : {}),
+    })
+  }, [update])
 
   useEffect(() => {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(state))

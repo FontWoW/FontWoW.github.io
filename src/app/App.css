@@ -77,9 +77,16 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
+  padding: 10px 12px;
   flex-shrink: 0;
-  gap: 6px;
+  gap: 8px;
+  margin: 8px 10px 0;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface-1) 72%, transparent);
+  border: 1px solid var(--border-1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .pill-btn {
@@ -168,23 +175,9 @@
 
 .brand-name {
   font-weight: 800;
-  font-size: 15px;
-  letter-spacing: 0.4px;
-  background: linear-gradient(90deg, #fff 20%, var(--accent-hi) 50%, #fff 80%);
-  background-size: 250% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: shimmer 2s var(--ease-out) 0.5s backwards;
-}
-
-@keyframes shimmer {
-  from {
-    background-position: 200% 0;
-  }
-  to {
-    background-position: -80% 0;
-  }
+  font-size: 14.5px;
+  letter-spacing: 0.2px;
+  color: var(--text-1);
 }
 
 .header-actions {
@@ -218,31 +211,37 @@
   min-height: 0;
   display: flex;
   justify-content: center;
-  padding: 0 14px;
+  padding: 10px 12px 8px;
 }
 
 /* Glass workspace well behind the canvas — sibling chrome, never exported */
 .stage::before {
   content: '';
   position: absolute;
-  inset: 0 14px;
-  border-radius: 18px;
-  background: rgba(17, 15, 26, 0.5);
+  inset: 10px 12px 8px;
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 28%),
+    rgba(12, 10, 20, 0.55);
   border: 1px solid var(--border-1);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
-  transition: box-shadow var(--dur-med) var(--ease-out);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 10px 28px rgba(0, 0, 0, 0.22);
+  transition: border-color var(--dur-med) var(--ease-out), box-shadow var(--dur-med) var(--ease-out);
   pointer-events: none;
 }
 
 .stage:focus-within::before {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border-1));
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.03),
-    var(--glow);
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent),
+    0 12px 32px rgba(0, 0, 0, 0.28);
 }
 
 .stage-inner {
   flex: 1;
-  border-radius: 18px;
+  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -476,9 +475,11 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--r-pill);
-  background: rgba(10, 8, 18, 0.55);
+  background: color-mix(in srgb, var(--surface-1) 78%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   color: #fff;
   font-size: 12px;
   font-weight: 700;
@@ -486,9 +487,16 @@
   cursor: pointer;
   z-index: 3;
   touch-action: manipulation;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
   transition:
     background var(--dur-fast) var(--ease-out),
-    border-color var(--dur-fast) var(--ease-out);
+    border-color var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.add-layer-btn:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  transform: translateY(-1px);
 }
 
 .add-image-layer-btn {
@@ -617,8 +625,10 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(10, 8, 18, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: color-mix(in srgb, var(--surface-1) 78%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   color: #fff;
   font-size: 11px;
   font-weight: 700;
@@ -627,6 +637,7 @@
   align-items: center;
   justify-content: center;
   touch-action: manipulation;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   transition:
     background var(--dur-fast) var(--ease-out),
     border-color var(--dur-fast) var(--ease-out),
@@ -679,18 +690,35 @@
   flex-shrink: 0;
   min-height: 0;
   max-height: min(52svh, 470px);
-  background: color-mix(in srgb, var(--surface-1) 90%, transparent);
-  border-top: 1px solid var(--border-1);
+  margin: 0 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 40%),
+    color-mix(in srgb, var(--surface-1) 94%, transparent);
+  border: 1px solid var(--border-1);
+  border-bottom: none;
   border-radius: 22px 22px 0 0;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    0 -12px 30px rgba(0, 0, 0, 0.35);
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 -10px 28px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+.controls::before {
+  content: '';
+  display: block;
+  width: 36px;
+  height: 4px;
+  margin: 8px auto 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  flex-shrink: 0;
 }
 
 .pinned-size-row {
   flex-shrink: 0;
-  padding: 12px 12px 0;
+  padding: 10px 14px 0;
   border-bottom: 1px solid var(--border-1);
 }
 
@@ -702,8 +730,13 @@
   position: relative;
   display: flex;
   overflow-x: auto;
-  gap: 6px;
-  padding: 10px 12px 0;
+  gap: 4px;
+  padding: 10px 12px 2px;
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .tab {
@@ -713,16 +746,22 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  border: none;
+  border: 1px solid transparent;
   background: transparent;
-  color: var(--text-2);
-  padding: 8px 13px;
+  color: var(--text-3);
+  padding: 8px 12px;
   border-radius: var(--r-pill);
-  font-size: 13.5px;
+  font-size: 13px;
   cursor: pointer;
   transition:
     color var(--dur-med) var(--ease-out),
-    transform var(--dur-fast) var(--ease-out);
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.tab:hover {
+  color: var(--text-2);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .tab.active {
@@ -734,20 +773,19 @@
   position: absolute;
   left: 0;
   top: 10px;
-  height: calc(100% - 10px);
+  height: calc(100% - 12px);
   width: 0;
   border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--accent) 22%, var(--surface-2));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
+  background: color-mix(in srgb, var(--accent) 24%, var(--surface-2));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent);
   transition:
-    transform var(--dur-med) var(--ease-spring),
-    width var(--dur-med) var(--ease-spring);
+    transform var(--dur-med) var(--ease-out),
+    width var(--dur-med) var(--ease-out);
   pointer-events: none;
 }
 
 .panel {
-  padding: 12px 12px 16px;
-  min-height: 96px;
+  padding: 12px 14px 18px;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -822,8 +860,8 @@
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  background: var(--surface-2);
-  border: 1.5px solid var(--border-1);
+  background: color-mix(in srgb, var(--surface-2) 88%, transparent);
+  border: 1px solid var(--border-1);
   border-radius: var(--r-m);
   padding: 10px 14px;
   color: var(--text-1);
@@ -838,10 +876,9 @@
 }
 
 .chip.selected {
-  border-color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
   background: var(--accent-soft);
-  box-shadow: 0 0 14px var(--accent-soft);
-  animation: pop var(--dur-med) var(--ease-spring);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent);
 }
 
 .chip.selected::after,

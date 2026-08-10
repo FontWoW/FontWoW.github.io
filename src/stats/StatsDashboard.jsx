@@ -1,5 +1,5 @@
-import * as I from './icons'
-import './Landing.css' // We can reuse and extend landing styles
+import * as I from '../shared/icons'
+import '../landing/Landing.css'
 
 export default function StatsDashboard() {
   return (

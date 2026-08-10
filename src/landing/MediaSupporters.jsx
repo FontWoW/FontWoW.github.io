@@ -1,5 +1,5 @@
 import { MEDIA_SUPPORTERS } from './mediaSupporterData'
-import * as I from './icons'
+import * as I from '../shared/icons'
 
 const SOCIALS = {
   github: { label: 'گیت‌هاب', Icon: I.IconGithub },

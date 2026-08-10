@@ -1,11 +1,67 @@
 import { useEffect, useState } from 'react'
-import * as I from './icons'
+import * as I from '../shared/icons'
 import { FEATURES } from './features'
-import { APP_VERSION } from './updates'
+import { TEMPLATES } from '../shared/fonts'
+import { APP_VERSION } from '../shared/updates'
 import MediaSupporters from './MediaSupporters'
 import FontGoals from './FontGoals'
-import { STRINGS } from './strings'
+import LandingDemo from './LandingDemo'
+import { STRINGS } from '../shared/strings'
 import './Landing.css'
+
+function FaqChevron() {
+  return (
+    <svg className="landing-faq-chevron" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+      <path
+        d="M3.5 6.25 8 10.75l4.5-4.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function FaqItem({ question, children }) {
+  return (
+    <details className="landing-faq-item">
+      <summary>
+        <span>{question}</span>
+        <FaqChevron />
+      </summary>
+      <p>{children}</p>
+    </details>
+  )
+}
+
+function useLandingReveal() {
+  useEffect(() => {
+    const nodes = Array.from(document.querySelectorAll('.landing-reveal'))
+    if (!nodes.length) return undefined
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (reduceMotion) {
+      nodes.forEach((node) => node.classList.add('is-visible'))
+      return undefined
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return
+          entry.target.classList.add('is-visible')
+          observer.unobserve(entry.target)
+        })
+      },
+      { threshold: 0.14, rootMargin: '0px 0px -36px 0px' },
+    )
+
+    nodes.forEach((node) => observer.observe(node))
+    return () => observer.disconnect()
+  }, [])
+}
 
 const REPO = 'https://github.com/FontWoW/FontWoW.github.io'
 const REPO_API = 'https://api.github.com/repos/FontWoW/FontWoW.github.io'
@@ -40,6 +96,8 @@ export default function Landing() {
   const [repoStats, setRepoStats] = useState(null)
   const [visitorCount, setVisitorCount] = useState(null)
   const [visitorCountLoading, setVisitorCountLoading] = useState(true)
+
+  useLandingReveal()
 
   useEffect(() => {
     let cancelled = false
@@ -153,10 +211,10 @@ export default function Landing() {
   return (
     <div className="landing" dir="rtl">
       <header className="landing-hero">
-        <img src="/favicon.svg" width="64" height="64" alt="FontWoW" className="landing-logo" />
-        <h1>FontWoW</h1>
-        <p className="landing-tagline">متن‌آرایی آنلاین — بنویس، استایل بده، عکس بگیر ⚡</p>
-        <div className="landing-cta">
+        <img src="/favicon.svg" width="64" height="64" alt="FontWoW" className="landing-logo landing-hero-in" />
+        <h1 className="landing-hero-in landing-hero-in-delay-1">FontWoW</h1>
+        <p className="landing-tagline landing-hero-in landing-hero-in-delay-2">متن‌آرایی آنلاین — بنویس، استایل بده، عکس بگیر ⚡</p>
+        <div className="landing-cta landing-hero-in landing-hero-in-delay-3">
           <a className="landing-btn landing-btn-primary" href={APP_URL}>
             <I.IconExternal size={16} />
             اجرای برنامه در مرورگر
@@ -171,11 +229,11 @@ export default function Landing() {
             {apkUrl ? `دانلود نسخه‌ی اندروید (نسخه ${apkVersion})` : apkError ? 'مشاهده‌ی نسخه‌ها در گیت‌هاب' : 'در حال یافتن آخرین نسخه…'}
           </a>
         </div>
-        <p className="landing-note">
+        <p className="landing-note landing-hero-in landing-hero-in-delay-4">
           بدون نصب، بدون حساب کاربری، کاملاً رایگان و client-side — هیچ داده‌ای به سرور فرستاده نمی‌شود.
           نسخه‌ی اندروید فعلاً یک build آزمایشی (debug) است؛ ممکن است هنگام نصب هشدار «منبع ناشناس» ببینید.
         </p>
-        <div className="landing-github-stats" aria-label="آمار مخزن FontWoW در گیت‌هاب">
+        <div className="landing-github-stats landing-reveal" aria-label="آمار مخزن FontWoW در گیت‌هاب">
           <div className="landing-github-counts">
             <span><I.IconStar size={17} /> <b>{repoStats ? repoStats.stars.toLocaleString('fa-IR') : '…'}</b> ستاره</span>
             <span><I.IconFork size={17} /> <b>{repoStats ? repoStats.forks.toLocaleString('fa-IR') : '…'}</b> فورک</span>
@@ -186,7 +244,7 @@ export default function Landing() {
           </a>
         </div>
 
-        <div className="landing-stats-card" aria-label="آمار بازدیدکنندگان FontWoW">
+        <div className="landing-stats-card landing-reveal" aria-label="آمار بازدیدکنندگان FontWoW">
           <div className="landing-stats-header-info">
             <I.IconCircle className="pulse-icon" size={12} fill="#10b981" stroke="none" />
             <span>آمار بازدیدهای زنده</span>
@@ -233,19 +291,34 @@ export default function Landing() {
         </div>
       )}
 
-      <section className="landing-screens">
+      <LandingDemo />
+
+      <section className="landing-templates landing-reveal" aria-label="قالب‌های آماده">
+        <h2>شروع با یک قالب</h2>
+        <p>یکی را انتخاب کن؛ همان سبک مستقیماً در ادیتور باز می‌شود.</p>
+        <div className="landing-templates-row">
+          {TEMPLATES.map((tpl) => (
+            <a key={tpl.id} className="landing-template-chip" href={`#/app?template=${tpl.id}`}>
+              <span className="landing-template-swatch" style={{ background: tpl.color }} aria-hidden="true" />
+              {tpl.label}
+            </a>
+          ))}
+        </div>
+      </section>
+
+      <section className="landing-screens landing-reveal">
         <img src="/docs/screen-editor.png" alt="ادیتور FontWoW" />
         <img src="/docs/screen-layout.png" alt="تنظیمات چیدمان FontWoW" />
         <img src="/docs/screen-save.png" alt="ذخیره و خروجی FontWoW" />
       </section>
 
-      <section className="landing-features">
+      <section className="landing-features landing-reveal">
         <h2>امکانات</h2>
         <div className="landing-grid">
           {FEATURES.map((f, i) => {
             const Icon = I[f.iconName]
             return (
-              <div className="landing-card" key={i}>
+              <div className="landing-card" key={i} style={{ '--reveal-delay': `${i * 60}ms` }}>
                 <div className="landing-card-icon"><Icon size={20} /></div>
                 <h3>{f.title}</h3>
                 <p>{f.text}</p>
@@ -255,25 +328,27 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="landing-faq">
+      <section className="landing-faq landing-reveal" id="faq">
         <h2>سوالات متداول</h2>
         <div className="landing-faq-list">
-          <details className="landing-faq-item">
-            <summary>FontWoW رایگان است؟</summary>
-            <p>بله. استفاده از نسخه وب رایگان است و برای ساخت متن، ذخیره تصویر و کپی کردن خروجی نیازی به حساب کاربری نیست.</p>
-          </details>
-          <details className="landing-faq-item">
-            <summary>آیا FontWoW روی موبایل هم خوب کار می‌کند؟</summary>
-            <p>بله. رابط کاربری برای موبایل و دسکتاپ طراحی شده و روی Android و iPhone هم قابل استفاده است.</p>
-          </details>
-          <details className="landing-faq-item">
-            <summary>آیا خروجی بدون واترمارک است؟</summary>
-            <p>بله. خروجی تصویر بدون واترمارک تبلیغاتی است و می‌توانی آن را با کیفیت بالا ذخیره یا کپی کنی.</p>
-          </details>
-          <details className="landing-faq-item">
-            <summary>آیا نیاز به نصب یا ثبت‌نام دارد؟</summary>
-            <p>خیر. نسخه وب مستقیم در مرورگر اجرا می‌شود و بدون نصب یا ساخت حساب کار می‌کند.</p>
-          </details>
+          <FaqItem question="FontWoW رایگان است؟">
+            بله. استفاده از نسخه وب رایگان است و برای ساخت متن، ذخیره تصویر و کپی کردن خروجی نیازی به حساب کاربری نیست.
+          </FaqItem>
+          <FaqItem question="آیا FontWoW روی موبایل هم خوب کار می‌کند؟">
+            بله. رابط کاربری برای موبایل و دسکتاپ طراحی شده و روی Android و iPhone هم قابل استفاده است.
+          </FaqItem>
+          <FaqItem question="آیا خروجی بدون واترمارک است؟">
+            بله. خروجی تصویر بدون واترمارک تبلیغاتی است و می‌توانی آن را با کیفیت بالا ذخیره یا کپی کنی.
+          </FaqItem>
+          <FaqItem question="آیا نیاز به نصب یا ثبت‌نام دارد؟">
+            خیر. نسخه وب مستقیم در مرورگر اجرا می‌شود و بدون نصب یا ساخت حساب کار می‌کند.
+          </FaqItem>
+          <FaqItem question="داده‌ها و طرح‌های من کجا ذخیره می‌شوند؟">
+            همه‌چیز فقط روی دستگاه یا مرورگر خودت می‌ماند (localStorage و حافظه محلی). هیچ طرح یا فونت شخصی به سرور FontWoW ارسال نمی‌شود.
+          </FaqItem>
+          <FaqItem question="چطور مثل اپ نصبش کنم (PWA)؟">
+            روی اندروید می‌توانی APK را از گیت‌هاب بگیری یا نسخه وب را به صفحه اصلی اضافه کنی. روی آیفون از Share → Add to Home Screen استفاده کن تا مثل اپ باز شود.
+          </FaqItem>
         </div>
       </section>
 
