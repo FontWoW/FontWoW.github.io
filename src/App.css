@@ -364,6 +364,19 @@
   border-radius: 6px;
 }
 
+.text-layer.locked {
+  cursor: default;
+}
+
+.text-layer.locked.active {
+  outline: 1.5px dashed rgba(255, 255, 255, 0.35);
+}
+
+.layer-toolbar button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .layer-del,
 .layer-rotate-handle {
   position: absolute;
