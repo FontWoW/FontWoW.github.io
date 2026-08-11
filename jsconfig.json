@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@app/*": ["src/app/*"],
+      "@landing/*": ["src/landing/*"],
+      "@share/*": ["src/share/*"],
+      "@stats/*": ["src/stats/*"],
+      "@shared/*": ["src/shared/*"]
+    },
+    // Keep in sync with vite.config.js aliases (trailing-slash style).
+    "jsx": "react-jsx",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "target": "ESNext",
+    "checkJs": false
+  },
+  "include": ["src"]
+}

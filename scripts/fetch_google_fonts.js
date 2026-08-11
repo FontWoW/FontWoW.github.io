@@ -37,7 +37,7 @@ fetch('https://fonts.google.com/metadata/fonts')
       all: allNames.sort()
     };
 
-    const targetPath = path.join(__dirname, '../src/google-fonts.json');
+    const targetPath = path.join(__dirname, '../src/shared/google-fonts.json');
     fs.writeFileSync(targetPath, JSON.stringify(output, null, 2));
     console.log(`Successfully wrote ${output.arabic.length} Arabic fonts and ${output.all.length} total fonts to ${targetPath}`);
   })

@@ -91,6 +91,19 @@ self.addEventListener('fetch', function (event) {
   if (request.method !== 'GET') return
   const url = new URL(request.url)
 
+  // Never cache Vite / HMR / source modules — stale React copies break hooks in DEV
+  // if a SW was left registered from a previous visit to the same origin.
+  if (
+    url.pathname.startsWith('/@') ||
+    url.pathname.startsWith('/src/') ||
+    url.pathname.startsWith('/node_modules/') ||
+    url.search.includes('v=') ||
+    url.hostname === 'localhost' ||
+    url.hostname === '127.0.0.1'
+  ) {
+    return
+  }
+
   if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
     event.respondWith(cacheFirst(request, FONT_CACHE))
     return

@@ -5,6 +5,42 @@
 // build once that release goes out.
 export const UPDATES = [
   {
+    version: '1.5.9',
+    date: '2026-08-10',
+    fa: {
+      title: 'ساختار تمیزتر و رابط ادیتور بهتر',
+      changes: [
+        'بازچینش پوشهٔ src به app / landing / share / stats / shared برای توسعهٔ ساده‌تر.',
+        'پولیش رابط ادیتور (نوار بالا، بوم، تب‌ها و پنل کنترل) و اصلاح فلش سوالات متداول در لندینگ.'
+      ]
+    },
+    en: {
+      title: 'Cleaner Structure & Editor UI',
+      changes: [
+        'Reorganize src into app / landing / share / stats / shared for easier development.',
+        'Polish the editor chrome (top bar, canvas, tabs, controls) and fix the landing FAQ chevron.'
+      ]
+    }
+  },
+  {
+    version: '1.5.8',
+    date: '2026-08-10',
+    fa: {
+      title: 'دموی زنده و بهبود صفحه اصلی',
+      changes: [
+        'افزودن دموی تعاملی در صفحه اصلی برای امتحان متن، نئون و گرادیان قبل از ورود به ادیتور.',
+        'باز شدن مستقیم قالب‌ها با لینک `#/app?template=…`، انیمیشن ورود/اسکرول سبک با احترام به کاهش حرکت، و گسترش سوالات متداول (حریم خصوصی و نصب PWA).'
+      ]
+    },
+    en: {
+      title: 'Live Demo & Landing Polish',
+      changes: [
+        'Add an interactive landing demo to try text, neon, and gradient before opening the editor.',
+        'Support `#/app?template=…` deep links, light entrance/scroll motion with reduced-motion respect, and expanded FAQ (privacy + PWA install).'
+      ]
+    }
+  },
+  {
     version: '1.5.7',
     date: '2026-08-10',
     fa: {

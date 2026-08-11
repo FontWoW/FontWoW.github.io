@@ -1,10 +1,10 @@
 // Run by .github/workflows/android.yml on every build. Stamps
 // android/app/build.gradle with the app's current version (the newest entry
-// in src/updates.js) and writes GitHub release notes so the in-app update
+// in src/shared/updates.js) and writes GitHub release notes so the in-app update
 // checker (src/updateCheck.js) can tell users a newer build exists and what
 // changed, since every Android release reuses the same "latest" GitHub tag.
 import { readFileSync, writeFileSync, appendFileSync } from 'node:fs'
-import { UPDATES } from '../src/updates.js'
+import { UPDATES } from '../src/shared/updates.js'
 
 const latest = UPDATES[0]
 const appVersion = latest.version

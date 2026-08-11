@@ -1,17 +1,17 @@
-import logger from './logger'
-logger.init()
-
 import { Component, StrictMode, useCallback, useEffect, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { Capacitor } from '@capacitor/core'
-import App from './App.jsx'
-import Landing from './Landing.jsx'
-import ShareKit from './ShareKit.jsx'
-import StartupLoader from './StartupLoader.jsx'
-import StatsDashboard from './StatsDashboard.jsx'
-import { trackPageView } from './analytics.js'
-import { copyTextNative } from './native.js'
+import App from './app/App.jsx'
+import Landing from './landing/Landing.jsx'
+import ShareKit from './share/ShareKit.jsx'
+import StartupLoader from './shared/StartupLoader.jsx'
+import StatsDashboard from './stats/StatsDashboard.jsx'
+import { trackPageView } from './shared/analytics.js'
+import { copyTextNative } from './shared/native.js'
+import logger from './shared/logger'
 import './index.css'
+
+logger.init()
 
 const CHUNK_RELOAD_KEY = 'fontwow_chunk_reload'
 
@@ -112,9 +112,10 @@ window.addEventListener('vite:preloadError', (event) => {
 
 function getRoute() {
   const hash = window.location.hash.replace(/^#\/?/, '')
-  if (hash === 'app') return 'app'
-  if (hash === 'share') return 'share'
-  if (hash === 'stats') return 'stats'
+  const path = hash.split('?')[0]
+  if (path === 'app') return 'app'
+  if (path === 'share') return 'share'
+  if (path === 'stats') return 'stats'
   return 'landing'
 }
 
@@ -166,12 +167,23 @@ createRoot(document.getElementById('root')).render(
   </StrictMode>,
 )
 
-// The native bundle already lives on-device. On the web, keep the application
-// shell and every font fetched through the app available for later offline use.
+// Production-only: the SW uses cache-first for same-origin assets. In Vite DEV that
+// fights HMR and can serve mixed React copies → Invalid hook call / blank startup.
 if (!Capacitor.isNativePlatform() && 'serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch((error) => {
-      logger.warn('Offline', 'Service worker registration failed', error?.message || String(error))
+  if (import.meta.env.DEV) {
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      registrations.forEach((registration) => registration.unregister())
+    }).catch(() => {})
+    if ('caches' in window) {
+      caches.keys().then((keys) => {
+        keys.filter((key) => key.startsWith('fontwow-')).forEach((key) => caches.delete(key))
+      }).catch(() => {})
+    }
+  } else {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch((error) => {
+        logger.warn('Offline', 'Service worker registration failed', error?.message || String(error))
+      })
     })
-  })
+  }
 }

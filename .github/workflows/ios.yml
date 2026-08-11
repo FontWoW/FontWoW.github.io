@@ -50,7 +50,7 @@ jobs:
 
       - name: Package iOS Application
         run: |
-          VERSION_NAME=$(node -e "import('./src/updates.js').then(m => console.log(m.APP_VERSION))")
+          VERSION_NAME=$(node -e "import('./src/shared/updates.js').then(m => console.log(m.APP_VERSION))")
           ZIP_NAME="FontWoW-v${VERSION_NAME}-iOS.zip"
           mkdir -p dist-ios
           cd build/Build/Products/Release-iphonesimulator

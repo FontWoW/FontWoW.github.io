@@ -5,7 +5,7 @@
 // native layer) — do not add an entry here without shipping the capability, and do not ship a new
 // capability without adding/updating an entry here. See .claude/skills/sync-site-app/SKILL.md.
 //
-// iconName references an export from ./icons (e.g. 'IconType' -> I.IconType).
+// iconName references an export from ../shared/icons (e.g. 'IconType' -> I.IconType).
 export const FEATURES = [
   { iconName: 'IconType', title: 'ده‌ها فونت چندزبانه', text: 'فارسی، عربی، انگلیسی، ژاپنی، کره‌ای، چینی، روسی، هندی و بیشتر — به‌علاوه‌ی آپلود فونت دلخواه خودت.' },
   { iconName: 'IconPalette', title: 'استایل و افکت متن', text: 'متن قوسی، موجی و دایره‌ای، سایهٔ سه‌بعدی، ماسک تصویر، کشیده، گرادیان و نئون.' },
