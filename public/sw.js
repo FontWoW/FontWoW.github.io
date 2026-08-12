@@ -1,4 +1,4 @@
-const SHELL_CACHE = 'fontwow-shell-v1.4.1'
+const SHELL_CACHE = 'fontwow-shell-v1.4.3'
 const RUNTIME_CACHE = 'fontwow-runtime-v1'
 const FONT_CACHE = 'fontwow-fonts-v1'
 const APP_SHELL = [
@@ -8,6 +8,7 @@ const APP_SHELL = [
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/apple-touch-icon.png',
+  '/coffee-support.png',
   '/donations.json',
 ]
 const UI_FONT_STYLESHEET = 'https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;800&display=swap'

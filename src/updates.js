@@ -5,6 +5,26 @@
 // build once that release goes out.
 export const UPDATES = [
   {
+    version: '1.7.1',
+    date: '2026-08-12',
+    fa: {
+      title: 'گزارش اثرگذاری و حمایت کافه‌ای',
+      changes: [
+        'افزودن گزارش زنده‌ی استفاده‌ها و حمایت‌ها با تبدیل ساده‌ی هزینه‌ی یک قهوه به اثر قابل‌فهم برای خرید فونت‌های بعدی.',
+        'افزودن مسیر همکاری برای کافه‌ها تا بتوانند سهم مشخصی از قهوه‌ها را برای مهمان‌های معرفی‌شده از FontWoW تقبل کنند و به‌عنوان حامی معرفی شوند.',
+        'بهبود تصویر قهوه با فنجان ثابت و بخار ظریف و متحرک که از سطح قهوه شروع می‌شود.'
+      ]
+    },
+    en: {
+      title: 'Impact Report and Cafe Sponsorship',
+      changes: [
+        'Add a live usage and support report that turns the cost of one coffee into a clear measure of progress toward the next licensed fonts.',
+        'Add a cafe partnership path for venues that want to cover a set number of coffees for guests who mention FontWoW and be listed as supporters.',
+        'Refine the coffee visual with a still cup and subtle animated steam that starts at the coffee surface.'
+      ]
+    }
+  },
+  {
     version: '1.6.0',
     date: '2026-08-11',
     fa: {
