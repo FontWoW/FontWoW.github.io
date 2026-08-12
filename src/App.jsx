@@ -206,6 +206,7 @@ const defaultState = {
   animationType: 'rise',
   layers: [],
   activeLayerId: null,
+  mainTextOnTop: false,
 }
 
 const defaultAppSettings = {
@@ -306,6 +307,54 @@ function LayerToolbar({ layer, onMoveLayer, onDuplicateLayer, t }) {
   )
 }
 
+function InlineLayerTextEditor({ value, onChange, onFinish, editorRef }) {
+  const ref = useRef(null)
+  const initialValueRef = useRef(value)
+
+  useLayoutEffect(() => {
+    if (!ref.current || document.activeElement === ref.current) return
+    if (ref.current.textContent !== value) ref.current.textContent = value
+  }, [value])
+
+  useEffect(() => {
+    if (!ref.current) return
+    ref.current.textContent = initialValueRef.current
+    ref.current.focus()
+    const selection = window.getSelection()
+    const range = document.createRange()
+    range.selectNodeContents(ref.current)
+    range.collapse(false)
+    selection?.removeAllRanges()
+    selection?.addRange(range)
+  }, [])
+
+  return (
+    <span
+      ref={(node) => {
+        ref.current = node
+        if (editorRef) editorRef.current = node
+      }}
+      className="layer-text-editor"
+      contentEditable
+      suppressContentEditableWarning
+      role="textbox"
+      aria-multiline="false"
+      onPointerDown={(event) => event.stopPropagation()}
+      onInput={(event) => onChange(event.currentTarget.textContent ?? '')}
+      onBlur={onFinish}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault()
+          event.currentTarget.blur()
+        } else if (event.key === 'Escape') {
+          event.preventDefault()
+          onFinish()
+        }
+      }}
+    />
+  )
+}
+
 export default function App() {
   const [cssElement, setCssElement] = useState('h1')
   const {
@@ -349,6 +398,7 @@ export default function App() {
   const [showStyleStudio, setShowStyleStudio] = useState(false)
   const [styleName, setStyleName] = useState('')
   const [showLabelPicker, setShowLabelPicker] = useState(false)
+  const [editingLayerId, setEditingLayerId] = useState(null)
   const [toast, setToast] = useState('')
   const [availableUpdate, setAvailableUpdate] = useState(null)
   const [showGoogleFontsSearch, setShowGoogleFontsSearch] = useState(false)
@@ -358,6 +408,7 @@ export default function App() {
   const [isExportingVideo, setIsExportingVideo] = useState(false)
   const previewRef = useRef(null)
   const textRef = useRef(null)
+  const editingLayerRef = useRef(null)
   const tabsRef = useRef(null)
   // Keep the selected layer id fresh for the once-bound keydown handler.
   const activeLayerIdRef = useRef(state.activeLayerId)
@@ -415,6 +466,12 @@ export default function App() {
     const tm = setTimeout(() => setToast(''), 2200)
     return () => clearTimeout(tm)
   }, [toast])
+
+  useEffect(() => {
+    if (!editingLayerId) return
+    const timer = window.setTimeout(() => editingLayerRef.current?.focus(), 0)
+    return () => window.clearTimeout(timer)
+  }, [editingLayerId])
 
   // Sync contentEditable content from state (without React controlling the innerHTML)
   useEffect(() => {
@@ -997,7 +1054,9 @@ export default function App() {
     try {
       const dataUrl = await fileToDataUrl(file)
       const id = `layer-${Date.now()}`
-      const newLayer = { id, type: 'image', src: dataUrl, x: 50, y: 50, rotation: 0, width: 120 }
+      const canvasWidth = previewRef.current?.getBoundingClientRect().width ?? 400
+      const width = Math.round(Math.min(420, Math.max(120, canvasWidth * 0.45)))
+      const newLayer = { id, type: 'image', src: dataUrl, x: 50, y: 50, rotation: 0, width }
       update({ layers: [...state.layers, newLayer], activeLayerId: id })
     } catch {
       setToast(t('bgError'))
@@ -1029,6 +1088,7 @@ export default function App() {
 
   function handleLayerDrag(e, layer) {
     e.stopPropagation()
+    if (e.detail > 1) return
     update({ activeLayerId: layer.id }, { record: false })
     if (!previewRef.current) return
     const rect = previewRef.current.getBoundingClientRect()
@@ -1211,6 +1271,7 @@ export default function App() {
 
   const depthShadow = longShadow(state.longShadowColor, state.longShadowDepth, state.longShadowAngle)
   const baseShadow = state.shadow ? '0 4px 18px rgba(0,0,0,0.55), 0 1px 0 rgba(0,0,0,0.3)' : ''
+  const mainTextZIndex = state.mainTextOnTop ? state.layers.length + 2 : 1
 
   const textStyle = {
     fontFamily: font.family,
@@ -1226,7 +1287,7 @@ export default function App() {
     opacity: state.opacity / 100,
     WebkitTextStroke: state.stroke ? `${state.strokeWidth}px ${strokeColor}` : 'none',
     position: 'relative',
-    zIndex: 1,
+    zIndex: mainTextZIndex,
     ...effectStyle,
     textShadow: [effectStyle.textShadow, baseShadow, depthShadow !== 'none' ? depthShadow : ''].filter(Boolean).join(', ') || 'none',
     ...boxStyleFor(state.textBoxStyle, state.color),
@@ -1252,6 +1313,7 @@ export default function App() {
     paintOrder: 'stroke fill',
     stroke: state.stroke ? strokeColor : 'none',
     strokeWidth: state.stroke ? state.strokeWidth : 0,
+    zIndex: mainTextZIndex,
   }
 
   const generatedCSS = `
@@ -1739,7 +1801,7 @@ export default function App() {
           ) : (
             <CurvedText text={displayText || t('placeholder')} mode={state.warpMode} bend={state.warpBend} style={curvedTextStyle} />
           )}
-          {state.layers.map((layer) => {
+          {state.layers.map((layer, layerIndex) => {
             if (layer.type === 'label') {
               const layerFont = allFonts.find((f) => f.id === layer.fontId) ?? font
               return (
@@ -1752,6 +1814,7 @@ export default function App() {
                     width: `${layer.width}px`,
                     aspectRatio: layer.aspectRatio ?? '16 / 9',
                     transform: `translate(-50%, -50%) rotate(${layer.rotation}deg)`,
+                    zIndex: layerIndex + 2,
                   }}
                   onPointerDown={(e) => handleLayerDrag(e, layer)}
                   onClick={(e) => e.stopPropagation()}
@@ -1798,6 +1861,7 @@ export default function App() {
                     top: `${layer.y}%`,
                     width: `${layer.width}px`,
                     transform: `translate(-50%, -50%) rotate(${layer.rotation}deg)`,
+                    zIndex: layerIndex + 2,
                   }}
                   onPointerDown={(e) => handleLayerDrag(e, layer)}
                   onClick={(e) => e.stopPropagation()}
@@ -1843,14 +1907,23 @@ export default function App() {
                   fontSize: `${layer.fontSize}px`,
                   color: layer.color,
                   direction: layerFont.rtl ? 'rtl' : 'ltr',
+                  zIndex: layerIndex + 2,
                 }}
                 onPointerDown={(e) => handleLayerDrag(e, layer)}
                 onClick={(e) => e.stopPropagation()}
-                onDoubleClick={() => {
-                  setPromptState({ layerId: layer.id, initialText: layer.text, promptKey: 'editLayerText' })
+                onDoubleClick={(e) => {
+                  e.stopPropagation()
+                  setEditingLayerId(layer.id)
                 }}
               >
-                {layer.text}
+                {editingLayerId === layer.id ? (
+                  <InlineLayerTextEditor
+                    value={layer.text}
+                    editorRef={editingLayerRef}
+                    onChange={(text) => updateLayer(layer.id, { text })}
+                    onFinish={() => setEditingLayerId(null)}
+                  />
+                ) : layer.text}
                 {state.activeLayerId === layer.id && (
                   <>
                     <LayerToolbar layer={layer} onMoveLayer={moveLayer} onDuplicateLayer={duplicateLayer} t={t} />
@@ -1922,6 +1995,17 @@ export default function App() {
               >
                 RTL
               </button>
+              {state.layers.length > 0 && (
+                <button
+                  className={`rail-btn ${state.mainTextOnTop ? 'on' : ''}`}
+                  onClick={() => update({ mainTextOnTop: !state.mainTextOnTop })}
+                  aria-label={t(state.mainTextOnTop ? 'mainTextToBack' : 'mainTextToFront')}
+                  aria-pressed={state.mainTextOnTop}
+                  title={t(state.mainTextOnTop ? 'mainTextToBack' : 'mainTextToFront')}
+                >
+                  {state.mainTextOnTop ? <I.IconArrowDown size={15} /> : <I.IconArrowUp size={15} />}
+                </button>
+              )}
               <button className="rail-btn danger" onClick={clearAll} aria-label={t('clear')}>
                 <I.IconTrash size={15} />
               </button>

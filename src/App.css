@@ -364,6 +364,13 @@
   border-radius: 6px;
 }
 
+.layer-text-editor {
+  cursor: text;
+  user-select: text;
+  touch-action: auto;
+  outline: none;
+}
+
 .layer-del,
 .layer-rotate-handle {
   position: absolute;
