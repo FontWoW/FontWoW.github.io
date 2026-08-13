@@ -69,11 +69,11 @@ export default function ShareKit() {
   const handleCopyText = () => {
     navigator.clipboard.writeText(shareText)
       .then(() => {
-        setToast(t('promoCopiedToast') || 'متن معرفی کپی شد!')
+        setToast({ text: t('promoCopiedToast') || 'متن معرفی کپی شد!', type: 'success' })
         setTimeout(() => setToast(''), 3000)
       })
       .catch(() => {
-        setToast(t('copyFailed') || 'کپی ناموفق بود')
+        setToast({ text: t('copyFailed') || 'کپی ناموفق بود', type: 'error' })
         setTimeout(() => setToast(''), 3000)
       })
   }
@@ -220,7 +220,7 @@ export default function ShareKit() {
     }
 
     img.onerror = () => {
-      setToast(t('imageError'))
+      setToast({ text: t('imageError'), type: 'error' })
       setTimeout(() => setToast(''), 3000)
       setIsDownloading(false)
     }
@@ -264,6 +264,9 @@ export default function ShareKit() {
     </svg>
   )
 
+  const isToastErr = typeof toast === 'object' ? toast.type === 'error' : false
+  const toastText = typeof toast === 'object' ? toast.text : toast
+
   return (
     <div className="sharekit-page" dir={isRtl ? 'rtl' : 'ltr'} style={{ '--accent': appSettings.themeColor }}>
       <header className="sharekit-header">
@@ -276,7 +279,11 @@ export default function ShareKit() {
         </a>
       </header>
 
-      {toast && <div className="sharekit-toast"><I.ToastCheck size={18} /> {toast}</div>}
+      {toast && (
+        <div className={`sharekit-toast ${isToastErr ? 'sharekit-toast-error' : ''}`}>
+          {isToastErr ? <I.ToastError size={18} /> : <I.ToastCheck size={18} />} {toastText}
+        </div>
+      )}
 
       <main className="sharekit-content">
         {/* Left Column: Info, Copy Text, Features, and App downloads */}

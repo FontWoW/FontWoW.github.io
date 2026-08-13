@@ -942,6 +942,22 @@
   z-index: 1;
 }
 
+.rename-font {
+  position: absolute;
+  top: -6px;
+  inset-inline-start: -6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1;
+}
+
 .upload-chip {
   cursor: pointer;
 }
@@ -1489,6 +1505,13 @@
     toastOut 0.3s ease-in 1.9s both;
 }
 
+.toast.toast-error {
+  background: rgba(30, 16, 22, 0.95);
+  border-color: rgba(244, 63, 94, 0.45);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 16px rgba(244, 63, 94, 0.22);
+}
+
+
 @keyframes toastIn {
   from {
     opacity: 0;
@@ -1616,20 +1639,30 @@
   flex-shrink: 0;
 }
 
+.toast-error-icon {
+  color: var(--danger, #f43f5e);
+  flex-shrink: 0;
+}
+
 .tc-circle,
-.tc-check {
+.tc-check,
+.te-circle,
+.te-exclamation {
   stroke-dasharray: 100;
   stroke-dashoffset: 100;
 }
 
-.tc-circle {
+.tc-circle,
+.te-circle {
   animation: dashDraw 0.45s var(--ease-out) 0.05s forwards;
   opacity: 0.9;
 }
 
-.tc-check {
-  animation: dashDraw 0.3s var(--ease-out) 0.4s forwards;
+.tc-check,
+.te-exclamation {
+  animation: dashDraw 0.3s var(--ease-out) 0.35s forwards;
 }
+
 
 @keyframes dashDraw {
   to {

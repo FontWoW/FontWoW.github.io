@@ -5,6 +5,24 @@
 // build once that release goes out.
 export const UPDATES = [
   {
+    version: '1.6.1',
+    date: '2026-08-12',
+    fa: {
+      title: 'اصلاح نمایش پیام‌های خطا و آیکون توست‌ها',
+      changes: [
+        'افزودن آیکون متمایز خطا و رنگ‌بندی هشدار (رز/قرمز) برای پیام‌های ناموفق و خطا در اپلیکیشن.',
+        'تفکیک پیام‌های خطا از پیام‌های موفقیت‌آمیز در بخش‌های مختلف مانند بارگذاری فونت، عکس و کپی کلیپ‌بورد.'
+      ]
+    },
+    en: {
+      title: 'Distinct Error Toast Visuals and Icons',
+      changes: [
+        'Add dedicated error icons and warning color scheme (rose/red border & glow) for failure toasts.',
+        'Separate error notifications from success toasts across font loading, image exports, and clipboard actions.'
+      ]
+    }
+  },
+  {
     version: '1.6.0',
     date: '2026-08-11',
     fa: {

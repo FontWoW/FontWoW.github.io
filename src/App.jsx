@@ -692,7 +692,7 @@ export default function App() {
       setLoadingFontId((id) => (id === f.id ? null : id))
     } catch (err) {
       console.error('Error loading native font:', err)
-      setToast(t('fontError'))
+      setToast({ text: t('fontError'), type: 'error' })
       setLoadingFontId((id) => (id === f.id ? null : id))
     }
   }, [t])
@@ -746,7 +746,7 @@ export default function App() {
         clearTimeout(timer)
         link.remove()
         setLoadingFontId((id) => (id === f.id ? null : id))
-        setToast(t('fontError'))
+        setToast({ text: t('fontError'), type: 'error' })
         resolve()
       }
       const timer = setTimeout(fail, 8000)
@@ -822,7 +822,7 @@ export default function App() {
       update({ fontId: id })
       setToast(t('fontAdded'))
     } catch {
-      setToast(t('fontError'))
+      setToast({ text: t('fontError'), type: 'error' })
     }
   }
 
@@ -832,6 +832,18 @@ export default function App() {
     setCustomFonts(next)
     localStorage.setItem(CUSTOM_FONTS_KEY, JSON.stringify(next))
     if (state.fontId === id) update({ fontId: 'vazirmatn' })
+  }
+
+  function renameCustomFont(id, e) {
+    e.stopPropagation()
+    const current = customFonts.find((f) => f.id === id)
+    if (!current) return
+    const name = window.prompt(t('renameFontPrompt'), current.label)
+    if (!name || !name.trim() || name.trim() === current.label) return
+    const next = customFonts.map((f) => (f.id === id ? { ...f, label: name.trim() } : f))
+    setCustomFonts(next)
+    localStorage.setItem(CUSTOM_FONTS_KEY, JSON.stringify(next))
+    setToast(t('fontRenamed'))
   }
 
   function addGoogleFont(gf) {
@@ -878,7 +890,7 @@ export default function App() {
       setToast(t('bgAdded'))
     } catch {
       logger.error('Background', 'خطا در خواندن فایل پس‌زمینه سفارشی')
-      setToast(t('bgError'))
+      setToast({ text: t('bgError'), type: 'error' })
     }
   }
 
@@ -890,7 +902,7 @@ export default function App() {
       update({ textMaskUrl: await fileToDataUrl(file), warpMode: 'none' })
       setToast(t('textMaskAdded'))
     } catch {
-      setToast(t('bgError'))
+      setToast({ text: t('bgError'), type: 'error' })
     }
   }
 
@@ -963,7 +975,7 @@ export default function App() {
       setToast(t('backgroundRemoved'))
     } catch (error) {
       logger.error('Image', 'خطا در حذف پس‌زمینه تصویر', error?.message)
-      setToast(t('backgroundRemoveFailed'))
+      setToast({ text: t('backgroundRemoveFailed'), type: 'error' })
     }
   }
 
@@ -1000,7 +1012,7 @@ export default function App() {
       const newLayer = { id, type: 'image', src: dataUrl, x: 50, y: 50, rotation: 0, width: 120 }
       update({ layers: [...state.layers, newLayer], activeLayerId: id })
     } catch {
-      setToast(t('bgError'))
+      setToast({ text: t('bgError'), type: 'error' })
     }
   }
 
@@ -1145,7 +1157,7 @@ export default function App() {
 
   function saveCustomTemplate() {
     if (!styleName.trim()) {
-      setToast(t('nameFirst'))
+      setToast({ text: t('nameFirst'), type: 'error' })
       return
     }
     const entry = buildStyleFromCurrentState(styleName.trim(), `custom-${Date.now()}`)
@@ -1158,7 +1170,7 @@ export default function App() {
 
   async function copyStyleJSON() {
     if (!styleName.trim()) {
-      setToast(t('nameFirst'))
+      setToast({ text: t('nameFirst'), type: 'error' })
       return
     }
     const entry = buildStyleFromCurrentState(styleName.trim(), `t-${Date.now()}`)
@@ -1168,7 +1180,7 @@ export default function App() {
       else await navigator.clipboard.writeText(json)
       setToast(t('styleJSONCopied'))
     } catch {
-      setToast(t('copyFailed'))
+      setToast({ text: t('copyFailed'), type: 'error' })
     }
   }
 
@@ -1372,7 +1384,7 @@ export default function App() {
     } catch (err) {
       logger.error('Export', 'خطا در خروجی PNG', err.stack || err.message)
       console.error('exportPng failed:', err)
-      setToast(errorToast('imageError', err))
+      setToast({ text: errorToast('imageError', err), type: 'error' })
     }
     setShowSave(false)
   }
@@ -1420,7 +1432,7 @@ export default function App() {
       setToast(t('gifSaved'))
     } catch (error) {
       logger.error('Export', 'خطا در خروجی GIF', error?.stack || error?.message)
-      setToast(errorToast('gifError', error))
+      setToast({ text: errorToast('gifError', error), type: 'error' })
     } finally {
       clearAnimationProgress(node)
       setIsExportingGif(false)
@@ -1430,7 +1442,7 @@ export default function App() {
   async function exportVideo() {
     if (!previewRef.current || isExportingVideo) return
     if (typeof MediaRecorder === 'undefined' || !HTMLCanvasElement.prototype.captureStream) {
-      setToast(t('videoUnsupported'))
+      setToast({ text: t('videoUnsupported'), type: 'error' })
       return
     }
     setIsExportingVideo(true)
@@ -1483,7 +1495,7 @@ export default function App() {
       setToast(t('videoSaved'))
     } catch (error) {
       logger.error('Export', 'خطا در خروجی ویدئو', error?.stack || error?.message)
-      setToast(errorToast('videoError', error))
+      setToast({ text: errorToast('videoError', error), type: 'error' })
     } finally {
       clearAnimationProgress(node)
       setIsExportingVideo(false)
@@ -1522,7 +1534,7 @@ export default function App() {
         setToast(t('imageCopyFallback'))
       } catch {
         logger.error('Clipboard', 'حالت پشتیبان کپی متن نیز با خطا مواجه شد.')
-        setToast(t('copyFailed'))
+        setToast({ text: t('copyFailed'), type: 'error' })
       }
     }
     setShowSave(false)
@@ -1538,14 +1550,14 @@ export default function App() {
       setToast(t('textCopied'))
     } catch {
       logger.error('Clipboard', 'خطا در کپی متن')
-      setToast(t('copyFailed'))
+      setToast({ text: t('copyFailed'), type: 'error' })
     }
     setShowSave(false)
   }
 
   function saveToGallery() {
     if (!state.text.trim()) {
-      setToast(t('writeFirst'))
+      setToast({ text: t('writeFirst'), type: 'error' })
       return
     }
     logger.info('Gallery', 'ذخیره در گالری برنامه')
@@ -2016,6 +2028,11 @@ export default function App() {
                       loadFont(f)
                     }}
                   >
+                    {f.dataUrl && (
+                      <span className="rename-font" onClick={(e) => renameCustomFont(f.id, e)}>
+                        <I.IconEdit size={9} />
+                      </span>
+                    )}
                     {(f.dataUrl || f.id.startsWith('gfont-')) && (
                       <span className="del-font" onClick={(e) => deleteCustomFont(f.id, e)}>
                         <I.IconX size={9} />
@@ -2026,7 +2043,9 @@ export default function App() {
                         <I.IconLoader size={16} />
                       </span>
                     )}
-                    <span style={{ fontFamily: f.family }}>{f.rtl ? 'ابر' : 'Aa'}</span>
+                    <span style={{ fontFamily: f.family }}>
+                      {state.text.trim() ? state.text.trim().slice(0, 8) : (f.rtl ? 'ابر' : 'Aa')}
+                    </span>
                     <span className="chip-label" style={{ fontFamily: f.family }}>{f.label}</span>
                   </button>
                 ))}
@@ -3202,12 +3221,16 @@ export default function App() {
         </Sheet>
       )}
 
-      {toast && (
-        <div className="toast" key={toast}>
-          <I.ToastCheck size={19} />
-          <span>{toast}</span>
-        </div>
-      )}
+      {toast && (() => {
+        const toastObj = typeof toast === 'string' ? { text: toast, type: 'success' } : toast
+        const isError = toastObj.type === 'error'
+        return (
+          <div className={`toast ${isError ? 'toast-error' : 'toast-success'}`} key={toastObj.text || toast}>
+            {isError ? <I.ToastError size={19} /> : <I.ToastCheck size={19} />}
+            <span>{toastObj.text || toast}</span>
+          </div>
+        )
+      })()}
 
       {promptState && (
         <PromptSheet

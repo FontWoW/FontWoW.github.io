@@ -26,6 +26,9 @@ function icon(children, viewBox = '0 0 24 24') {
 export const IconX = icon(<path d="M18 6 6 18M6 6l12 12" />)
 export const IconLoader = icon(<path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />)
 export const IconPlus = icon(<path d="M12 5v14M5 12h14" />)
+export const IconEdit = icon(
+  <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />,
+)
 export const IconSettings = icon(
   <>
     <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
@@ -284,6 +287,28 @@ export function ToastCheck({ size = 20 }) {
     </svg>
   )
 }
+
+export function ToastError({ size = 20 }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="toast-error-icon"
+      aria-hidden="true"
+    >
+      <circle className="te-circle" cx="12" cy="12" r="9.2" pathLength="100" />
+      <path className="te-exclamation" d="M12 7.5v5.5" pathLength="100" />
+      <circle className="te-dot" cx="12" cy="16.2" r="0.8" fill="currentColor" />
+    </svg>
+  )
+}
+
 
 export const IconSearch = icon(
   <>
