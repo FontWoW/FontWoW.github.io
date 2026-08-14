@@ -1,18 +1,5 @@
 {
   "project": "FontWoW",
-  "updatedAt": "2026-08-12T19:46:15.988Z",
-  "donationCount": 2,
-  "totalAmount": 1500000,
-  "supporterCount": 2,
-  "supporterCountMode": "donations",
-  "donations": [
-    {
-      "amount": 1000000,
-      "date": "2026-08-08T02:20:35+03:30"
-    },
-    {
-      "amount": 500000,
-      "date": "2026-08-08T01:33:33+03:30"
-    }
-  ]
+  "updatedAt": "2026-08-14T10:07:04.053Z",
+  "donations": []
 }
