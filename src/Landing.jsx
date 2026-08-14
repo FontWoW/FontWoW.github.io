@@ -17,10 +17,10 @@ const APP_URL = '#/app'
 const CRYPTO_DONATE_URL = 'https://pay.oxapay.com/15417059'
 const TOMAN_DONATE_URL = 'https://daramet.com/fontwow'
 const COFFEE_DAY_COST_TOMAN = 200000
-const CAFE_SPONSOR_EXAMPLE_COFFEES = 30
+const CAFE_SPONSOR_EXAMPLE_COFFEES = 10
 const PAID_APP_MONTHLY_BENCHMARK_TOMAN = 400000
 const PAID_APP_DAILY_BENCHMARK_TOMAN = Math.round(PAID_APP_MONTHLY_BENCHMARK_TOMAN / 30)
-const CAFE_SPONSOR_CONTACT_URL = `mailto:m4tinbeigi@gmail.com?subject=${encodeURIComponent('پیشنهاد حمایت کافه از FontWoW')}&body=${encodeURIComponent('نام کافه:\nشهر:\nتعداد سهم قهوه:\nلینک لوگو یا صفحه‌ی کافه:')}`
+const CAFE_SPONSOR_CONTACT_URL = `mailto:m4tinbeigi@gmail.com?subject=${encodeURIComponent('پیشنهاد اسپانسری کافه برای FontWoW')}&body=${encodeURIComponent('نام کافه:\nشهر:\nتعداد قهوه‌ای که اسپانسر می‌کنید:\nلینک لوگو یا صفحه‌ی کافه:')}`
 const TOTAL_FONT_LICENSE_COST_TOMAN = FONT_GOALS.reduce(
   (sum, goal) => sum + getDiscountedFontPrice(goal.price),
   0,
@@ -439,10 +439,10 @@ export default function Landing() {
 
       <section className="landing-cafe-sponsor" aria-labelledby="landing-cafe-sponsor-title">
         <div className="landing-cafe-sponsor-copy">
-          <p className="landing-impact-eyebrow">پیشنهاد همکاری برای کافه‌ها</p>
-          <h2 id="landing-cafe-sponsor-title">کافه دارید؟ مهمان‌های FontWoW را مهمان خودتان کنید.</h2>
+          <p className="landing-impact-eyebrow">پیشنهاد اسپانسری برای کافه‌ها</p>
+          <h2 id="landing-cafe-sponsor-title">کافه‌تان می‌تواند حامی قهوه‌های FontWoW باشد.</h2>
           <p>
-            مثلاً هزینه‌ی ۳۰ قهوه را تقبل کنید. مهمان‌ها بگویند «از FontWoW آمدم»، کافه سهم او را حساب کند و ارزش این حمایت به نام کافه‌تان ثبت شود.
+            مثلاً هزینه‌ی ۱۰ قهوه را اسپانسر کنید. در ادامه، نام و لوگوی کافه‌تان به‌عنوان حامی این سهم‌ها نمایش داده می‌شود و به کاربران می‌گوییم: «هزینه‌ی یک قهوه‌ات با FontWoW.»
           </p>
           <a className="landing-cafe-sponsor-cta" href={CAFE_SPONSOR_CONTACT_URL}>
             پیشنهاد حمایت کافه‌ای
@@ -456,9 +456,9 @@ export default function Landing() {
             <small>{formatToman(CAFE_SPONSOR_EXAMPLE_COFFEES * COFFEE_DAY_COST_TOMAN)} ارزش حمایت</small>
           </div>
           <ol>
-            <li><b>۱</b><span><strong>تعداد سهم را مشخص کنید</strong><small>مثلاً ۳۰ قهوه</small></span></li>
-            <li><b>۲</b><span><strong>مهمان بگوید «از FontWoW آمدم»</strong><small>کافه سهم او را مهمان می‌کند</small></span></li>
-            <li><b>۳</b><span><strong>نام و لوگوی کافه نمایش داده می‌شود</strong><small>همراه با تعداد سهم‌های حمایت</small></span></li>
+            <li><b>۱</b><span><strong>تعداد قهوه‌های اسپانسری را مشخص کنید</strong><small>مثلاً ۱۰ قهوه</small></span></li>
+            <li><b>۲</b><span><strong>هزینه‌ی سهم‌ها را پرداخت کنید</strong><small>برای پشتیبانی از FontWoW</small></span></li>
+            <li><b>۳</b><span><strong>نام و لوگوی کافه نمایش داده می‌شود</strong><small>همراه با تعداد قهوه‌های اسپانسرشده</small></span></li>
           </ol>
         </div>
         <div className="landing-cafe-sponsor-showcase">
