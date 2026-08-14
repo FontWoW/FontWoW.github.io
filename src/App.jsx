@@ -25,6 +25,7 @@ import { useDesignHistory } from './useDesignHistory'
 import googleFontsList from './google-fonts.json'
 import { UPDATES, APP_VERSION } from './updates'
 import { checkForUpdate, dismissUpdate } from './updateCheck'
+import { trackFontUsage } from './analytics.js'
 import { FEATURES } from './features'
 import PromptSheet from './PromptSheet'
 import MediaSupporters from './MediaSupporters'
@@ -2012,6 +2013,7 @@ export default function App() {
                     key={f.id}
                     className={`chip font-chip ${state.fontId === f.id ? 'selected' : ''} ${loadingFontId === f.id ? 'loading' : ''}`}
                     onClick={() => {
+                      if (state.fontId !== f.id) trackFontUsage(f.id)
                       update({ fontId: f.id, direction: f.rtl ? 'rtl' : 'ltr' })
                       loadFont(f)
                     }}
@@ -2398,6 +2400,7 @@ export default function App() {
                         key={labelFont.id}
                         className={`chip font-chip ${activeLabel.fontId === labelFont.id ? 'selected' : ''}`}
                         onClick={() => {
+                          if (activeLabel.fontId !== labelFont.id) trackFontUsage(labelFont.id)
                           updateLayer(activeLabel.id, { fontId: labelFont.id })
                           loadFont(labelFont)
                         }}

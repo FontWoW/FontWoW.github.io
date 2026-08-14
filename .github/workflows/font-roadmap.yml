@@ -1,0 +1,36 @@
+name: Update Font Roadmap Data
+
+on:
+  schedule:
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: font-roadmap
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: node scripts/fetch-font-roadmap.mjs
+        env:
+          COUNTER_USER: ${{ secrets.COUNTER_USER }}
+          COUNTER_TOKEN: ${{ secrets.COUNTER_TOKEN }}
+          COUNTER_SITE: fontwow.github.io
+          FONT_ROADMAP_DAYS: 90
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/font-roadmap.json
+          git diff --staged --quiet || git commit -m "chore: update font roadmap data"
+          git push
