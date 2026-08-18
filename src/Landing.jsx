@@ -4,6 +4,7 @@ import { FEATURES } from './features'
 import { APP_VERSION } from './updates'
 import MediaSupporters from './MediaSupporters'
 import FontGoals from './FontGoals'
+import { FONT_GOALS, getDiscountedFontPrice } from './goals'
 import { STRINGS } from './strings'
 import './Landing.css'
 
@@ -15,6 +16,39 @@ const RELEASES_URL = `${REPO}/releases/tag/latest`
 const APP_URL = '#/app'
 const CRYPTO_DONATE_URL = 'https://pay.oxapay.com/15417059'
 const TOMAN_DONATE_URL = 'https://daramet.com/fontwow'
+const COFFEE_DAY_COST_TOMAN = 200000
+const CAFE_SPONSOR_EXAMPLE_COFFEES = 10
+const PAID_APP_MONTHLY_BENCHMARK_TOMAN = 400000
+const PAID_APP_DAILY_BENCHMARK_TOMAN = Math.round(PAID_APP_MONTHLY_BENCHMARK_TOMAN / 30)
+const CAFE_SPONSOR_CONTACT_URL = `mailto:m4tinbeigi@gmail.com?subject=${encodeURIComponent('پیشنهاد اسپانسری کافه برای FontWoW')}&body=${encodeURIComponent('نام کافه:\nشهر:\nتعداد قهوه‌ای که اسپانسر می‌کنید:\nلینک لوگو یا صفحه‌ی کافه:')}`
+const TOTAL_FONT_LICENSE_COST_TOMAN = FONT_GOALS.reduce(
+  (sum, goal) => sum + getDiscountedFontPrice(goal.price),
+  0,
+)
+
+function formatToman(value) {
+  return `${Math.round(value).toLocaleString('fa-IR')} تومان`
+}
+
+function formatDonationDate(value) {
+  if (!value) return null
+  const date = new Date(value)
+  return Number.isNaN(date.getTime())
+    ? value
+    : date.toLocaleDateString('fa-IR', { year: 'numeric', month: 'short', day: 'numeric' })
+}
+
+function normalizeDonationSummary(data, list) {
+  const fallbackTotal = list.reduce((sum, donation) => sum + (Number(donation.amount) || 0), 0)
+  const fallbackCount = list.length
+  return {
+    totalAmount: Number(data?.totalAmount) >= 0 ? Number(data.totalAmount) : fallbackTotal,
+    donationCount: Number(data?.donationCount) >= 0 ? Number(data.donationCount) : fallbackCount,
+    supporterCount: Number(data?.supporterCount) >= 0 ? Number(data.supporterCount) : fallbackCount,
+    supporterCountMode: data?.supporterCountMode || 'donations',
+    updatedAt: data?.updatedAt || null,
+  }
+}
 
 function detectPlatform() {
   const ua = navigator.userAgent || ''
@@ -37,6 +71,7 @@ export default function Landing() {
   const [platform] = useState(detectPlatform)
   const [donations, setDonations] = useState(null)
   const [donationsError, setDonationsError] = useState(false)
+  const [donationSummary, setDonationSummary] = useState(null)
   const [repoStats, setRepoStats] = useState(null)
   const [visitorCount, setVisitorCount] = useState(null)
   const [visitorCountLoading, setVisitorCountLoading] = useState(true)
@@ -108,18 +143,29 @@ export default function Landing() {
 
   useEffect(() => {
     let cancelled = false
-    fetch('/donations.json')
-      .then(res => {
+
+    const loadDonations = async () => {
+      try {
+        const res = await fetch(`/donations.json?ts=${Date.now()}`, { cache: 'no-store' })
         if (!res.ok) throw new Error('bad response')
-        return res.json()
-      })
-      .then(data => {
-        if (!cancelled) setDonations(Array.isArray(data.donations) ? data.donations : [])
-      })
-      .catch(() => {
+        const data = await res.json()
+        const list = Array.isArray(data.donations) ? data.donations : []
+        if (!cancelled) {
+          setDonations(list)
+          setDonationSummary(normalizeDonationSummary(data, list))
+          setDonationsError(false)
+        }
+      } catch {
         if (!cancelled) setDonationsError(true)
-      })
-    return () => { cancelled = true }
+      }
+    }
+
+    loadDonations()
+    const refreshTimer = window.setInterval(loadDonations, 15 * 60 * 1000)
+    return () => {
+      cancelled = true
+      window.clearInterval(refreshTimer)
+    }
   }, [])
 
   useEffect(() => {
@@ -149,6 +195,18 @@ export default function Landing() {
       })
     return () => { cancelled = true }
   }, [])
+
+  const totalDonations = donationSummary?.totalAmount ?? 0
+  const supporterCount = donationSummary?.supporterCount ?? 0
+  const averageDonation = supporterCount > 0 ? totalDonations / supporterCount : 0
+  const estimatedCollectiveValue = visitorCount !== null
+    ? visitorCount * PAID_APP_DAILY_BENCHMARK_TOMAN
+    : null
+  const fundedCoffeeDays = totalDonations / COFFEE_DAY_COST_TOMAN
+  const remainingFontCost = Math.max(TOTAL_FONT_LICENSE_COST_TOMAN - totalDonations, 0)
+  const remainingCoffeeDays = Math.ceil(remainingFontCost / COFFEE_DAY_COST_TOMAN)
+  const fundingPercent = Math.min(100, (totalDonations / TOTAL_FONT_LICENSE_COST_TOMAN) * 100)
+  const supportUnitLabel = donationSummary?.supporterCountMode === 'unique-donors' ? 'حامی' : 'حمایت'
 
   return (
     <div className="landing" dir="rtl">
@@ -315,11 +373,99 @@ export default function Landing() {
                 <I.IconHeart size={14} />
                 <span className="landing-recent-donation-amount">{Number(d.amount).toLocaleString('fa-IR')} تومان</span>
                 <span className="landing-recent-donation-project">برای FontWoW</span>
-                {d.date && <span className="landing-recent-donation-date">{d.date}</span>}
+                {d.date && <span className="landing-recent-donation-date">{formatDonationDate(d.date)}</span>}
               </li>
             ))}
           </ul>
         )}
+      </section>
+
+      <section className="landing-impact" aria-labelledby="landing-impact-title">
+        <div className="landing-impact-visual">
+          <div className="landing-impact-art">
+            <img src="/coffee-support.png" alt="فنجان قهوه برای حمایت از FontWoW" />
+            <svg className="landing-impact-steam" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+              <path className="coffee-steam-path coffee-steam-path-one" d="M44 32 C38 27 49 23 43 18 C37 13 50 9 46 3" />
+              <path className="coffee-steam-path coffee-steam-path-two" d="M50 32 C44 27 56 23 50 17 C44 11 57 8 52 1" />
+              <path className="coffee-steam-path coffee-steam-path-three" d="M56 32 C51 27 62 23 57 18 C52 13 65 9 61 4" />
+            </svg>
+          </div>
+          <span className="landing-impact-visual-caption">یک روز قهوه‌نخوردن: حداقل ۲۰۰٬۰۰۰ تومان</span>
+        </div>
+        <div className="landing-impact-content">
+          <p className="landing-impact-eyebrow">یک روز قهوه‌نخوری چه می‌شود؟</p>
+          <h2 id="landing-impact-title">یک قهوه کمتر برای تو؛ یک فونت بیشتر برای همه.</h2>
+          <p className="landing-impact-intro">
+            هزینه‌ی حداقل یک قهوه، یعنی ۲۰۰٬۰۰۰ تومان، می‌تواند به خرید فونت‌های لایسنس‌دار کمک کند تا FontWoW رایگان بماند. اینجا می‌بینی استفاده‌ها و حمایت‌ها چه اثری ساخته‌اند.
+          </p>
+          <div className="landing-impact-grid">
+            <article className="landing-impact-card">
+              <span className="landing-impact-card-label">استفاده‌های ثبت‌شده</span>
+              <strong>{visitorCount !== null ? visitorCount.toLocaleString('fa-IR') : '…'}</strong>
+              <small>تعداد دفعات بازشدن صفحه؛ تعداد افراد یکتا نیست.</small>
+            </article>
+            <article className="landing-impact-card">
+              <span className="landing-impact-card-label">ارزش تقریبی استفاده‌ی رایگان</span>
+              <strong>{estimatedCollectiveValue !== null ? formatToman(estimatedCollectiveValue) : '…'}</strong>
+              <small>بر اساس روزانه‌ی {formatToman(PAID_APP_DAILY_BENCHMARK_TOMAN)} برای ابزار مشابه؛ این عدد برآورد است، نه مبلغ دریافت‌شده.</small>
+            </article>
+            <article className="landing-impact-card landing-impact-card-coffee">
+              <span className="landing-impact-card-label">حمایت جمع‌شده</span>
+              <strong>{donationSummary ? formatToman(totalDonations) : '…'}</strong>
+              <small>
+                معادل {fundedCoffeeDays.toLocaleString('fa-IR', { maximumFractionDigits: 1 })} روز قهوه‌نخوردن؛ هر روز حداقل {formatToman(COFFEE_DAY_COST_TOMAN)}.
+              </small>
+            </article>
+          </div>
+          <div className="landing-impact-progress" aria-label="پیشرفت تأمین هزینه‌ی فونت‌ها">
+            <div className="landing-impact-progress-head">
+              <span>پیشرفت خرید فونت‌های بعدی</span>
+              <b>{donationSummary ? `${fundingPercent.toLocaleString('fa-IR', { maximumFractionDigits: 1 })}٪` : '…'}</b>
+            </div>
+            <div className="landing-impact-progress-track">
+              <span style={{ width: `${fundingPercent}%` }} />
+            </div>
+            <p>
+              {donationSummary
+                ? `تا تأمین هزینه‌ی همه‌ی ${FONT_GOALS.length} فونت، معادل ${remainingCoffeeDays.toLocaleString('fa-IR')} روز قهوه‌نخوردن فاصله داریم.`
+                : 'در حال دریافت آخرین آمار حمایت‌ها…'}
+            </p>
+          </div>
+          <p className="landing-impact-note">
+            میانگین هر {supportUnitLabel}: {donationSummary && supporterCount > 0 ? formatToman(averageDonation) : '—'}؛ فقط آمار تجمیعی نمایش داده می‌شود.
+          </p>
+        </div>
+      </section>
+
+      <section className="landing-cafe-sponsor" aria-labelledby="landing-cafe-sponsor-title">
+        <div className="landing-cafe-sponsor-copy">
+          <p className="landing-impact-eyebrow">پیشنهاد اسپانسری برای کافه‌ها</p>
+          <h2 id="landing-cafe-sponsor-title">کافه‌تان می‌تواند حامی قهوه‌های FontWoW باشد.</h2>
+          <p>
+            مثلاً هزینه‌ی ۱۰ قهوه را اسپانسر کنید. در ادامه، نام و لوگوی کافه‌تان به‌عنوان حامی این سهم‌ها نمایش داده می‌شود و به کاربران می‌گوییم: «هزینه‌ی یک قهوه‌ات با FontWoW.»
+          </p>
+          <a className="landing-cafe-sponsor-cta" href={CAFE_SPONSOR_CONTACT_URL}>
+            پیشنهاد حمایت کافه‌ای
+            <I.IconMail size={15} />
+          </a>
+        </div>
+        <div className="landing-cafe-sponsor-flow" aria-label="مراحل حمایت کافه‌ای">
+          <div className="landing-cafe-sponsor-example">
+            <span>نمونه‌ی قابل اجرا</span>
+            <strong>{CAFE_SPONSOR_EXAMPLE_COFFEES.toLocaleString('fa-IR')} قهوه</strong>
+            <small>{formatToman(CAFE_SPONSOR_EXAMPLE_COFFEES * COFFEE_DAY_COST_TOMAN)} ارزش حمایت</small>
+          </div>
+          <ol>
+            <li><b>۱</b><span><strong>تعداد قهوه‌های اسپانسری را مشخص کنید</strong><small>مثلاً ۱۰ قهوه</small></span></li>
+            <li><b>۲</b><span><strong>هزینه‌ی سهم‌ها را پرداخت کنید</strong><small>برای پشتیبانی از FontWoW</small></span></li>
+            <li><b>۳</b><span><strong>نام و لوگوی کافه نمایش داده می‌شود</strong><small>همراه با تعداد قهوه‌های اسپانسرشده</small></span></li>
+          </ol>
+        </div>
+        <div className="landing-cafe-sponsor-showcase">
+          <span>حامیان کافه‌ای FontWoW</span>
+          <strong>لوگوی کافه‌ی شما اینجا نمایش داده می‌شود</strong>
+          <small>بعد از هماهنگی، نام، لوگو و تعداد سهم‌های حمایت در همین بخش اضافه می‌شود.</small>
+        </div>
       </section>
 
       <section className="landing-goals">
