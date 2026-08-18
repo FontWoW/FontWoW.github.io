@@ -5,6 +5,28 @@
 // build once that release goes out.
 export const UPDATES = [
   {
+    version: '1.7.1',
+    date: '2026-08-14',
+    fa: {
+      title: 'اولویت‌بندی کاربردمحور فونت‌ها',
+      changes: [
+        'ترتیب اهداف خرید با اولویت استفاده‌ی واقعی فونت‌ها در FontWoW و سپس محبوبیت عمومی و شکاف پوشش تایپوگرافی محاسبه می‌شود.',
+        'نزدیک‌بودن به تکمیل حمایت فقط یک عامل اجرایی محدود است و قیمت خام یا درصد ساده‌ی تأمین مالی را به معیار اصلی تبدیل نمی‌کند.',
+        'لایک‌های جامعه، فقط در صورت ثبت از یک منبع عمومی مشترک، با وزن کم در تصمیم‌گیری اثر می‌گذارند.',
+        'امتیاز و عوامل مؤثر در اولویت هر فونت در لندینگ نمایش داده می‌شود.'
+      ]
+    },
+    en: {
+      title: 'Data-backed Font Prioritization',
+      changes: [
+        'Rank the font purchase roadmap primarily by real FontWoW usage, then by public popularity and the typography coverage gap.',
+        'Keep near-complete funding as a small execution signal without turning raw price or a simple funding percentage into the main priority.',
+        'Use community likes as a small signal only when they come from a shared public source.',
+        'Show each font priority score and its contributing signals on the landing page.'
+      ]
+    }
+  },
+  {
     version: '1.6.0',
     date: '2026-08-11',
     fa: {
