@@ -5,6 +5,26 @@
 // build once that release goes out.
 export const UPDATES = [
   {
+    version: '1.7.0',
+    date: '2026-08-12',
+    fa: {
+      title: 'ویرایش بهتر و کنترل ترتیب لایه‌ها',
+      changes: [
+        'ویرایش مستقیم متن لایه‌های جدید با دوبار کلیک، بدون بازشدن پنجرهٔ جداگانه.',
+        'اضافه‌شدن کنترل آوردن متن اصلی به جلو یا فرستادن آن به عقب و اصلاح ترتیب واقعی لایه‌ها در خروجی.',
+        'بزرگ‌تر شدن اندازهٔ اولیهٔ عکس‌ها بر اساس اندازهٔ بوم برای شروع سریع‌تر طراحی.'
+      ]
+    },
+    en: {
+      title: 'Better Editing and Layer Ordering',
+      changes: [
+        'Edit newly added text layers directly with a double-click, without opening a separate prompt.',
+        'Add a control to bring the main text forward or send it backward, and make layer ordering consistent in exports.',
+        'Size newly added images relative to the canvas so designs start with a more useful preview.'
+      ]
+    }
+  },
+  {
     version: '1.6.0',
     date: '2026-08-11',
     fa: {
