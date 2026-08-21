@@ -2047,6 +2047,9 @@ export default function App() {
                       {state.text.trim() ? state.text.trim().slice(0, 8) : (f.rtl ? 'ابر' : 'Aa')}
                     </span>
                     <span className="chip-label" style={{ fontFamily: f.family }}>{f.label}</span>
+                    {f.creator && (
+                      <span className="chip-creator" style={{ fontSize: '0.65em', color: 'var(--text-3)', marginTop: '2px', fontFamily: 'system-ui', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{f.creator}</span>
+                    )}
                   </button>
                 ))}
                 <label className="chip font-chip upload-chip">
@@ -2422,6 +2425,9 @@ export default function App() {
                         }}
                       >
                         <span style={{ fontFamily: labelFont.family }}>{labelFont.label}</span>
+                        {labelFont.creator && (
+                          <span className="chip-creator" style={{ fontSize: '0.65em', color: 'var(--text-3)', marginTop: '2px', fontFamily: 'system-ui', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{labelFont.creator}</span>
+                        )}
                       </button>
                     ))}
                   </div>

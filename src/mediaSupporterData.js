@@ -1,9 +1,9 @@
 export const MEDIA_SUPPORTERS = [
   {
-    id: 'iotechio',
+    id: 'iotechoi',
     name: 'عایوتک',
-    handle: 'iotechio',
-    avatar: 'media-supporters/iotechio.jpeg',
+    handle: 'iotechoi',
+    avatar: 'media-supporters/iotechoi.jpeg',
     socials: {
       telegram: {
         handle: 'iotechoi',

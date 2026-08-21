@@ -5,6 +5,28 @@
 // build once that release goes out.
 export const UPDATES = [
   {
+    version: '1.6.2',
+    date: '2026-08-19',
+    fa: {
+      title: 'کارکرد آفلاین بهتر و اصلاح پیام آپدیت',
+      changes: [
+        'اصلاح نمایش پیام آپدیت روی صفحه‌های کوچک تا در هیچ سیستم‌عامل یا دستگاهی از صفحه خارج نشود.',
+        'بررسی آپدیت حداکثر یک‌بار در روز انجام می‌شود و وقتی اینترنت وصل نیست اصلاً بررسی نمی‌شود.',
+        'بارگذاری اپلیکیشن در حالت آفلاین سریع‌تر شد چون دیگر منتظر پاسخ شبکه نمی‌ماند.',
+        'فونت‌های فارسی پس از بارگذاری اپلیکیشن به‌صورت خودکار در پس‌زمینه دانلود و روی دستگاه ذخیره می‌شوند تا بدون اینترنت هم در دسترس باشند.'
+      ]
+    },
+    en: {
+      title: 'Better Offline Behavior and Update Toast Fix',
+      changes: [
+        'Fix the update banner overflowing off-screen on small displays across every OS and device.',
+        'Check for updates at most once per day, and skip the check entirely when offline.',
+        'Faster offline app loads by no longer waiting on a doomed network request.',
+        'Persian fonts now auto-download and are stored on the device in the background after the app loads, so they work without internet.'
+      ]
+    }
+  },
+  {
     version: '1.6.1',
     date: '2026-08-12',
     fa: {

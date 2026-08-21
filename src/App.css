@@ -1535,6 +1535,12 @@
   top: calc(12px + env(safe-area-inset-top));
   left: 12px;
   right: 12px;
+  max-width: 420px;
+  margin: 0 auto;
+  max-height: calc(100vh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  box-sizing: border-box;
   display: flex;
   align-items: flex-start;
   gap: 10px;
@@ -1552,6 +1558,7 @@
 .update-banner.ios-prompt-banner {
   top: auto;
   bottom: calc(12px + env(safe-area-inset-bottom));
+  max-height: calc(100vh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   animation: slideUpIn var(--dur-med) var(--ease-spring) both;
 }
 
