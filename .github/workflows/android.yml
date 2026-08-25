@@ -114,3 +114,14 @@ jobs:
           body_path: release-notes.txt
           prerelease: true
           files: ${{ steps.rename.outputs.apk_path }}
+
+      - name: Send Release APK to Telegram Channel
+        if: always() && steps.rename.outputs.apk_path != ''
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          APP_VERSION: ${{ steps.sync-version.outputs.app_version }}
+          APK_PATH: ${{ steps.rename.outputs.apk_path }}
+          RELEASE_NOTES_PATH: release-notes.txt
+        run: |
+          python3 scripts/notify_telegram_release.py
