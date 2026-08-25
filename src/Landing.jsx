@@ -15,6 +15,8 @@ const RELEASES_URL = `${REPO}/releases/tag/latest`
 const APP_URL = '#/app'
 const CRYPTO_DONATE_URL = 'https://pay.oxapay.com/15417059'
 const TOMAN_DONATE_URL = 'https://daramet.com/fontwow'
+const TELEGRAM_CHANNEL_URL = 'https://t.me/FontWoW_app'
+const TELEGRAM_GROUP_URL = 'https://t.me/+IAzR2ntpvNVkMWI0'
 
 function detectPlatform() {
   const ua = navigator.userAgent || ''
@@ -169,6 +171,15 @@ export default function Landing() {
           >
             <I.IconDownload size={16} />
             {apkUrl ? `دانلود نسخه‌ی اندروید (نسخه ${apkVersion})` : apkError ? 'مشاهده‌ی نسخه‌ها در گیت‌هاب' : 'در حال یافتن آخرین نسخه…'}
+          </a>
+          <a
+            className="landing-btn landing-btn-telegram"
+            href={TELEGRAM_CHANNEL_URL}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <I.IconTelegram size={16} />
+            کانال تلگرام و آپدیت‌ها
           </a>
         </div>
         <p className="landing-note">
@@ -385,6 +396,12 @@ export default function Landing() {
       </section>
 
       <footer className="landing-footer">
+        <a href={TELEGRAM_CHANNEL_URL} target="_blank" rel="noreferrer">
+          <I.IconTelegram size={16} /> کانال تلگرام (@FontWoW_app) <I.IconExternal size={11} />
+        </a>
+        <a href={TELEGRAM_GROUP_URL} target="_blank" rel="noreferrer">
+          <I.IconTelegram size={16} /> گروه گفتگو و حل مشکل <I.IconExternal size={11} />
+        </a>
         <a href={REPO} target="_blank" rel="noreferrer">
           <I.IconGithub size={16} /> کد متن‌باز در گیت‌هاب <I.IconExternal size={11} />
         </a>
