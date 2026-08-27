@@ -2801,7 +2801,7 @@ export default function App() {
             target="_blank"
             rel="noreferrer"
           >
-            <I.IconTelegram size={17} style={{ color: '#229ed9' }} /> کانال تلگرام (@FontWoW_app)
+            <I.IconTelegram size={17} style={{ color: '#229ed9' }} /> کانال تلگرام (@FontWoW)
           </a>
           <a
             className="sheet-item"
@@ -3063,7 +3063,7 @@ export default function App() {
 
             <p className="settings-label">لینک‌ها</p>
             <a className="sheet-item" href="https://t.me/FontWoW" target="_blank" rel="noreferrer">
-              <I.IconTelegram size={17} style={{ color: '#229ed9' }} /> کانال رسمی تلگرام (@FontWoW_app)
+              <I.IconTelegram size={17} style={{ color: '#229ed9' }} /> کانال رسمی تلگرام (@FontWoW)
             </a>
             <a className="sheet-item" href="https://t.me/+IAzR2ntpvNVkMWI0" target="_blank" rel="noreferrer">
               <I.IconTelegram size={17} style={{ color: '#229ed9' }} /> گروه گفتگو و ثبت نظرات
