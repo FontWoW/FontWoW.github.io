@@ -15,7 +15,7 @@ const RELEASES_URL = `${REPO}/releases/tag/latest`
 const APP_URL = '#/app'
 const CRYPTO_DONATE_URL = 'https://pay.oxapay.com/15417059'
 const TOMAN_DONATE_URL = 'https://daramet.com/fontwow'
-const TELEGRAM_CHANNEL_URL = 'https://t.me/FontWoW_app'
+const TELEGRAM_CHANNEL_URL = 'https://t.me/FontWoW'
 const TELEGRAM_GROUP_URL = 'https://t.me/+IAzR2ntpvNVkMWI0'
 
 function detectPlatform() {

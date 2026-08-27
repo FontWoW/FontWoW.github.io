@@ -2797,7 +2797,7 @@ export default function App() {
           <p className="settings-label">{t('contact')}</p>
           <a
             className="sheet-item"
-            href="https://t.me/FontWoW_app"
+            href="https://t.me/FontWoW"
             target="_blank"
             rel="noreferrer"
           >
@@ -3062,7 +3062,7 @@ export default function App() {
             <MediaSupporters compact />
 
             <p className="settings-label">لینک‌ها</p>
-            <a className="sheet-item" href="https://t.me/FontWoW_app" target="_blank" rel="noreferrer">
+            <a className="sheet-item" href="https://t.me/FontWoW" target="_blank" rel="noreferrer">
               <I.IconTelegram size={17} style={{ color: '#229ed9' }} /> کانال رسمی تلگرام (@FontWoW_app)
             </a>
             <a className="sheet-item" href="https://t.me/+IAzR2ntpvNVkMWI0" target="_blank" rel="noreferrer">
