@@ -262,6 +262,7 @@
   outline: none;
   white-space: pre-wrap;
   cursor: text;
+  unicode-bidi: plaintext;
 }
 
 .curved-text {
@@ -1834,6 +1835,45 @@
   border-radius: 50%;
   background: #ff5f56;
   box-shadow: 14px 0 0 #ffbd2e, 28px 0 0 #27c93f;
+}
+
+.tb-quote {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+  padding: 34px 22px 20px 22px !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.2);
+  position: relative;
+  backdrop-filter: blur(10px);
+}
+.tb-quote::before {
+  content: "“";
+  position: absolute;
+  top: 4px;
+  right: 14px;
+  font-size: 38px;
+  line-height: 1;
+  font-family: Georgia, serif;
+  color: var(--accent, #8b5cf6);
+  opacity: 0.75;
+}
+[dir='ltr'] .tb-quote::before {
+  right: auto;
+  left: 14px;
+}
+.tb-quote::after {
+  content: "";
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  right: 0;
+  width: 4px;
+  border-radius: 4px;
+  background: var(--accent, #8b5cf6);
+}
+[dir='ltr'] .tb-quote::after {
+  right: auto;
+  left: 0;
 }
 
 .tb-tweet {
