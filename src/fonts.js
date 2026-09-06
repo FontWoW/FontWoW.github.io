@@ -34,6 +34,9 @@ export const FONTS = [
   { id: 'arad', label: 'آراد', family: "'Arad', sans-serif", rtl: true, lang: 'fa', creator: 'Mohamad Darvishi', license: 'OFL-1.1' },
   { id: 'ario', label: 'آریو', family: "'Ario', sans-serif", rtl: true, lang: 'fa', creator: 'Mohamad Darvishi', license: 'OFL-1.1' },
   { id: 'sorena', label: 'سورنا', family: "'Sorena', sans-serif", rtl: true, lang: 'fa', creator: 'Mohamad Darvishi', license: 'OFL-1.1' },
+  { id: 'notokufi', label: 'نوتو کوفی', family: "'Noto Kufi Arabic', sans-serif", rtl: true, lang: 'fa', google: 'Noto+Kufi+Arabic:wght@400;700', license: 'OFL-1.1', creator: 'Google' },
+  { id: 'baloobhaijaan2', label: 'بالو ۲', family: "'Baloo Bhaijaan 2', cursive", rtl: true, lang: 'fa', google: 'Baloo+Bhaijaan+2:wght@500;700', license: 'OFL-1.1', creator: 'Ek Type' },
+  { id: 'vibes', label: 'وایبز', family: "'Vibes', cursive", rtl: true, lang: 'fa', google: 'Vibes:wght@400', license: 'OFL-1.1', creator: 'Abdallah Aravind' },
 
   // عربی
   { id: 'cairo', label: 'Cairo', family: "'Cairo', sans-serif", rtl: true, lang: 'ar', google: 'Cairo:wght@400;700', license: 'OFL-1.1', creator: 'Mohamed Gaber' },
@@ -42,6 +45,8 @@ export const FONTS = [
   { id: 'changa', label: 'Changa', family: "'Changa', sans-serif", rtl: true, lang: 'ar', google: 'Changa:wght@400;700', license: 'OFL-1.1', creator: 'Eduardo Tunni' },
   { id: 'markazi', label: 'Markazi Text', family: "'Markazi Text', serif", rtl: true, lang: 'ar', google: 'Markazi+Text:wght@400;700', license: 'OFL-1.1', creator: 'Borna Izadpanah' },
   { id: 'rakkas', label: 'Rakkas', family: "'Rakkas', cursive", rtl: true, lang: 'ar', google: 'Rakkas:wght@400', license: 'OFL-1.1', creator: 'Zeynep Akay' },
+  { id: 'alexandria', label: 'Alexandria', family: "'Alexandria', sans-serif", rtl: true, lang: 'ar', google: 'Alexandria:wght@400;700', license: 'OFL-1.1', creator: 'Boutros Fonts' },
+  { id: 'zain', label: 'Zain', family: "'Zain', sans-serif", rtl: true, lang: 'ar', google: 'Zain:wght@400;700', license: 'OFL-1.1', creator: 'Boutros Fonts' },
 
   // English
   { id: 'pacifico', label: 'Pacifico', family: "'Pacifico', cursive", rtl: false, lang: 'en', google: 'Pacifico:wght@400', license: 'OFL-1.1', creator: 'Vernon Adams' },
@@ -188,6 +193,7 @@ export const ALL_BACKGROUNDS = [...BACKGROUNDS, ...Object.values(BG_TEMPLATES).f
 export const TEXT_BOX_STYLES = [
   { id: 'none', label: 'ساده' },
   { id: 'box', label: 'جعبه رنگی' },
+  { id: 'quote', label: 'نقل‌قول' },
   { id: 'underline', label: 'زیرخط ضخیم' },
   { id: 'frame', label: 'قاب' },
   { id: 'glass', label: 'شیشه‌ای' },
@@ -228,7 +234,9 @@ export const ASPECT_RATIOS = [
   { id: 'story', label: 'استوری ۹:۱۶', value: '9 / 16' },
   { id: 'square', label: 'مربعی ۱:۱', value: '1 / 1' },
   { id: 'portrait', label: 'پست عمودی ۴:۵', value: '4 / 5' },
+  { id: 'carousel', label: 'کاروسل ۳:۴', value: '3 / 4' },
   { id: 'landscape', label: 'لندسکیپ ۱۶:۹', value: '16 / 9' },
+  { id: 'banner', label: 'بنر ۳:۱', value: '3 / 1' },
 ]
 
 // designer-editable styles: edit templates.json directly, or use the in-app "Style Studio"
