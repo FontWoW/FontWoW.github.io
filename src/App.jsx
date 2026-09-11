@@ -77,6 +77,41 @@ function fileToDataUrl(file) {
   })
 }
 
+function imageFileToDataUrl(file, maxDimension = 1920) {
+  return new Promise((resolve, reject) => {
+    if (!file?.type || !file.type.startsWith('image/') || file.type.includes('svg')) {
+      return fileToDataUrl(file).then(resolve, reject)
+    }
+    const reader = new FileReader()
+    reader.onerror = reject
+    reader.onload = () => {
+      const img = new Image()
+      img.onerror = () => resolve(reader.result)
+      img.onload = () => {
+        let { width, height } = img
+        if (!width || !height || (width <= maxDimension && height <= maxDimension)) {
+          return resolve(reader.result)
+        }
+        if (width > height) {
+          height = Math.round((height * maxDimension) / width)
+          width = maxDimension
+        } else {
+          width = Math.round((width * maxDimension) / height)
+          height = maxDimension
+        }
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, 0, 0, width, height)
+        resolve(canvas.toDataURL(file.type === 'image/png' ? 'image/png' : 'image/jpeg', 0.88))
+      }
+      img.src = reader.result
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
 function imageFromUrl(src) {
   return new Promise((resolve, reject) => {
     const image = new Image()
@@ -206,6 +241,7 @@ const defaultState = {
   animationType: 'rise',
   layers: [],
   activeLayerId: null,
+  mainTextOnTop: false,
 }
 
 const defaultAppSettings = {
@@ -288,11 +324,14 @@ function SliderRow({ label, value, display, min, max, step, onChange }) {
   )
 }
 
-// Shared duplicate/reorder toolbar rendered above the active layer, used by all three layer
-// kinds (text, image, label).
-function LayerToolbar({ layer, onMoveLayer, onDuplicateLayer, t }) {
+function LayerToolbar({ layer, onMoveLayer, onDuplicateLayer, onEditText, t }) {
   return (
     <div className="layer-toolbar" onPointerDown={(e) => e.stopPropagation()}>
+      {onEditText && (layer.type === 'text' || layer.type === 'label') && (
+        <button onClick={() => onEditText(layer)} aria-label={t('editLayerText')}>
+          <I.IconEdit size={12} />
+        </button>
+      )}
       <button onClick={() => onMoveLayer(layer.id, -1)} aria-label={t('sendBackward')}>
         <I.IconArrowDown size={12} />
       </button>
@@ -626,11 +665,7 @@ export default function App() {
 
       setLoadingFontId(f.id)
 
-      const res = await fetch(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        }
-      })
+      const res = await fetch(url)
       if (!res.ok) throw new Error('Failed to fetch stylesheet')
       const cssText = await res.text()
 
@@ -884,7 +919,7 @@ export default function App() {
     logger.info('Background', `شروع بارگذاری پس‌زمینه سفارشی: ${file.name}`)
     logger.preflightCheck('upload_bg')
     try {
-      const dataUrl = await fileToDataUrl(file)
+      const dataUrl = await imageFileToDataUrl(file, 1920)
       update({ bgId: 'custom-image', customBgUrl: dataUrl })
       logger.info('Background', 'پس‌زمینه سفارشی با موفقیت اعمال شد.')
       setToast(t('bgAdded'))
@@ -899,7 +934,7 @@ export default function App() {
     e.target.value = ''
     if (!file) return
     try {
-      update({ textMaskUrl: await fileToDataUrl(file), warpMode: 'none' })
+      update({ textMaskUrl: await imageFileToDataUrl(file, 1920), warpMode: 'none' })
       setToast(t('textMaskAdded'))
     } catch {
       setToast({ text: t('bgError'), type: 'error' })
@@ -929,6 +964,7 @@ export default function App() {
       fontSize: 28,
     }
     update({ layers: [...state.layers, newLayer], activeLayerId: id })
+    setPromptState({ layerId: id, initialText: t('newLayerText'), promptKey: 'editLayerText' })
   }
 
   function applyMagicLayout() {
@@ -1007,9 +1043,11 @@ export default function App() {
     e.target.value = ''
     if (!file) return
     try {
-      const dataUrl = await fileToDataUrl(file)
+      const dataUrl = await imageFileToDataUrl(file, 1280)
       const id = `layer-${Date.now()}`
-      const newLayer = { id, type: 'image', src: dataUrl, x: 50, y: 50, rotation: 0, width: 120 }
+      const canvasWidth = previewRef.current ? previewRef.current.clientWidth : 360
+      const initialWidth = Math.min(360, Math.max(200, Math.round(canvasWidth * 0.45)))
+      const newLayer = { id, type: 'image', src: dataUrl, x: 50, y: 50, rotation: 0, width: initialWidth }
       update({ layers: [...state.layers, newLayer], activeLayerId: id })
     } catch {
       setToast({ text: t('bgError'), type: 'error' })
@@ -1238,7 +1276,7 @@ export default function App() {
     opacity: state.opacity / 100,
     WebkitTextStroke: state.stroke ? `${state.strokeWidth}px ${strokeColor}` : 'none',
     position: 'relative',
-    zIndex: 1,
+    zIndex: state.mainTextOnTop ? 15 : 1,
     ...effectStyle,
     textShadow: [effectStyle.textShadow, baseShadow, depthShadow !== 'none' ? depthShadow : ''].filter(Boolean).join(', ') || 'none',
     ...boxStyleFor(state.textBoxStyle, state.color),
@@ -1349,11 +1387,15 @@ export default function App() {
   }
 
   async function ensureFontPainted() {
-    await loadFont(font)
+    try {
+      await loadFont(font)
+    } catch {}
     try {
       await document.fonts?.load(`${state.fontSize}px ${font.family}`)
     } catch {}
-    await document.fonts?.ready
+    try {
+      await document.fonts?.ready
+    } catch {}
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
   }
 
@@ -1370,7 +1412,13 @@ export default function App() {
     logger.preflightCheck('export_png')
     try {
       await ensureFontPainted()
-      const dataUrl = await toPng(previewRef.current, { pixelRatio: 3, cacheBust: true })
+      const node = previewRef.current
+      const rect = node.getBoundingClientRect()
+      const maxDim = Math.max(rect.width, rect.height, 1)
+      const pixelRatio = isNative()
+        ? Math.min(2.5, Math.max(1.5, Math.floor(2160 / maxDim)))
+        : 3
+      const dataUrl = await toPng(node, { pixelRatio, cacheBust: false })
       if (isNative()) {
         await saveImageNative(dataUrl, fileName)
       } else {
@@ -1508,8 +1556,14 @@ export default function App() {
     logger.preflightCheck('copy_image')
     try {
       await ensureFontPainted()
+      const node = previewRef.current
+      const rect = node.getBoundingClientRect()
+      const maxDim = Math.max(rect.width, rect.height, 1)
+      const pixelRatio = isNative()
+        ? Math.min(2.5, Math.max(1.5, Math.floor(2160 / maxDim)))
+        : 3
       if (isNative()) {
-        const dataUrl = await toPng(previewRef.current, { pixelRatio: 3, cacheBust: true })
+        const dataUrl = await toPng(node, { pixelRatio, cacheBust: false })
         const mode = await copyImageNative(dataUrl, `fontwow-${Date.now()}.png`)
         // 'canceled' means the user dismissed the share sheet — say nothing.
         if (mode !== 'canceled') {
@@ -1519,7 +1573,7 @@ export default function App() {
           logger.info('Clipboard', 'عملیات کپی/اشتراک‌گذاری تصویر توسط کاربر لغو شد.')
         }
       } else {
-        const blob = await toBlob(previewRef.current, { pixelRatio: 3, cacheBust: true })
+        const blob = await toBlob(node, { pixelRatio, cacheBust: false })
         await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })])
         logger.info('Clipboard', 'تصویر با موفقیت در کلیپ‌بورد کپی شد.')
         setToast(t('imageCopied'))
@@ -1555,6 +1609,16 @@ export default function App() {
     setShowSave(false)
   }
 
+  function persistSavedGallery(items) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
+    } catch {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(items.slice(0, 15)))
+      } catch {}
+    }
+  }
+
   function saveToGallery() {
     if (!state.text.trim()) {
       setToast({ text: t('writeFirst'), type: 'error' })
@@ -1574,7 +1638,7 @@ export default function App() {
       }
       const next = saved.map(e => (e.id === existing.id ? updated : e))
       setSaved(next)
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+      persistSavedGallery(next)
       logger.info('Gallery', `نسخه جدید برای طرح ${existing.id} ذخیره شد.`)
       setToast(t('versionAdded'))
     } else {
@@ -1586,7 +1650,7 @@ export default function App() {
       }
       const next = [entry, ...saved].slice(0, 40)
       setSaved(next)
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+      persistSavedGallery(next)
       logger.info('Gallery', `طرح با شناسه ${entry.id} در گالری داخلی برنامه ذخیره شد.`)
       setToast(t('savedToGallery'))
     }
@@ -1751,7 +1815,8 @@ export default function App() {
           ) : (
             <CurvedText text={displayText || t('placeholder')} mode={state.warpMode} bend={state.warpBend} style={curvedTextStyle} />
           )}
-          {state.layers.map((layer) => {
+          {state.layers.map((layer, index) => {
+            const layerZIndex = state.activeLayerId === layer.id ? 25 : 2 + index
             if (layer.type === 'label') {
               const layerFont = allFonts.find((f) => f.id === layer.fontId) ?? font
               return (
@@ -1764,6 +1829,7 @@ export default function App() {
                     width: `${layer.width}px`,
                     aspectRatio: layer.aspectRatio ?? '16 / 9',
                     transform: `translate(-50%, -50%) rotate(${layer.rotation}deg)`,
+                    zIndex: layerZIndex,
                   }}
                   onPointerDown={(e) => handleLayerDrag(e, layer)}
                   onClick={(e) => e.stopPropagation()}
@@ -1785,7 +1851,7 @@ export default function App() {
                   </span>
                   {state.activeLayerId === layer.id && (
                     <>
-                      <LayerToolbar layer={layer} onMoveLayer={moveLayer} onDuplicateLayer={duplicateLayer} t={t} />
+                      <LayerToolbar layer={layer} onMoveLayer={moveLayer} onDuplicateLayer={duplicateLayer} onEditText={(l) => setPromptState({ layerId: l.id, initialText: l.text, promptKey: 'editLabelText' })} t={t} />
                       <span className="layer-del" onPointerDown={(e) => e.stopPropagation()} onClick={() => deleteLayer(layer.id)}>
                         <I.IconX size={11} />
                       </span>
@@ -1810,6 +1876,7 @@ export default function App() {
                     top: `${layer.y}%`,
                     width: `${layer.width}px`,
                     transform: `translate(-50%, -50%) rotate(${layer.rotation}deg)`,
+                    zIndex: layerZIndex,
                   }}
                   onPointerDown={(e) => handleLayerDrag(e, layer)}
                   onClick={(e) => e.stopPropagation()}
@@ -1855,6 +1922,7 @@ export default function App() {
                   fontSize: `${layer.fontSize}px`,
                   color: layer.color,
                   direction: layerFont.rtl ? 'rtl' : 'ltr',
+                  zIndex: layerZIndex,
                 }}
                 onPointerDown={(e) => handleLayerDrag(e, layer)}
                 onClick={(e) => e.stopPropagation()}
@@ -1865,7 +1933,7 @@ export default function App() {
                 {layer.text}
                 {state.activeLayerId === layer.id && (
                   <>
-                    <LayerToolbar layer={layer} onMoveLayer={moveLayer} onDuplicateLayer={duplicateLayer} t={t} />
+                    <LayerToolbar layer={layer} onMoveLayer={moveLayer} onDuplicateLayer={duplicateLayer} onEditText={(l) => setPromptState({ layerId: l.id, initialText: l.text, promptKey: 'editLayerText' })} t={t} />
                     <span
                       className="layer-del"
                       onPointerDown={(e) => e.stopPropagation()}
@@ -1923,6 +1991,16 @@ export default function App() {
               >
                 <I.IconUnderline size={15} />
               </button>
+              {state.layers.length > 0 && (
+                <button
+                  className={`rail-btn ${state.mainTextOnTop ? 'on' : ''}`}
+                  onClick={() => update({ mainTextOnTop: !state.mainTextOnTop })}
+                  aria-label={state.mainTextOnTop ? t('mainTextBackward') : t('mainTextForward')}
+                  title={state.mainTextOnTop ? t('mainTextBackward') : t('mainTextForward')}
+                >
+                  <I.IconLayers size={15} />
+                </button>
+              )}
               <button
                 className={`rail-btn ${state.direction === 'rtl' ? 'on' : ''}`}
                 onClick={() =>
