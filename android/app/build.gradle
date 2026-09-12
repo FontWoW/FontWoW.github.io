@@ -7,8 +7,13 @@ android {
         applicationId "ir.m4tinbeigi.fontwow"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
+<<<<<<< Updated upstream
         versionCode 42
         versionName "1.6.2"
+=======
+        versionCode 38
+        versionName "1.6.0"
+>>>>>>> Stashed changes
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

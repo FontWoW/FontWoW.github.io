@@ -2043,6 +2043,7 @@ export default function App() {
                         <I.IconLoader size={16} />
                       </span>
                     )}
+<<<<<<< Updated upstream
                     <span style={{ fontFamily: f.family }}>
                       {state.text.trim() ? state.text.trim().slice(0, 8) : (f.rtl ? 'ابر' : 'Aa')}
                     </span>
@@ -2050,6 +2051,10 @@ export default function App() {
                     {f.creator && (
                       <span className="chip-creator" style={{ fontSize: '0.65em', color: 'var(--text-3)', marginTop: '2px', fontFamily: 'system-ui', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{f.creator}</span>
                     )}
+=======
+                    <span style={{ fontFamily: f.family }}>{f.rtl ? 'ابر' : 'Aa'}</span>
+                    <span className="chip-label" style={{ fontFamily: f.family }}>{f.label}</span>
+>>>>>>> Stashed changes
                   </button>
                 ))}
                 <label className="chip font-chip upload-chip">

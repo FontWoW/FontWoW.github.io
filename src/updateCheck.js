@@ -49,6 +49,7 @@ function dismissVersion(version) {
   }
 }
 
+<<<<<<< Updated upstream
 function readLastCheck() {
   try {
     return Number(localStorage.getItem(LAST_CHECK_KEY)) || 0
@@ -65,6 +66,8 @@ function writeLastCheck(time) {
   }
 }
 
+=======
+>>>>>>> Stashed changes
 /**
  * Checks GitHub for a newer Android release than the one currently installed.
  * Returns null when there's nothing to show (up to date, already dismissed,

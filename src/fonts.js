@@ -13,6 +13,7 @@ export const FONT_CATEGORIES = [
 // google: "Family+Name:wght@weights" used to build the Google Fonts stylesheet URL for each category
 export const FONTS = [
   // فارسی
+<<<<<<< Updated upstream
   { id: 'vazirmatn', label: 'وزیرمتن', family: "'Vazirmatn', sans-serif", rtl: true, lang: 'fa', google: 'Vazirmatn:wght@400;700', license: 'OFL-1.1', creator: 'Saber Rastikerdar' },
   { id: 'estedad', label: 'استعداد', family: "'Estedad', sans-serif", rtl: true, lang: 'fa', google: 'Estedad:wght@400;700', license: 'OFL-1.1', creator: 'Amin Abedi' },
   { id: 'parastoo', label: 'پرستو', family: "'Parastoo', sans-serif", rtl: true, lang: 'fa', google: 'Parastoo:wght@400;700', license: 'OFL-1.1', creator: 'Saber Rastikerdar' },
@@ -34,6 +35,26 @@ export const FONTS = [
   { id: 'arad', label: 'آراد', family: "'Arad', sans-serif", rtl: true, lang: 'fa', creator: 'Mohamad Darvishi', license: 'OFL-1.1' },
   { id: 'ario', label: 'آریو', family: "'Ario', sans-serif", rtl: true, lang: 'fa', creator: 'Mohamad Darvishi', license: 'OFL-1.1' },
   { id: 'sorena', label: 'سورنا', family: "'Sorena', sans-serif", rtl: true, lang: 'fa', creator: 'Mohamad Darvishi', license: 'OFL-1.1' },
+=======
+  { id: 'vazirmatn', label: 'وزیرمتن', family: "'Vazirmatn', sans-serif", rtl: true, lang: 'fa', google: 'Vazirmatn:wght@400;700', license: 'OFL-1.1' },
+  { id: 'estedad', label: 'استعداد', family: "'Estedad', sans-serif", rtl: true, lang: 'fa', google: 'Estedad:wght@400;700', license: 'OFL-1.1' },
+  { id: 'parastoo', label: 'پرستو', family: "'Parastoo', sans-serif", rtl: true, lang: 'fa', google: 'Parastoo:wght@400;700', license: 'OFL-1.1' },
+  { id: 'lalezar', label: 'لاله‌زار', family: "'Lalezar', cursive", rtl: true, lang: 'fa', google: 'Lalezar:wght@400', license: 'OFL-1.1' },
+  { id: 'rubikarabic', label: 'روبیک عربی', family: "'Rubik Arabic', sans-serif", rtl: true, lang: 'fa', google: 'Rubik+Arabic:wght@400;700', license: 'OFL-1.1' },
+  { id: 'readexpro', label: 'ریدکس پرو', family: "'Readex Pro', sans-serif", rtl: true, lang: 'fa', google: 'Readex+Pro:wght@400;700', license: 'OFL-1.1' },
+  { id: 'katibeh', label: 'کتیبه', family: "'Katibeh', cursive", rtl: true, lang: 'fa', google: 'Katibeh:wght@400', license: 'OFL-1.1' },
+  { id: 'jomhuria', label: 'جمهوریا', family: "'Jomhuria', serif", rtl: true, lang: 'fa', google: 'Jomhuria:wght@400', license: 'OFL-1.1' },
+  { id: 'mirza', label: 'میرزا', family: "'Mirza', serif", rtl: true, lang: 'fa', google: 'Mirza:wght@400;700', license: 'OFL-1.1' },
+  { id: 'elmessiri', label: 'المسیری', family: "'El Messiri', sans-serif", rtl: true, lang: 'fa', google: 'El+Messiri:wght@400;700', license: 'OFL-1.1' },
+  { id: 'lemonada', label: 'لمونادا', family: "'Lemonada', sans-serif", rtl: true, lang: 'fa', google: 'Lemonada:wght@400;700', license: 'OFL-1.1' },
+  { id: 'scheherazade', label: 'شهرزاد جدید', family: "'Scheherazade New', serif", rtl: true, lang: 'fa', google: 'Scheherazade+New:wght@400;700', license: 'OFL-1.1' },
+  { id: 'harmattan', label: 'هارماتان', family: "'Harmattan', sans-serif", rtl: true, lang: 'fa', google: 'Harmattan:wght@400;700', license: 'OFL-1.1' },
+  { id: 'amiri', label: 'امیری', family: "'Amiri', serif", rtl: true, lang: 'fa', google: 'Amiri:wght@400;700', license: 'OFL-1.1' },
+  { id: 'naskh', label: 'نسخ', family: "'Noto Naskh Arabic', serif", rtl: true, lang: 'fa', google: 'Noto+Naskh+Arabic:wght@400;700', license: 'OFL-1.1' },
+  { id: 'aref', label: 'عارف', family: "'Aref Ruqaa', serif", rtl: true, lang: 'fa', google: 'Aref+Ruqaa:wght@400;700', license: 'OFL-1.1' },
+  { id: 'reem', label: 'ریم کوفی', family: "'Reem Kufi', sans-serif", rtl: true, lang: 'fa', google: 'Reem+Kufi:wght@400;700', license: 'OFL-1.1' },
+  { id: 'oi', label: 'Oi', family: "'Oi', cursive", rtl: true, lang: 'fa', google: 'Oi:wght@400', license: 'OFL-1.1' },
+>>>>>>> Stashed changes
 
   // عربی
   { id: 'cairo', label: 'Cairo', family: "'Cairo', sans-serif", rtl: true, lang: 'ar', google: 'Cairo:wght@400;700', license: 'OFL-1.1', creator: 'Mohamed Gaber' },

@@ -5,6 +5,7 @@
 // build once that release goes out.
 export const UPDATES = [
   {
+<<<<<<< Updated upstream
     version: '1.6.2',
     date: '2026-08-19',
     fa: {
@@ -45,6 +46,8 @@ export const UPDATES = [
     }
   },
   {
+=======
+>>>>>>> Stashed changes
     version: '1.6.0',
     date: '2026-08-11',
     fa: {
