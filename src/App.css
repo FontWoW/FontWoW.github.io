@@ -364,6 +364,19 @@
   border-radius: 6px;
 }
 
+.text-layer.locked {
+  cursor: default;
+}
+
+.text-layer.locked.active {
+  outline: 1.5px dashed rgba(255, 255, 255, 0.35);
+}
+
+.layer-toolbar button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .layer-del,
 .layer-rotate-handle {
   position: absolute;
@@ -445,14 +458,10 @@
 }
 
 .snap-guide-v {
-  top: 0;
-  bottom: 0;
   width: 1px;
 }
 
 .snap-guide-h {
-  left: 0;
-  right: 0;
   height: 1px;
 }
 

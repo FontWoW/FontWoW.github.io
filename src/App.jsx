@@ -290,16 +290,22 @@ function SliderRow({ label, value, display, min, max, step, onChange }) {
 
 // Shared duplicate/reorder toolbar rendered above the active layer, used by all three layer
 // kinds (text, image, label).
-function LayerToolbar({ layer, onMoveLayer, onDuplicateLayer, t }) {
+function LayerToolbar({ layer, onMoveLayer, onDuplicateLayer, onToggleLock, t }) {
   return (
     <div className="layer-toolbar" onPointerDown={(e) => e.stopPropagation()}>
-      <button onClick={() => onMoveLayer(layer.id, -1)} aria-label={t('sendBackward')}>
+      <button
+        onClick={() => onToggleLock(layer.id)}
+        aria-label={layer.locked ? t('unlockLayer') : t('lockLayer')}
+      >
+        {layer.locked ? <I.IconLock size={12} /> : <I.IconLockOpen size={12} />}
+      </button>
+      <button onClick={() => onMoveLayer(layer.id, -1)} aria-label={t('sendBackward')} disabled={layer.locked}>
         <I.IconArrowDown size={12} />
       </button>
       <button onClick={() => onDuplicateLayer(layer.id)} aria-label={t('duplicateLayer')}>
         <I.IconCopy size={12} />
       </button>
-      <button onClick={() => onMoveLayer(layer.id, 1)} aria-label={t('bringForward')}>
+      <button onClick={() => onMoveLayer(layer.id, 1)} aria-label={t('bringForward')} disabled={layer.locked}>
         <I.IconArrowUp size={12} />
       </button>
     </div>
@@ -323,7 +329,7 @@ export default function App() {
   }))
   const [tab, setTab] = useState('font')
   const [fontLang, setFontLang] = useState('fa')
-  const [dragGuides, setDragGuides] = useState({ x: null, y: null })
+  const [dragGuides, setDragGuides] = useState({ x: null, y: null, rect: null })
   const [bgCategory, setBgCategory] = useState('colors')
   const [showSave, setShowSave] = useState(false)
   const [showGallery, setShowGallery] = useState(false)
@@ -528,7 +534,7 @@ export default function App() {
       const isEditing = el?.isContentEditable || el?.tagName === 'INPUT' || el?.tagName === 'TEXTAREA'
       if (isEditing) return
       const layer = state.layers.find((l) => l.id === state.activeLayerId)
-      if (!layer) return
+      if (!layer || layer.locked) return
       e.preventDefault()
       const step = e.shiftKey ? 3 : 0.5
       const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0
@@ -1018,6 +1024,7 @@ export default function App() {
 
   function handleLayerResize(e, layer) {
     e.stopPropagation()
+    if (layer.locked) return
     const startX = e.clientX
     const origWidth = layer.width
     function onMove(ev) {
@@ -1033,15 +1040,24 @@ export default function App() {
   }
 
   function deleteLayer(id) {
+    const layer = state.layers.find((l) => l.id === id)
+    if (layer?.locked) return
     update({
       layers: state.layers.filter((l) => l.id !== id),
       activeLayerId: null,
     })
   }
 
+  function toggleLayerLock(id) {
+    const layer = state.layers.find((l) => l.id === id)
+    if (!layer) return
+    updateLayer(id, { locked: !layer.locked })
+  }
+
   function handleLayerDrag(e, layer) {
     e.stopPropagation()
     update({ activeLayerId: layer.id }, { record: false })
+    if (layer.locked) return
     if (!previewRef.current) return
     const rect = previewRef.current.getBoundingClientRect()
     const startX = e.clientX
@@ -1081,12 +1097,12 @@ export default function App() {
       }
 
       updateLayer(layer.id, { x, y })
-      setDragGuides({ x: guideX, y: guideY })
+      setDragGuides({ x: guideX, y: guideY, rect })
     }
     function onUp() {
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
-      setDragGuides({ x: null, y: null })
+      setDragGuides({ x: null, y: null, rect: null })
     }
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
@@ -1114,6 +1130,7 @@ export default function App() {
 
   function handleLayerRotate(e, layer) {
     e.stopPropagation()
+    if (layer.locked) return
     const layerEl = e.currentTarget.closest('.text-layer')
     if (!layerEl) return
     const rect = layerEl.getBoundingClientRect()
@@ -1757,7 +1774,7 @@ export default function App() {
               return (
                 <div
                   key={layer.id}
-                  className={`text-layer label-layer ${state.activeLayerId === layer.id ? 'active' : ''}`}
+                  className={`text-layer label-layer ${state.activeLayerId === layer.id ? 'active' : ''} ${layer.locked ? 'locked' : ''}`}
                   style={{
                     left: `${layer.x}%`,
                     top: `${layer.y}%`,
@@ -1768,6 +1785,7 @@ export default function App() {
                   onPointerDown={(e) => handleLayerDrag(e, layer)}
                   onClick={(e) => e.stopPropagation()}
                   onDoubleClick={() => {
+                    if (layer.locked) return
                     setPromptState({ layerId: layer.id, initialText: layer.text, promptKey: 'editLabelText' })
                   }}
                 >
@@ -1785,16 +1803,22 @@ export default function App() {
                   </span>
                   {state.activeLayerId === layer.id && (
                     <>
-                      <LayerToolbar layer={layer} onMoveLayer={moveLayer} onDuplicateLayer={duplicateLayer} t={t} />
-                      <span className="layer-del" onPointerDown={(e) => e.stopPropagation()} onClick={() => deleteLayer(layer.id)}>
-                        <I.IconX size={11} />
-                      </span>
-                      <span className="layer-rotate-handle" onPointerDown={(e) => handleLayerRotate(e, layer)}>
-                        <I.IconRotate size={11} />
-                      </span>
-                      <span className="layer-resize-handle" onPointerDown={(e) => handleLayerResize(e, layer)}>
-                        <I.IconArrowsLR size={11} />
-                      </span>
+                      <LayerToolbar layer={layer} onMoveLayer={moveLayer} onDuplicateLayer={duplicateLayer} onToggleLock={toggleLayerLock} t={t} />
+                      {!layer.locked && (
+                        <span className="layer-del" onPointerDown={(e) => e.stopPropagation()} onClick={() => deleteLayer(layer.id)}>
+                          <I.IconX size={11} />
+                        </span>
+                      )}
+                      {!layer.locked && (
+                        <span className="layer-rotate-handle" onPointerDown={(e) => handleLayerRotate(e, layer)}>
+                          <I.IconRotate size={11} />
+                        </span>
+                      )}
+                      {!layer.locked && (
+                        <span className="layer-resize-handle" onPointerDown={(e) => handleLayerResize(e, layer)}>
+                          <I.IconArrowsLR size={11} />
+                        </span>
+                      )}
                     </>
                   )}
                 </div>
@@ -1804,7 +1828,7 @@ export default function App() {
               return (
                 <div
                   key={layer.id}
-                  className={`text-layer image-layer ${state.activeLayerId === layer.id ? 'active' : ''}`}
+                  className={`text-layer image-layer ${state.activeLayerId === layer.id ? 'active' : ''} ${layer.locked ? 'locked' : ''}`}
                   style={{
                     left: `${layer.x}%`,
                     top: `${layer.y}%`,
@@ -1817,26 +1841,32 @@ export default function App() {
                   <img src={layer.src} alt="" draggable={false} />
                   {state.activeLayerId === layer.id && (
                     <>
-                      <LayerToolbar layer={layer} onMoveLayer={moveLayer} onDuplicateLayer={duplicateLayer} t={t} />
-                      <span
-                        className="layer-del"
-                        onPointerDown={(e) => e.stopPropagation()}
-                        onClick={() => deleteLayer(layer.id)}
-                      >
-                        <I.IconX size={11} />
-                      </span>
-                      <span
-                        className="layer-rotate-handle"
-                        onPointerDown={(e) => handleLayerRotate(e, layer)}
-                      >
-                        <I.IconRotate size={11} />
-                      </span>
-                      <span
-                        className="layer-resize-handle"
-                        onPointerDown={(e) => handleLayerResize(e, layer)}
-                      >
-                        <I.IconArrowsLR size={11} />
-                      </span>
+                      <LayerToolbar layer={layer} onMoveLayer={moveLayer} onDuplicateLayer={duplicateLayer} onToggleLock={toggleLayerLock} t={t} />
+                      {!layer.locked && (
+                        <span
+                          className="layer-del"
+                          onPointerDown={(e) => e.stopPropagation()}
+                          onClick={() => deleteLayer(layer.id)}
+                        >
+                          <I.IconX size={11} />
+                        </span>
+                      )}
+                      {!layer.locked && (
+                        <span
+                          className="layer-rotate-handle"
+                          onPointerDown={(e) => handleLayerRotate(e, layer)}
+                        >
+                          <I.IconRotate size={11} />
+                        </span>
+                      )}
+                      {!layer.locked && (
+                        <span
+                          className="layer-resize-handle"
+                          onPointerDown={(e) => handleLayerResize(e, layer)}
+                        >
+                          <I.IconArrowsLR size={11} />
+                        </span>
+                      )}
                     </>
                   )}
                 </div>
@@ -1846,7 +1876,7 @@ export default function App() {
             return (
               <div
                 key={layer.id}
-                className={`text-layer ${state.activeLayerId === layer.id ? 'active' : ''}`}
+                className={`text-layer ${state.activeLayerId === layer.id ? 'active' : ''} ${layer.locked ? 'locked' : ''}`}
                 style={{
                   left: `${layer.x}%`,
                   top: `${layer.y}%`,
@@ -1859,37 +1889,48 @@ export default function App() {
                 onPointerDown={(e) => handleLayerDrag(e, layer)}
                 onClick={(e) => e.stopPropagation()}
                 onDoubleClick={() => {
+                  if (layer.locked) return
                   setPromptState({ layerId: layer.id, initialText: layer.text, promptKey: 'editLayerText' })
                 }}
               >
                 {layer.text}
                 {state.activeLayerId === layer.id && (
                   <>
-                    <LayerToolbar layer={layer} onMoveLayer={moveLayer} onDuplicateLayer={duplicateLayer} t={t} />
-                    <span
-                      className="layer-del"
-                      onPointerDown={(e) => e.stopPropagation()}
-                      onClick={() => deleteLayer(layer.id)}
-                    >
-                      <I.IconX size={11} />
-                    </span>
-                    <span
-                      className="layer-rotate-handle"
-                      onPointerDown={(e) => handleLayerRotate(e, layer)}
-                    >
-                      <I.IconRotate size={11} />
-                    </span>
+                    <LayerToolbar layer={layer} onMoveLayer={moveLayer} onDuplicateLayer={duplicateLayer} onToggleLock={toggleLayerLock} t={t} />
+                    {!layer.locked && (
+                      <span
+                        className="layer-del"
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={() => deleteLayer(layer.id)}
+                      >
+                        <I.IconX size={11} />
+                      </span>
+                    )}
+                    {!layer.locked && (
+                      <span
+                        className="layer-rotate-handle"
+                        onPointerDown={(e) => handleLayerRotate(e, layer)}
+                      >
+                        <I.IconRotate size={11} />
+                      </span>
+                    )}
                   </>
                 )}
               </div>
             )
           })}
         </div>
-        {dragGuides.x != null && (
-          <div className="snap-guide snap-guide-v" style={{ left: dragGuides.x }} />
+        {dragGuides.x != null && dragGuides.rect && (
+          <div
+            className="snap-guide snap-guide-v"
+            style={{ left: dragGuides.x, top: dragGuides.rect.top, height: dragGuides.rect.height }}
+          />
         )}
-        {dragGuides.y != null && (
-          <div className="snap-guide snap-guide-h" style={{ top: dragGuides.y }} />
+        {dragGuides.y != null && dragGuides.rect && (
+          <div
+            className="snap-guide snap-guide-h"
+            style={{ top: dragGuides.y, left: dragGuides.rect.left, width: dragGuides.rect.width }}
+          />
         )}
         <button className="add-layer-btn" onClick={addLayer} aria-label={t('addLayer')}>
           <I.IconPlus size={12} /> Aa
