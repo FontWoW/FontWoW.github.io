@@ -170,7 +170,19 @@ createRoot(document.getElementById('root')).render(
 // shell and every font fetched through the app available for later offline use.
 if (!Capacitor.isNativePlatform() && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch((error) => {
+    navigator.serviceWorker.register('/sw.js').then((registration) => {
+      // Fire-and-forget: ask the worker to fetch and store every Persian font
+      // in the background, well after first paint, so the editor works fully
+      // offline without slowing down the initial load. Skipped while offline
+      // and retried once connectivity returns.
+      const cachePersianFonts = () => {
+        if (!navigator.onLine) return
+        const target = navigator.serviceWorker.controller || registration.active
+        target?.postMessage('CACHE_PERSIAN_FONTS')
+      }
+      cachePersianFonts()
+      window.addEventListener('online', cachePersianFonts)
+    }).catch((error) => {
       logger.warn('Offline', 'Service worker registration failed', error?.message || String(error))
     })
   })

@@ -3,6 +3,8 @@ import { APP_VERSION } from './updates'
 
 const LATEST_RELEASE_API = 'https://api.github.com/repos/FontWoW/FontWoW.github.io/releases/tags/latest'
 const DISMISSED_KEY = 'fontwow_update_dismissed_version_v1'
+const LAST_CHECK_KEY = 'fontwow_update_last_check_v1'
+const CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000
 
 // The Android release workflow writes the version in the body, but the GitHub
 // release name, tag, or APK asset name can also be used as a fallback so the
@@ -47,16 +49,38 @@ function dismissVersion(version) {
   }
 }
 
+function readLastCheck() {
+  try {
+    return Number(localStorage.getItem(LAST_CHECK_KEY)) || 0
+  } catch {
+    return 0
+  }
+}
+
+function writeLastCheck(time) {
+  try {
+    localStorage.setItem(LAST_CHECK_KEY, String(time))
+  } catch {
+    // Ignore storage failures so update checks never break in restricted webviews.
+  }
+}
+
 /**
  * Checks GitHub for a newer Android release than the one currently installed.
  * Returns null when there's nothing to show (up to date, already dismissed,
- * or not running as the native app).
+ * not running as the native app, offline, or already checked within the
+ * last 24 hours).
  */
 export async function checkForUpdate({ force = false } = {}) {
   if (!isNative()) return null
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return null
+
+  const now = Date.now()
+  if (!force && now - readLastCheck() < CHECK_INTERVAL_MS) return null
 
   let data
   try {
+    writeLastCheck(now)
     const res = await fetch(LATEST_RELEASE_API)
     if (!res.ok) return null
     data = await res.json()
