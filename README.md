@@ -1,3 +1,10 @@
+<!-- DevSponsors Badges -->
+<p align="center">
+  <a href="https://devsponsors.github.io"><img src="https://img.shields.io/badge/DevSponsors-Verified_OSS-6366f1?style=for-the-badge&logo=github" alt="DevSponsors Verified"></a>
+  <a href="https://devsponsors.github.io"><img src="https://img.shields.io/badge/Sponsor-DevSponsors_Hub-emerald?style=for-the-badge&logo=github-sponsors" alt="DevSponsors Sponsor"></a>
+  <a href="https://devsponsors.github.io/mediakit.html"><img src="https://img.shields.io/badge/Infrastructure-DevSponsors_Cloud-ec4899?style=for-the-badge&logo=server" alt="DevSponsors Cloud"></a>
+</p>
+
 <div align="center">
 
 <img src="public/favicon.svg" width="96" alt="FontWoW Logo" />
@@ -273,7 +280,7 @@ cd android && ./gradlew assembleDebug
 
 صمیمانه از حامیان رسانه‌ای که در معرفی و نشر پروژه ما را همراهی کردند تشکر می‌کنیم:
 
-* 📡 **عایوتک (iotechio)** - [تلگرام](https://t.me/iotechoi) | [اینستاگرام](https://www.instagram.com/iotechoi/)
+* 📡 **عایوتک (iotechoi)** - [تلگرام](https://t.me/iotechoi) | [اینستاگرام](https://www.instagram.com/iotechoi/)
 * 📡 **متین سنپای (MatinSenPai)** - [گیت‌هاب](https://github.com/MatinSenPai) | [تلگرام](https://t.me/MatinSenPaii) | [اینستاگرام](https://www.instagram.com/matinsenpai/) | [توییتر](https://twitter.com/MatinSenPai) | [یوتیوب](https://youtube.com/@Matin_SenPai)
 * 📡 **حسین ارس (hoseinares)** - [تلگرام](https://t.me/hoseinares/649) | [اینستاگرام](https://www.instagram.com/areshosein)
 * 📡 **نیما اکسوی (nimaaksoy)** - [وب‌سایت](https://nimaaksoy.com/) | [اینستاگرام](https://www.instagram.com/nimaaksoy/) | [توییتر](https://x.com/nima1980) | [اینستاگرام دوم](https://www.instagram.com/1980nima/) | [لینکدین](https://linkedin.com/in/nima1980) | [بورووا](https://bowora.com/) | [تلگرام](https://t.me/nimaaksoychannel/457)
@@ -365,7 +372,7 @@ A huge thanks to all the contributors who helped make FontWoW better:
 
 Special thanks to the media channels and creators who shared FontWoW with their audience:
 
-* **iotechio (عایوتک)** - [Telegram](https://t.me/iotechoi) | [Instagram](https://www.instagram.com/iotechoi/)
+* **iotechoi (عایوتک)** - [Telegram](https://t.me/iotechoi) | [Instagram](https://www.instagram.com/iotechoi/)
 * **MatinSenPai (متین سنپای)** - [GitHub](https://github.com/MatinSenPai) | [Telegram](https://t.me/MatinSenPaii) | [Instagram](https://www.instagram.com/matinsenpai/) | [Twitter](https://twitter.com/MatinSenPai) | [YouTube](https://youtube.com/@Matin_SenPai)
 * **hoseinares (حسین ارس)** - [Telegram](https://t.me/hoseinares/649) | [Instagram](https://www.instagram.com/areshosein)
 * **nimaaksoy (نیما اکسوی)** - [Website](https://nimaaksoy.com/) | [Instagram](https://www.instagram.com/nimaaksoy/) | [Twitter](https://x.com/nima1980) | [Instagram 2](https://www.instagram.com/1980nima/) | [LinkedIn](https://linkedin.com/in/nima1980) | [Bowora](https://bowora.com/) | [Telegram](https://t.me/nimaaksoychannel/457)

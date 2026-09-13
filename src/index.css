@@ -403,3 +403,21 @@ input, textarea, [contenteditable] {
   user-select: text;
 }
 .startup-error__copy-status { display: block; margin-top: 8px; color: #c9c5d8; }
+
+@font-face {
+  font-family: 'Arad';
+  src: url('https://cdn.jsdelivr.net/gh/MohamadDarvishi/Arad@main/Fonts/Main_Fonts/AradVF.woff2') format('woff2');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Ario';
+  src: url('https://cdn.jsdelivr.net/gh/MohamadDarvishi/Ario@main/Fonts/Main_Fonts/Ario-Dots1.ttf') format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Sorena';
+  src: url('https://cdn.jsdelivr.net/gh/MohamadDarvishi/Sorena@main/Fonts/Main_Fonts/Sorena-Normal.woff2') format('woff2');
+  font-display: swap;
+}

@@ -73,6 +73,13 @@
   border: 1px solid var(--border-2);
 }
 
+.landing-btn-telegram {
+  background: linear-gradient(135deg, #229ed9, #1783b5);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(34, 158, 217, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
 .landing-btn:hover { 
   filter: brightness(1.1); 
   transform: translateY(-2px);
