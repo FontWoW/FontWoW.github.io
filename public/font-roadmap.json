@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": null,
+  "period": {
+    "from": null,
+    "to": null
+  },
+  "source": {
+    "inAppUsage": "Aggregate selection counts for built-in FontWoW fonts; no personal data.",
+    "publicPopularity": "Maintainer-supplied 0-100 score with a documented public source.",
+    "coverageGap": "Maintainer-supplied 0-100 score for missing typography coverage.",
+    "communityLikes": "Aggregate anonymous Counter events from the one-like-per-font control; no per-user records are stored."
+  },
+  "fonts": {
+    "sepidar": { "inAppUsageCount": null, "publicPopularityScore": null, "coverageGapScore": null, "communityLikeCount": null },
+    "tarlan": { "inAppUsageCount": null, "publicPopularityScore": null, "coverageGapScore": null, "communityLikeCount": null },
+    "iransans": { "inAppUsageCount": null, "publicPopularityScore": null, "coverageGapScore": null, "communityLikeCount": null },
+    "damoon": { "inAppUsageCount": null, "publicPopularityScore": null, "coverageGapScore": null, "communityLikeCount": null },
+    "samarqand": { "inAppUsageCount": null, "publicPopularityScore": null, "coverageGapScore": null, "communityLikeCount": null },
+    "colak": { "inAppUsageCount": null, "publicPopularityScore": null, "coverageGapScore": null, "communityLikeCount": null }
+  }
+}
