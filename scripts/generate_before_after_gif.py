@@ -52,6 +52,9 @@ def main():
     height: 100%;
   }}
   .img-layer img {{
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -59,16 +62,11 @@ def main():
   }}
   .layer-before {{
     position: absolute;
-    top: 0;
-    left: 0;
+    inset: 0;
+    width: 100%;
     height: 100%;
-    width: 50%;
-    overflow: hidden;
     z-index: 2;
-  }}
-  .layer-before img {{
-    width: 413px;
-    max-width: none;
+    clip-path: inset(0 0 0 0);
   }}
   /* Slider divider bar & handle */
   .slider-bar {{
@@ -77,7 +75,7 @@ def main():
     bottom: 0;
     width: 3px;
     background: #ffffff;
-    box-shadow: 0 0 12px rgba(255, 255, 255, 0.8), 0 0 20px rgba(99, 102, 241, 0.6);
+    box-shadow: 0 0 14px rgba(255, 255, 255, 0.9), 0 0 24px rgba(99, 102, 241, 0.8);
     z-index: 10;
     transform: translateX(-50%);
   }}
@@ -86,17 +84,17 @@ def main():
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 42px;
-    height: 42px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     background: #ffffff;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
     display: flex;
     align-items: center;
     justify-content: center;
     color: #1e1b4b;
-    font-size: 16px;
-    font-weight: bold;
+    font-size: 17px;
+    font-weight: 900;
     user-select: none;
   }}
   /* Badge Labels */
@@ -130,16 +128,16 @@ def main():
 <body>
 
 <div class="comparison-container">
-  <!-- After Layer (Base) -->
+  <!-- After Layer (Base - stationary) -->
   <div class="img-layer layer-after">
     <img src="file:///{after_img}" alt="After">
     <div class="badge badge-after">✨ نسخه جدید (FontWoW 2.0)</div>
   </div>
 
-  <!-- Before Layer (Clipped) -->
-  <div class="layer-before" id="beforeLayer">
+  <!-- Before Layer (Overlay - stationary with clip-path mask) -->
+  <div class="img-layer layer-before" id="beforeLayer">
     <img src="file:///{before_img}" alt="Before">
-    <div class="badge badge-before">🔴 نسخه قدیمی (v1.x)</div>
+    <div class="badge badge-before">🔴 نسخه پیشین (v1.x)</div>
   </div>
 
   <!-- Divider Line & Drag Handle -->
@@ -151,7 +149,9 @@ def main():
 <script>
   function setSlider(percent) {{
     const p = Math.max(0, Math.min(100, percent));
-    document.getElementById('beforeLayer').style.width = p + '%';
+    // inset(top, right, bottom, left)
+    // When slider is at p%, hide right side (100 - p)%, keeping 0 to p% perfectly visible and 100% stationary!
+    document.getElementById('beforeLayer').style.clipPath = `inset(0 ${{100 - p}}% 0 0)`;
     document.getElementById('sliderBar').style.left = p + '%';
   }}
 </script>
