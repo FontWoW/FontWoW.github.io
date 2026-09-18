@@ -111,6 +111,99 @@ function imageFromUrl(src) {
   })
 }
 
+async function trimTransparentImage(dataUrl, padding = 16) {
+  try {
+    const img = await imageFromUrl(dataUrl)
+    const canvas = document.createElement('canvas')
+    canvas.width = img.width
+    canvas.height = img.height
+    const ctx = canvas.getContext('2d', { willReadFrequently: true })
+    if (!ctx) return dataUrl
+    ctx.drawImage(img, 0, 0)
+
+    const w = canvas.width
+    const h = canvas.height
+    const imgData = ctx.getImageData(0, 0, w, h)
+    const data = imgData.data
+
+    let minY = -1
+    for (let y = 0; y < h; y++) {
+      const rowOffset = y * w * 4
+      for (let x = 0; x < w; x++) {
+        if (data[rowOffset + x * 4 + 3] > 6) {
+          minY = y
+          break
+        }
+      }
+      if (minY !== -1) break
+    }
+
+    if (minY === -1) return dataUrl
+
+    let maxY = -1
+    for (let y = h - 1; y >= minY; y--) {
+      const rowOffset = y * w * 4
+      for (let x = 0; x < w; x++) {
+        if (data[rowOffset + x * 4 + 3] > 6) {
+          maxY = y
+          break
+        }
+      }
+      if (maxY !== -1) break
+    }
+
+    let minX = w
+    let maxX = -1
+    for (let y = minY; y <= maxY; y++) {
+      const rowOffset = y * w * 4
+      for (let x = 0; x < minX; x++) {
+        if (data[rowOffset + x * 4 + 3] > 6) {
+          minX = x
+          break
+        }
+      }
+      for (let x = w - 1; x > maxX; x--) {
+        if (data[rowOffset + x * 4 + 3] > 6) {
+          maxX = x
+          break
+        }
+      }
+    }
+
+    if (maxX < minX || maxY < minY) return dataUrl
+
+    const safeMinX = Math.max(0, minX - padding)
+    const safeMinY = Math.max(0, minY - padding)
+    const safeMaxX = Math.min(w, maxX + padding + 1)
+    const safeMaxY = Math.min(h, maxY + padding + 1)
+
+    const cropW = safeMaxX - safeMinX
+    const cropH = safeMaxY - safeMinY
+
+    const TARGET_WIDTH = 900
+    let scale = TARGET_WIDTH / cropW
+    if (cropH * scale > 1600) {
+      scale = 1600 / cropH
+    }
+    const outW = Math.max(1, Math.round(cropW * scale))
+    const outH = Math.max(1, Math.round(cropH * scale))
+
+    const croppedCanvas = document.createElement('canvas')
+    croppedCanvas.width = outW
+    croppedCanvas.height = outH
+    const croppedCtx = croppedCanvas.getContext('2d')
+    if (!croppedCtx) return dataUrl
+    croppedCtx.imageSmoothingEnabled = true
+    croppedCtx.imageSmoothingQuality = 'high'
+    croppedCtx.drawImage(canvas, safeMinX, safeMinY, cropW, cropH, 0, 0, outW, outH)
+
+    return croppedCanvas.toDataURL('image/png')
+  } catch (e) {
+    console.warn('Trim transparent image error, using untrimmed:', e)
+    return dataUrl
+  }
+}
+
 function bytesToBase64(bytes) {
   let binary = ''
   for (let index = 0; index < bytes.length; index += 0x8000) {
@@ -377,6 +470,8 @@ const defaultState = {
   animationType: 'rise',
   layers: [],
   activeLayerId: null,
+  textX: 50,
+  textY: 50,
 }
 
 const defaultAppSettings = {
@@ -546,20 +641,30 @@ export default function App() {
 
   useEffect(() => {
     if (!stageRef.current) return
+    let rafId = null
     const updateSize = () => {
-      if (!stageRef.current) return
-      const rect = stageRef.current.getBoundingClientRect()
-      setStageDimensions({ width: rect.width, height: rect.height })
+      if (rafId) cancelAnimationFrame(rafId)
+      rafId = requestAnimationFrame(() => {
+        if (!stageRef.current) return
+        const rect = stageRef.current.getBoundingClientRect()
+        const nextW = Math.round(rect.width)
+        const nextH = Math.round(rect.height)
+        setStageDimensions((prev) => {
+          if (prev.width === nextW && prev.height === nextH) return prev
+          return { width: nextW, height: nextH }
+        })
+      })
     }
     updateSize()
     const ro = new ResizeObserver(updateSize)
     ro.observe(stageRef.current)
     window.addEventListener('resize', updateSize)
     return () => {
+      if (rafId) cancelAnimationFrame(rafId)
       ro.disconnect()
       window.removeEventListener('resize', updateSize)
     }
-  }, [isControlsOpen])
+  }, [])
 
   const lastBackPressRef = useRef(0)
   useEffect(() => {
@@ -659,9 +764,11 @@ export default function App() {
         }
         if (isControlsOpen && deltaY > 26) {
           setIsControlsOpen(false)
+          triggerHaptic('light')
           cleanup()
         } else if (!isControlsOpen && deltaY < -26) {
           setIsControlsOpen(true)
+          triggerHaptic('light')
           cleanup()
         }
       }
@@ -1582,6 +1689,82 @@ export default function App() {
     window.addEventListener('pointerup', onUp)
   }
 
+  function handleMainTextDrag(e) {
+    if (!state.bgEnabled) return
+    if (e.button !== undefined && e.button !== 0) return
+    if (!previewRef.current) return
+
+    const rect = previewRef.current.getBoundingClientRect()
+    const startX = e.clientX
+    const startY = e.clientY
+    const origX = state.textX ?? 50
+    const origY = state.textY ?? 50
+    const SNAP = 2.5
+    const layers = state.layers || []
+    let hasMoved = false
+    let currentX = origX
+    let currentY = origY
+
+    function onMove(ev) {
+      const dist = Math.hypot(ev.clientX - startX, ev.clientY - startY)
+      if (!hasMoved && dist < 4) {
+        return
+      }
+      if (!hasMoved) {
+        hasMoved = true
+        try {
+          window.getSelection()?.removeAllRanges()
+        } catch {}
+      }
+
+      const dx = ((ev.clientX - startX) / rect.width) * 100
+      const dy = ((ev.clientY - startY) / rect.height) * 100
+      let x = Math.min(95, Math.max(5, origX + dx))
+      let y = Math.min(95, Math.max(5, origY + dy))
+      let guideX = null
+      let guideY = null
+
+      if (Math.abs(x - 50) < SNAP) {
+        x = 50
+        guideX = rect.left + rect.width * 0.5
+      } else {
+        const match = layers.find((l) => Math.abs(x - l.x) < SNAP)
+        if (match) {
+          x = match.x
+          guideX = rect.left + (rect.width * match.x) / 100
+        }
+      }
+
+      if (Math.abs(y - 50) < SNAP) {
+        y = 50
+        guideY = rect.top + rect.height * 0.5
+      } else {
+        const match = layers.find((l) => Math.abs(y - l.y) < SNAP)
+        if (match) {
+          y = match.y
+          guideY = rect.top + (rect.height * match.y) / 100
+        }
+      }
+
+      currentX = Math.round(x * 10) / 10
+      currentY = Math.round(y * 10) / 10
+      update({ textX: currentX, textY: currentY }, { record: false })
+      setDragGuides({ x: guideX, y: guideY })
+    }
+
+    function onUp() {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      setDragGuides({ x: null, y: null })
+      if (hasMoved) {
+        update({ textX: currentX, textY: currentY }, { record: true })
+      }
+    }
+
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+  }
+
   function duplicateLayer(id) {
     const layer = state.layers.find((l) => l.id === id)
     if (!layer) return
@@ -1825,7 +2008,18 @@ export default function App() {
     direction: state.direction,
     opacity: state.opacity / 100,
     WebkitTextStroke: state.stroke ? `${state.strokeWidth}px ${strokeColor}` : 'none',
-    position: 'relative',
+    position: state.bgEnabled ? 'absolute' : 'relative',
+    ...(state.bgEnabled
+      ? {
+          left: `${state.textX ?? 50}%`,
+          top: `${state.textY ?? 50}%`,
+          transform: 'translate(-50%, -50%)',
+          width: state.textBoxStyle !== 'none' ? 'fit-content' : 'max-content',
+          maxWidth: '92%',
+          cursor: 'move',
+          touchAction: 'none',
+        }
+      : {}),
     zIndex: 1,
     boxSizing: 'border-box',
     wordBreak: 'normal',
@@ -1838,7 +2032,7 @@ export default function App() {
       boxRadius: state.boxRadius,
       boxPadding: state.boxPadding,
     }),
-    ...(state.textBoxStyle !== 'none'
+    ...(state.textBoxStyle !== 'none' && !state.bgEnabled
       ? {
           width: 'fit-content',
           maxWidth: '96%',
@@ -1971,8 +2165,10 @@ export default function App() {
     if (state.bgEnabled && previewRef.current) {
       previewRef.current.style.borderRadius = '0px'
     }
+    previewRef.current?.classList.add('is-exporting')
     return () => {
       unlock()
+      previewRef.current?.classList.remove('is-exporting')
       if (previewRef.current && origRadius !== undefined) {
         previewRef.current.style.borderRadius = origRadius
       }
@@ -2018,14 +2214,17 @@ export default function App() {
         const rect = previewRef.current.getBoundingClientRect()
         width = Math.max(200, Math.round(rect.width))
         height = Math.max(200, Math.round(rect.height))
-        pixelRatio = 2.5
+        pixelRatio = 3
       }
-      const dataUrl = await toPng(previewRef.current, {
+      let dataUrl = await toPng(previewRef.current, {
         pixelRatio,
         cacheBust: false,
         width,
         height,
       })
+      if (!state.bgEnabled) {
+        dataUrl = await trimTransparentImage(dataUrl, 24)
+      }
       if (isNative()) {
         await saveImageNative(dataUrl, fileName)
         triggerHaptic('medium')
@@ -2219,7 +2418,10 @@ export default function App() {
       }
 
       if (isNative()) {
-        const dataUrl = await toPng(previewRef.current, { pixelRatio: 2, cacheBust: false, width, height })
+        let dataUrl = await toPng(previewRef.current, { pixelRatio: 2.5, cacheBust: false, width, height })
+        if (!state.bgEnabled) {
+          dataUrl = await trimTransparentImage(dataUrl, 20)
+        }
         const mode = await copyImageNative(dataUrl, `fontwow-${Date.now()}.png`)
         // 'canceled' means the user dismissed the share sheet — say nothing.
         if (mode !== 'canceled') {
@@ -2229,13 +2431,21 @@ export default function App() {
           logger.info('Clipboard', 'عملیات کپی/اشتراک‌گذاری تصویر توسط کاربر لغو شد.')
         }
       } else {
-        const blob = await toBlob(previewRef.current, { pixelRatio: 2, cacheBust: false, width, height })
-        if (!blob) throw new Error('Blob generation returned null')
+        let targetBlob = null
+        if (!state.bgEnabled) {
+          const dataUrl = await toPng(previewRef.current, { pixelRatio: 2.5, cacheBust: false, width, height })
+          const trimmedUrl = await trimTransparentImage(dataUrl, 20)
+          const res = await fetch(trimmedUrl)
+          targetBlob = await res.blob()
+        } else {
+          targetBlob = await toBlob(previewRef.current, { pixelRatio: 2, cacheBust: false, width, height })
+        }
+        if (!targetBlob) throw new Error('Blob generation returned null')
 
         let copied = false
         if (navigator.clipboard && typeof navigator.clipboard.write === 'function' && typeof ClipboardItem !== 'undefined') {
           try {
-            await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+            await navigator.clipboard.write([new ClipboardItem({ 'image/png': targetBlob })])
             copied = true
             logger.info('Clipboard', 'تصویر با موفقیت در کلیپ‌بورد کپی شد.')
             setToast(t('imageCopied'))
@@ -2246,7 +2456,7 @@ export default function App() {
 
         if (!copied) {
           // If clipboard write is restricted in iframe/browser environment, automatically download the image
-          const url = URL.createObjectURL(blob)
+          const url = URL.createObjectURL(targetBlob)
           const link = document.createElement('a')
           link.download = `fontwow-${Date.now()}.png`
           link.href = url
@@ -2421,7 +2631,7 @@ export default function App() {
       <div className="bg-layer" style={bgLayerStyle} />
       {state.warpMode === 'none' ? (
         <div
-          className={`text-canvas tb-${state.textBoxStyle} ${state.textBoxStyle !== 'none' ? 'has-box' : ''}`}
+          className={`text-canvas tb-${state.textBoxStyle} ${state.textBoxStyle !== 'none' ? 'has-box' : ''} ${state.bgEnabled ? 'is-draggable' : ''}`}
           ref={textRef}
           style={textStyle}
           contentEditable
@@ -2429,9 +2639,30 @@ export default function App() {
           dir={state.direction}
           data-placeholder={t('placeholder')}
           onInput={onTextInput}
+          onPointerDown={state.bgEnabled ? handleMainTextDrag : undefined}
         />
       ) : (
-        <CurvedText text={displayText || t('placeholder')} mode={state.warpMode} bend={state.warpBend} style={curvedTextStyle} />
+        <div
+          ref={textRef}
+          className={state.bgEnabled ? 'is-draggable' : ''}
+          style={
+            state.bgEnabled
+              ? {
+                  position: 'absolute',
+                  left: `${state.textX ?? 50}%`,
+                  top: `${state.textY ?? 50}%`,
+                  transform: 'translate(-50%, -50%)',
+                  cursor: 'move',
+                  touchAction: 'none',
+                  zIndex: 1,
+                  width: '100%',
+                }
+              : { position: 'relative', zIndex: 1, width: '100%' }
+          }
+          onPointerDown={state.bgEnabled ? handleMainTextDrag : undefined}
+        >
+          <CurvedText text={displayText || t('placeholder')} mode={state.warpMode} bend={state.warpBend} style={curvedTextStyle} />
+        </div>
       )}
       {state.layers.map((layer) => {
         if (layer.type === 'label') {
@@ -2778,7 +3009,11 @@ export default function App() {
         <div
           className="controls-grab-bar"
           onPointerDown={handleControlsGrabPointerDown}
-          onClick={() => setIsControlsOpen((prev) => !prev)}
+          onClick={() => {
+            if (grabHasMoved.current) return
+            setIsControlsOpen((prev) => !prev)
+            triggerHaptic('light')
+          }}
           role="button"
           tabIndex={0}
           aria-label={isControlsOpen ? 'بستن پنل تنظیمات' : 'باز کردن پنل تنظیمات'}
@@ -3467,7 +3702,7 @@ export default function App() {
                   </div>
 
                   {/* Categories Row */}
-                  <div className="chip-row sub-row">
+                  <HorizontalScroll trackClassName="chip-row sub-row" ariaLabel="دسته‌بندی‌های پس‌زمینه">
                     {BG_CATEGORIES.map((c) => (
                       <button
                         key={c.id}
@@ -3482,7 +3717,7 @@ export default function App() {
                         {c.label}
                       </button>
                     ))}
-                  </div>
+                  </HorizontalScroll>
 
                   {/* Swatches Row (Single line, minimal) */}
                   <HorizontalScroll trackClassName="bg-swatches-row" ariaLabel="پالت‌های پس‌زمینه">
@@ -3962,54 +4197,110 @@ export default function App() {
 
           {tab === 'layout' && (
             <div className="layout-panel">
-              <SliderRow
-                label={t('letterSpacing')}
-                min={-4}
-                max={20}
-                value={state.letterSpacing}
-                onChange={(e) => update({ letterSpacing: +e.target.value })}
-              />
-              <SliderRow
-                label={t('lineHeight')}
-                min={0.8}
-                max={2.4}
-                step={0.1}
-                value={state.lineHeight}
-                onChange={(e) => update({ lineHeight: +e.target.value })}
-              />
-              <SliderRow
-                label={t('strokeWidth')}
-                min={0.5}
-                max={6}
-                step={0.5}
-                value={state.strokeWidth}
-                onChange={(e) => update({ strokeWidth: +e.target.value })}
-              />
-              <SliderRow
-                label={t('opacity')}
-                min={10}
-                max={100}
-                value={state.opacity}
-                display={`${state.opacity}%`}
-                onChange={(e) => update({ opacity: +e.target.value })}
-              />
-              <SliderRow
-                label={t('margin')}
-                min={0}
-                max={60}
-                value={state.margin}
-                onChange={(e) => update({ margin: +e.target.value })}
-              />
-              <div className="align-row">
-                {['right', 'center', 'left'].map((a) => (
-                  <button
-                    key={a}
-                    className={`toggle ${state.align === a ? 'on' : ''}`}
-                    onClick={() => update({ align: a })}
-                  >
-                    {t(`align_${a}`)}
-                  </button>
-                ))}
+              {/* Text Alignment Card */}
+              <div className="layout-section-card">
+                <div className="layout-section-header">
+                  <span>{t('textAlign')}</span>
+                </div>
+                <div className="align-row">
+                  {['right', 'center', 'left'].map((a) => (
+                    <button
+                      key={a}
+                      className={`toggle ${state.align === a ? 'on' : ''}`}
+                      onClick={() => update({ align: a })}
+                    >
+                      {t(`align_${a}`)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Canvas Text Position Card (Visible when Background is enabled) */}
+              {state.bgEnabled && (
+                <div className="layout-section-card">
+                  <div className="layout-section-header">
+                    <span>{t('textPosition')}</span>
+                    {(state.textX !== 50 || state.textY !== 50) && (
+                      <button
+                        type="button"
+                        className="layout-reset-btn"
+                        onClick={() => update({ textX: 50, textY: 50 })}
+                        title={t('resetPosition')}
+                      >
+                        {t('resetPosition')}
+                      </button>
+                    )}
+                  </div>
+                  <div className="align-row position-row">
+                    <button
+                      className={`toggle ${state.textY === 25 ? 'on' : ''}`}
+                      onClick={() => update({ textY: 25, textX: 50 })}
+                    >
+                      {t('posTop')}
+                    </button>
+                    <button
+                      className={`toggle ${state.textY === 50 && state.textX === 50 ? 'on' : ''}`}
+                      onClick={() => update({ textY: 50, textX: 50 })}
+                    >
+                      {t('posCenter')}
+                    </button>
+                    <button
+                      className={`toggle ${state.textY === 75 ? 'on' : ''}`}
+                      onClick={() => update({ textY: 75, textX: 50 })}
+                    >
+                      {t('posBottom')}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Typography Spacing & Opacity Card */}
+              <div className="layout-section-card">
+                <div className="layout-section-header">
+                  <span>{t('typographySpacing')}</span>
+                </div>
+                <div className="layout-sliders-group">
+                  <SliderRow
+                    label={t('letterSpacing')}
+                    min={-4}
+                    max={20}
+                    value={state.letterSpacing}
+                    onChange={(e) => update({ letterSpacing: +e.target.value })}
+                  />
+                  <SliderRow
+                    label={t('lineHeight')}
+                    min={0.8}
+                    max={2.4}
+                    step={0.1}
+                    value={state.lineHeight}
+                    onChange={(e) => update({ lineHeight: +e.target.value })}
+                  />
+                  <SliderRow
+                    label={t('opacity')}
+                    min={10}
+                    max={100}
+                    value={state.opacity}
+                    display={`${state.opacity}%`}
+                    onChange={(e) => update({ opacity: +e.target.value })}
+                  />
+                  <SliderRow
+                    label={t('margin')}
+                    min={0}
+                    max={60}
+                    value={state.margin}
+                    onChange={(e) => update({ margin: +e.target.value })}
+                  />
+                  {state.stroke && (
+                    <SliderRow
+                      label={t('strokeWidth')}
+                      min={0.5}
+                      max={6}
+                      step={0.5}
+                      value={state.strokeWidth}
+                      onChange={(e) => update({ strokeWidth: +e.target.value })}
+                    />
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -5069,11 +5360,13 @@ export default function App() {
         </div>
       ) : null}
 
-      <footer className="footer">
-        <a href="https://github.com/FontWoW/FontWoW.github.io" target="_blank" rel="noreferrer">
-          {t('openSource')} <I.IconExternal size={11} className="flip-rtl" />
-        </a>
-      </footer>
+      {!isNative() && (
+        <footer className="footer">
+          <a href="https://github.com/FontWoW/FontWoW.github.io" target="_blank" rel="noreferrer">
+            {t('openSource')} <I.IconExternal size={11} className="flip-rtl" />
+          </a>
+        </footer>
+      )}
     </div>
   )
 }

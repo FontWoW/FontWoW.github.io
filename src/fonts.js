@@ -282,7 +282,7 @@ export const THEME_COLORS = [
 ]
 
 export const THEME_STAGE_GRADIENTS = {
-  '#8b5cf6': 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%)',
+  '#8b5cf6': 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #6462ea 100%)',
   '#000000': '#000000',
   '#09090b': '#000000',
   '#ffffff': '#ffffff',

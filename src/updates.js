@@ -16,7 +16,11 @@ export const UPDATES = [
         'موتور اسکرول درگ ماوس روی دسکتاپ با فیزیک اینرسی و دکمه‌های ناوبری سریع در تمامی تب‌ها و ابزارها.',
         'بهینه‌سازی عمیق نسخه اندروید: پشتیبانی از دکمه بازگشت سخت‌افزاری، ذخیره مستقیم انیمیشن GIF در گالری سیستم، بازخورد لرزشی (Haptics) و کادر متن چندخطی.',
         'اصلاح ریشه‌ای دانلود فونت‌ها با تاب‌آوری بالا در برابر تایم‌اوت شبکه و حذف خطاهای کاذب.',
-        'بازطراحی کامل بخش ذخیره در موبایل: چیدمان تک‌ستونه تمام‌عرض، خوانایی ۱۰۰٪ متون و حذف کوتاه شدن نام‌ها.'
+        'بازطراحی کامل بخش ذخیره در موبایل: چیدمان تک‌ستونه تمام‌عرض، خوانایی ۱۰۰٪ متون و حذف کوتاه شدن نام‌ها.',
+        'خط لوله بهینه استیکر شفاف با مقیاس‌گذاری متوازن ۹۰۰ پیکسل و صاف‌سازی بای‌کیوبیک بدون افت کیفیت.',
+        'قابلیت جابجایی مغناطیسی متن روی بوم با خطوط اسنپ سنتر و نشانگر بصری جابجایی در حالت پس‌زمینه.',
+        'استودیوی تمام‌صفحه و لبه‌به‌لبه در اپلیکیشن موبایل با حذف هوشمند فوتر در نسخه نیتیو.',
+        'پالت گرادیانت بازطراحی‌شده استیج با تم نیلی-بنفش مدرن جهت کنتراست عمیق‌تر.'
       ]
     },
     en: {
@@ -28,7 +32,11 @@ export const UPDATES = [
         'Desktop drag-to-scroll engine with zero-latency pointer mechanics and chevron navigation across all toolbars.',
         'Enhanced native Android UX: Hardware back button handling, direct animated GIF export to system gallery, tactile haptic feedback, and multiline prompt support.',
         'Resilient font loading engine eliminating false-alarm timeout errors across mobile networks.',
-        'Redesigned mobile save modal: responsive single-column layout with full text visibility.'
+        'Redesigned mobile save modal: responsive single-column layout with full text visibility.',
+        'Balanced 900px high-resolution transparent sticker export pipeline with bicubic anti-aliasing.',
+        'Magnetic canvas text dragging with crosshair snap guides and visual grab handles in background mode.',
+        'Edge-to-edge native mobile studio with automatic footer removal on mobile devices.',
+        'Refined indigo-violet stage gradient for higher contrast and richer text glow.'
       ]
     }
   },

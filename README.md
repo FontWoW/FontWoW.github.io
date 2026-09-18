@@ -32,19 +32,24 @@
 <table>
   <tr>
     <td align="center">
-      <kbd><b>ویرایشگر اصلی</b></kbd><br />
-      <img src="docs/screen-editor.png" width="220" alt="ادیتور فونت واو" />
+      <kbd><b>افکت سایبر نئون و بوم</b></kbd><br />
+      <img src="docs/screen-editor.png" width="220" alt="ادیتور سایبر نئون فونت واو" />
     </td>
     <td align="center">
-      <kbd><b>چیدمان و ابعاد</b></kbd><br />
-      <img src="docs/screen-layout.png" width="220" alt="تنظیمات چیدمان بوم" />
+      <kbd><b>جعبه متن و برچسب‌ها</b></kbd><br />
+      <img src="docs/screen-layout.png" width="220" alt="استایل‌های جعبه متن و برچسب‌ها" />
     </td>
     <td align="center">
-      <kbd><b>خروجی و قالب‌ها</b></kbd><br />
-      <img src="docs/screen-save.png" width="220" alt="قالب‌های آماده و ذخیره‌سازی" />
+      <kbd><b>خروجی رسپانسیو و استوری</b></kbd><br />
+      <img src="docs/screen-save.png" width="220" alt="خروجی رسپانسیو و قالب‌های استوری" />
     </td>
   </tr>
 </table>
+
+<br />
+
+<kbd><b>نمای عریض استودیوی دسکتاپ و اسکرول اینرسی با ماوس (Widescreen Studio & Desktop UX)</b></kbd><br />
+<img src="docs/screen-wide.png" width="700" alt="استودیوی دسکتاپ فونت واو" />
 
 </div>
 

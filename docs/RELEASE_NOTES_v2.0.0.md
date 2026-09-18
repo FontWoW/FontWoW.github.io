@@ -6,15 +6,29 @@
 > ### 📱 دانلود فوری نسخه جدید اندروید
 > **نسخه ۲.۰.۰ استودیو با ۱۴ افکت متنی نوین، نوار ابزار بوم و اسکرول روان دسکتاپ اکنون آماده دریافت است:**
 > 
-> ⬇️ **[دریافت مستقیم فایل نصب: FontWoW-v2.0.0.apk](https://github.com/omid-io/FontWoW.github.io/releases/download/latest/FontWoW-v2.0.0.apk)** *(نسخه اندروید: ۷.۰ به بالا | بیلد: ۵۵)*
+> ⬇️ **[دریافت مستقیم فایل نصب: FontWoW-v2.0.0.apk](https://github.com/omid-io/FontWoW-2.0/releases/download/v2.0.0/FontWoW-v2.0.0.apk)** *(نسخه اندروید: ۷.۰ به بالا | بیلد: ۵۸)*
 
 ---
 
-## 🌟 پیش‌نمایش محیط جدید استودیو
+## 🌟 پیش‌نمایش متحرک استودیو (Live Studio Tour)
 
-| ادیتور و نوار ابزار بوم | استایل‌ها و پالت‌های گرادیان | ذخیره رسپانسیو و انیمیشن |
+<div align="center">
+  <img src="https://raw.githubusercontent.com/omid-io/FontWoW.github.io/main/docs/tour-showcase.gif" width="420" alt="تور متحرک استودیو فونت‌واو ۲.۰" /><br />
+  <sub><em>گردش در امکانات استودیو: افکت نئون، دراور روان، گرادیانت بنفش جدید، جابجایی مغناطیسی و خروجی باکیفیت ۹۰۰ پیکسل</em></sub>
+</div>
+
+<br />
+
+| ادیتور سایبر نئون و اسلایدر زنده | استایل‌های شیشه‌ای و جعبه متن | خروجی رسپانسیو و فرمت‌های نوین |
 | :---: | :---: | :---: |
-| <img src="https://raw.githubusercontent.com/omid-io/FontWoW.github.io/main/docs/screen-editor.png" width="260" alt="Editor" /> | <img src="https://raw.githubusercontent.com/omid-io/FontWoW.github.io/main/docs/screen-layout.png" width="260" alt="Layout" /> | <img src="https://raw.githubusercontent.com/omid-io/FontWoW.github.io/main/docs/screen-save.png" width="260" alt="Save" /> |
+| <img src="https://raw.githubusercontent.com/omid-io/FontWoW.github.io/main/docs/screen-editor.png" width="260" alt="سایبر نئون و نوار ابزار بوم" /> | <img src="https://raw.githubusercontent.com/omid-io/FontWoW.github.io/main/docs/screen-layout.png" width="260" alt="استایل‌های جعبه متن" /> | <img src="https://raw.githubusercontent.com/omid-io/FontWoW.github.io/main/docs/screen-save.png" width="260" alt="خروجی رسپانسیو" /> |
+
+<br />
+
+<div align="center">
+  <kbd><b>نمای عریض دسکتاپ و اسکرول اینرسی با ماوس (Widescreen Studio & Desktop UX)</b></kbd><br />
+  <img src="https://raw.githubusercontent.com/omid-io/FontWoW.github.io/main/docs/screen-wide.png" width="820" alt="نمای عریض دسکتاپ" />
+</div>
 
 ---
 
@@ -51,6 +65,42 @@
 - بهینه‌سازی کش سرویس‌ورکر جهت اجرای پایدار آفلاین PWA بدون نیاز به اینترنت.
 - پاکسازی آسیب‌پذیری‌های امنیتی `npm audit` و ایزوله‌سازی هوشمند ورک‌فلوهای تست اختصاصی مخزن اصلی.
 
+### 🎯 ۶. استیکر شفاف بدون حاشیه و فشرده (Tight Transparent Sticker Export)
+- برش خودکار و بی‌درنگ فضاهای خالی شفاف (Trim Transparent Alpha) هنگام ذخیره بدون پس‌زمینه با کیفیت ۳ برابری رتینا.
+- آماده‌سازی فوری استیکر شفاف جهت استفاده مستقیم در استوری اینستاگرام، تلگرام و واتساپ بدون حاشیه‌های ناخواسته.
+- پشتیبانی کامل از کپی در کلیپ‌بورد در حالت بدون حاشیه در دسکتاپ و نسخه نیتیو.
+
+### ✋ ۷. جابجایی آزاد متن اصلی روی بوم (Draggable Canvas Text in Background Mode)
+- تفکیک هوشمند رفتار متن: در حالت عادی متن در مرکز ثابت است؛ با روشن شدن حالت پس‌زمینه، متن اصلی کاملاً قابل درگ و جابجایی آزادانه روی تصویر پس‌زمینه می‌شود.
+- مجهز به خطوط راهنمای مغناطیسی هوشمند (Magnetic Snap Guides) در ۵۰٪ افقی و عمودی بوم.
+- کلیدهای تنظیم سریع موقعیت عمودی (بالا، وسط، پایین) و بازنشانی ۱-لمسی موقعیت در تب چیدمان.
+
+### ⚡ ۸. پنل پایینی روان و بدون لگ (Ultra-Smooth 60fps Bottom Sheet)
+- رفع کامل لگ و سنگینی نوار کشویی پایین (`controls-grab-bar`) در گوشی‌های هوشمند.
+- حذف کامل پردازش‌های اضافی `ResizeObserver` حین انیمیشن با زمان‌بندی هوشمند `requestAnimationFrame`.
+- منحنی حرکتی فنری نرم (Spring Physics: `cubic-bezier(0.2, 0.9, 0.3, 1)`) همراه با ویبره لمسی سبک (Haptic Feedback).
+
+### ↔️ ۹. اسکرول اینرسی زیرمجموعه پس‌زمینه (Background Sub-row Drag Scroll)
+- تجهیز ردیف چیپ‌های دسته‌بندی پس‌زمینه (`chip-row sub-row`) به موتور اسکرول و درگ اینرسی دسکتاپ و موبایل.
+
+### 📐 ۱۰. بازطراحی مینیمال تب چیدمان (Structured Layout Cards)
+- دسته‌بندی گزینه‌های تب Layout در سه کارت تفکیک‌شده مدرن با شیشه مات (چینش متن، موقعیت بوم و فاصله‌بندی حروف/سطرها).
+- نمایش هوشمند اسلایدر ضخامت دورخط منحصراً در زمان فعال بودن دورخط متن (Stroke).
+
+### 🎯 ۱۱. خروجی بهینه استیکر با وضوح متوازن ۹۰۰ پیکسل (Balanced 900px High-Res Pipeline)
+- نرمال‌سازی ابعاد خروجی استیکر شفاف: مقیاس‌گذاری خودکار کادر بریده‌شده به عرض هدف ۹۰۰ پیکسل با الگوریتم صاف‌سازی بای‌کیوبیک (`imageSmoothingQuality = 'high'`).
+- ایجاد تعادل بی‌نقص بین شفافیت و وضوح فوق‌العاده بالا برای استوری و استیکر شبکه‌های اجتماعی در عین بهینه‌ماندن حجم فایل نهایی.
+
+### ✥ ۱۲. نشانگر تعاملی جابجایی متن در حالت پس‌زمینه (Visual Grab Affordance)
+- نمایش خط‌چین ظریف و نشانگر شناور بنفش `✥ جابجایی` روی متن اصلی در زمان فعال بودن پس‌زمینه برای راهنمایی بصری کاربر.
+- ایزولاسیون کامل نشانگر در زمان صدور خروجی (`.is-exporting`) جهت جلوگیری از ثبت ناخواسته المان‌های کمکی روی تصویر نهایی.
+
+### 🎨 ۱۳. پالت گرادیانت استیج بازطراحی‌شده (Refined Stage Indigo Gradient)
+- بازطراحی رنگ‌بندی پس‌زمینه استیج استودیو با گرادیانت مدرن نیلی تا بنفش پررنگ (`#6366f1` تا `#6462ea`) جهت کنتراست عمیق‌تر و جلوه درخشان‌تر افکت‌های متنی.
+
+### 📱 ۱۴. محیط تمام‌صفحه لبه‌به‌لبه در اپلیکیشن موبایل (Edge-to-Edge Native Studio)
+- حذف هوشمند نوار فوتر در محیط نیتیو اندروید (`!isNative()`) و تخصیص ۱۰۰٪ فضای عمودی صفحه به بوم طراحی و پنل ابزارها، هم‌زمان با حفظ استاندارد فوتر در نسخه وب.
+
 ---
 
 ## 📊 مشخصات فنی بیلد
@@ -58,11 +108,11 @@
 | مشخصه | مقدار |
 | :--- | :--- |
 | **نسخه نرم‌افزار** | `v2.0.0 (FontWoW 2.0 Studio)` |
-| **کد بیلد داخلی (VersionCode)** | `55` |
+| **کد بیلد داخلی (VersionCode)** | `60` |
 | **فایل خروجی نصبی** | `FontWoW-v2.0.0.apk` |
 | **حداقل اندروید پشتیبانی‌شده** | اندروید ۷.۰ (API 24) به بالا |
 | **مجوز نرم‌افزاری** | نرم‌افزار آزاد GNU GPL-3.0 |
-| **مخزن توسعه و سورس‌کد** | [omid-io/FontWoW.github.io](https://github.com/omid-io/FontWoW.github.io) |
+| **مخزن توسعه و سورس‌کد** | [omid-io/FontWoW-2.0](https://github.com/omid-io/FontWoW-2.0) |
 
 ```
 version: 2.0.0
