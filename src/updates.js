@@ -5,28 +5,30 @@
 // build once that release goes out.
 export const UPDATES = [
   {
-    version: '1.7.0',
+    version: '2.0.0',
     date: '2026-09-18',
     fa: {
-      title: 'استودیوی پیشرفته فونت‌واو: افکت‌های بصری، نوار ابزار بوم و ارگونومی دسکتاپ',
+      title: 'نسل دوم فونت‌واو (FontWoW 2.0 Studio): جهش بزرگ تایپوگرافی، افکت‌های بصری و ارگونومی مدرن',
       changes: [
         'افزودن ۱۴ افکت متنی پیشرفته شامل سایبر نئون، سینت‌ویو رترو، سه‌بعدی پاپ، گلیچ دیجیتال، هولوگرام، ارورا و گرادیان‌های لوکس طلایی و اقیانوسی.',
-        'نوار ابزار سریع بوم (Canvas Quick-Bar) برای دسترسی آنی به ابعاد، استایل جعبه متن، مدیریت لایه‌ها و زوم سریع.',
-        'اسلایدر عمودی سایز قلم برای کنترل پیوسته، روان و بسیار دقیق اندازه فونت.',
-        'موتور اسکرول درگ ماوس روی دسکتاپ همراه با دکمه‌های ناوبری سریع در تمامی تب‌ها و نوارهای افقی ابزار.',
+        'نوار ابزار سریع بوم (Canvas Quick-Bar) برای دسترسی آنی به ابعاد، استایل جعبه متن، مدیریت لایه‌ها و زوم سریع بدون رفتن به منوها.',
+        'اسلایدر عمودی سایز قلم برای کنترل پیوسته، روان و عددی اندازه فونت در لحظه.',
+        'موتور اسکرول درگ ماوس روی دسکتاپ با فیزیک اینرسی و دکمه‌های ناوبری سریع در تمامی تب‌ها و ابزارها.',
         'بهینه‌سازی عمیق نسخه اندروید: پشتیبانی از دکمه بازگشت سخت‌افزاری، ذخیره مستقیم انیمیشن GIF در گالری سیستم، بازخورد لرزشی (Haptics) و کادر متن چندخطی.',
-        'رفع باگ زمان اجرای متغیرها (TDZ) و ارتقای مکانیزم کش آفلاین سرویس‌ورکر.'
+        'اصلاح ریشه‌ای دانلود فونت‌ها با تاب‌آوری بالا در برابر تایم‌اوت شبکه و حذف خطاهای کاذب.',
+        'بازطراحی کامل بخش ذخیره در موبایل: چیدمان تک‌ستونه تمام‌عرض، خوانایی ۱۰۰٪ متون و حذف کوتاه شدن نام‌ها.'
       ]
     },
     en: {
-      title: 'FontWoW Studio: Advanced Typography Effects, Quick-Bar & Desktop Ergonomics',
+      title: 'FontWoW 2.0 Studio: Next-Gen Typography, Visual Shaders & Modern Ergonomics',
       changes: [
         'Added 14 advanced canvas typography effects including Cyber Neon, Retro Synthwave, Pop 3D, Glitch, Aurora, Hologram, and Luxury Gradients.',
-        'Canvas Quick-Bar for instant access to aspect ratios, text box styling, layer ordering, and quick zoom.',
+        'Canvas Quick-Bar for instant 1-tap access to aspect ratios, text box styling, layer ordering, and quick zoom.',
         'Vertical font size slider for seamless, real-time, high-precision typography scaling.',
         'Desktop drag-to-scroll engine with zero-latency pointer mechanics and chevron navigation across all toolbars.',
         'Enhanced native Android UX: Hardware back button handling, direct animated GIF export to system gallery, tactile haptic feedback, and multiline prompt support.',
-        'Engineered runtime TDZ crash protection and strengthened offline PWA service worker caching.'
+        'Resilient font loading engine eliminating false-alarm timeout errors across mobile networks.',
+        'Redesigned mobile save modal: responsive single-column layout with full text visibility.'
       ]
     }
   },
