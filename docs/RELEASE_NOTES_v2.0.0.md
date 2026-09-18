@@ -10,24 +10,11 @@
 
 ---
 
-## 🌟 پیش‌نمایش متحرک استودیو (Live Studio Tour)
+## 🌟 پیش‌نمایش زنده استودیو (Studio Interactive Tour)
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/omid-io/FontWoW.github.io/main/docs/tour-showcase.gif" width="420" alt="تور متحرک استودیو فونت‌واو ۲.۰" /><br />
-  <sub><em>گردش در امکانات استودیو: افکت نئون، دراور روان، گرادیانت بنفش جدید، جابجایی مغناطیسی و خروجی باکیفیت ۹۰۰ پیکسل</em></sub>
-</div>
-
-<br />
-
-| ادیتور سایبر نئون و اسلایدر زنده | استایل‌های شیشه‌ای و جعبه متن | خروجی رسپانسیو و فرمت‌های نوین |
-| :---: | :---: | :---: |
-| <img src="https://raw.githubusercontent.com/omid-io/FontWoW.github.io/main/docs/screen-editor.png" width="260" alt="سایبر نئون و نوار ابزار بوم" /> | <img src="https://raw.githubusercontent.com/omid-io/FontWoW.github.io/main/docs/screen-layout.png" width="260" alt="استایل‌های جعبه متن" /> | <img src="https://raw.githubusercontent.com/omid-io/FontWoW.github.io/main/docs/screen-save.png" width="260" alt="خروجی رسپانسیو" /> |
-
-<br />
-
-<div align="center">
-  <kbd><b>نمای عریض دسکتاپ و اسکرول اینرسی با ماوس (Widescreen Studio & Desktop UX)</b></kbd><br />
-  <img src="https://raw.githubusercontent.com/omid-io/FontWoW.github.io/main/docs/screen-wide.png" width="820" alt="نمای عریض دسکتاپ" />
+  <img src="https://raw.githubusercontent.com/omid-io/FontWoW.github.io/main/docs/tour-showcase.gif" width="460" alt="تور متحرک استودیو فونت‌واو ۲.۰" /><br />
+  <sub><em>گردش کامل در ۵ گام: صفحه اول بدون منو ⟵ گردش در تب‌ها (قلم، استایل نئون، جعبه متن) ⟵ روشن و خاموش کردن پس‌زمینه با نشانگر جابجایی ⟵ پنجره تنظیمات ⟵ شیت ذخیره با وضوح ۹۰۰ پیکسل</em></sub>
 </div>
 
 ---

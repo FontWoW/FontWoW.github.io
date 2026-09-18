@@ -14,17 +14,11 @@ All enhancements maintain 100% backward compatibility with existing saved templa
 
 ---
 
-## 🎬 Studio Tour Preview
-
-![FontWoW Studio 2.0 Showcase](https://raw.githubusercontent.com/omid-io/FontWoW.github.io/main/docs/tour-showcase.gif)
-
-| Modern Editor & Cyber Neon | Minimalist Structured Layout | High-Res 900px Save Modal |
-| :---: | :---: | :---: |
-| <img src="https://raw.githubusercontent.com/omid-io/FontWoW.github.io/main/docs/screen-editor.png" width="260" alt="Editor & Neon" /> | <img src="https://raw.githubusercontent.com/omid-io/FontWoW.github.io/main/docs/screen-layout.png" width="260" alt="Layout Cards" /> | <img src="https://raw.githubusercontent.com/omid-io/FontWoW.github.io/main/docs/screen-save.png" width="260" alt="Save Modal" /> |
+## 🎬 Studio Interactive Tour Preview
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/omid-io/FontWoW.github.io/main/docs/screen-wide.png" width="820" alt="Desktop Studio Experience" /><br />
-  <sub><em>Desktop Studio Experience: Inertial mouse drag scrolling, vertical font size slider, and quick canvas toolbar.</em></sub>
+  <img src="https://raw.githubusercontent.com/omid-io/FontWoW.github.io/main/docs/tour-showcase.gif" width="460" alt="FontWoW Studio 2.0 Tour" /><br />
+  <sub><em>5-Step Interactive Walkthrough: Initial Canvas (Closed) ➔ Tab Tour (Fonts, Cyber Neon, Glass Text Box) ➔ Background Switch (Indigo Gradient & Drag Guide) ➔ Settings Sheet ➔ High-Res 900px Save Modal.</em></sub>
 </div>
 
 ---
