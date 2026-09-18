@@ -19,25 +19,22 @@ To help you review and test these changes immediately without needing to clone o
 
 ---
 
-## 🎬 Visual Highlights: Interactive Tour & Before/After Comparison
+## 🎬 Visual Highlights: Before/After & Interactive Studio Tour
 
-### 1. 🔄 Before vs After Interactive Comparison Slider
-A visual comparison showcasing the evolution in layout cleanliness, spacing, ergonomics, and visual hierarchy:
-
-<div align="center">
-  <img src="https://raw.githubusercontent.com/omid-io/FontWoW-2.0/main/docs/compare-slider.gif" width="400" alt="Before vs After Slider" /><br />
-  <sub><em>Split-slider comparison: Left is legacy v1.x layout; Right is the refined Studio 2.0 layout.</em></sub>
-</div>
-
-<br />
-
-### 2. ⚡ 5-Step Complete Studio Walkthrough
-A tour covering core workflows: Initial Canvas ➔ Tabs (Fonts, Cyber Neon, Glass Box) ➔ Background ON/OFF ➔ Settings ➔ 900px Save Modal:
-
-<div align="center">
-  <img src="https://raw.githubusercontent.com/omid-io/FontWoW-2.0/main/docs/tour-showcase.gif" width="440" alt="FontWoW Studio 2.0 Tour" /><br />
-  <sub><em>Interactive walkthrough showing smooth bottom-sheet physics, shader effects, and high-res export options.</em></sub>
-</div>
+<table align="center" style="border-collapse: collapse; border: none;">
+  <tr>
+    <td align="center" width="50%" valign="top" style="border: none; padding: 12px;">
+      <b>🔄 Before vs After Comparison</b><br />
+      <sub><em>Stationary split-slider: Legacy v1.x vs Studio 2.0</em></sub><br /><br />
+      <img src="https://raw.githubusercontent.com/omid-io/FontWoW-2.0/main/docs/compare-slider.gif" width="280" alt="Before vs After Slider" />
+    </td>
+    <td align="center" width="50%" valign="top" style="border: none; padding: 12px;">
+      <b>⚡ 5-Step Studio Walkthrough</b><br />
+      <sub><em>Canvas ➔ Tabs (Fonts/Neon/Box) ➔ Bg ➔ Settings ➔ 900px Save</em></sub><br /><br />
+      <img src="https://raw.githubusercontent.com/omid-io/FontWoW-2.0/main/docs/tour-showcase.gif" width="280" alt="FontWoW Studio 2.0 Tour" />
+    </td>
+  </tr>
+</table>
 
 ---
 

@@ -10,12 +10,22 @@
 
 ---
 
-## 🌟 پیش‌نمایش زنده استودیو (Studio Interactive Tour)
+## 🌟 پیش‌نمایش متحرک استودیو و مقایسه قبل و بعد
 
-<div align="center">
-  <img src="https://raw.githubusercontent.com/omid-io/FontWoW.github.io/main/docs/tour-showcase.gif" width="460" alt="تور متحرک استودیو فونت‌واو ۲.۰" /><br />
-  <sub><em>گردش کامل در ۵ گام: صفحه اول بدون منو ⟵ گردش در تب‌ها (قلم، استایل نئون، جعبه متن) ⟵ روشن و خاموش کردن پس‌زمینه با نشانگر جابجایی ⟵ پنجره تنظیمات ⟵ شیت ذخیره با وضوح ۹۰۰ پیکسل</em></sub>
-</div>
+<table align="center" style="border-collapse: collapse; border: none;">
+  <tr>
+    <td align="center" width="50%" valign="top" style="border: none; padding: 10px;">
+      <b>🔄 اسلایدر مقایسه قبل و بعد</b><br />
+      <sub><em>مقایسه اسلایدر ثابت: نسخه پیشین ۱ در برابر استودیو ۲.۰</em></sub><br /><br />
+      <img src="https://raw.githubusercontent.com/omid-io/FontWoW-2.0/main/docs/compare-slider.gif" width="280" alt="اسلایدر مقایسه قبل و بعد" />
+    </td>
+    <td align="center" width="50%" valign="top" style="border: none; padding: 10px;">
+      <b>⚡ گردش ۵ مرحله‌ای استودیو</b><br />
+      <sub><em>بوم اولیه ➔ تب‌ها (فونت/نئون/کادر) ➔ پس‌زمینه ➔ تنظیمات ➔ ذخیره</em></sub><br /><br />
+      <img src="https://raw.githubusercontent.com/omid-io/FontWoW-2.0/main/docs/tour-showcase.gif" width="280" alt="تور متحرک استودیو فونت‌واو ۲.۰" />
+    </td>
+  </tr>
+</table>
 
 ---
 
