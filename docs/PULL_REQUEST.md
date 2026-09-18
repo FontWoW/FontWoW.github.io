@@ -1,109 +1,109 @@
-# Pull Request: Studio 2.0 Innovations, Visual Shaders, Desktop UX & High-Res Pipeline
+## 🌟 خلاصه و لینک‌های تست سریع (Live Demos)
 
-**Target Repository:** `FontWoW/FontWoW.github.io` (Branch: `main`)  
-**Head / Source:** `omid-io:feat/studio-innovations-and-desktop-ux`  
-**Type of Change:** `Feature` / `UX/UI Enhancement` / `Performance & Hardening`
+با سلام و احترام خدمت سازنده محترم پروژه فونت‌واو و جامعه توسعه‌دهندگان،
 
----
+این پول ریکوئست تحت عنوان **Studio 2.0 Innovations**، حاصل یک ارتقای ساختاری و بصری برای استودیوی تایپوگرافی فونت‌واو است. هدف این تغییرات، بهبود ارگونومی کار در دسکتاپ و موبایل، افزودن شیدرهای متنی نوین، روان‌سازی تعاملات و افزایش کیفیت خروجی استیکرها با حفظ ۱۰۰٪ سازگاری با نسخه‌های قبلی و احترام کامل به حریم خصوصی کلاینت‌ساید است.
 
-## 🌟 Quick Overview & Live Demos for Reviewers
-
-First off, a sincere thank you to the creator and contributors of FontWoW for building such an empowering, privacy-first Iranian typography tool.
-
-This pull request represents **Studio 2.0 Innovations**, a major quality-of-life, architectural, and visual evolution designed to bring FontWoW to modern design standards across both desktop and mobile devices while preserving 100% backward compatibility and privacy guarantees.
-
-To help you review and test these changes immediately without needing to clone or compile locally:
-
-- 🌐 **Live Web Preview (Hosted on Fork):** [https://omid-io.github.io/FontWoW-2.0/](https://omid-io.github.io/FontWoW-2.0/)
-- 📱 **Direct Android APK Download:** [Download FontWoW-v2.0.0.apk](https://github.com/omid-io/FontWoW-2.0/releases/download/v2.0.0/FontWoW-v2.0.0.apk) *(Release: v2.0.0 | API 24+)*
+برای بررسی و تست بدون نیاز به کلون یا کامپایل محلی:
+- 🌐 **نسخه وب زنده (هاست‌شده روی فورک):** [https://omid-io.github.io/FontWoW-2.0/](https://omid-io.github.io/FontWoW-2.0/)
+- 📱 **دانلود مستقیم فایل نصبی APK:** [دریافت مستقیم FontWoW-v2.0.0.apk](https://github.com/omid-io/FontWoW-2.0/releases/download/v2.0.0/FontWoW-v2.0.0.apk)
 
 ---
 
-## 🎬 Visual Highlights: Before/After & Interactive Studio Tour
+## 🎬 تصاویر و پیش‌نمایش متحرک (Visual Highlights)
 
 <table align="center" style="border-collapse: collapse; border: none;">
   <tr>
-    <td align="center" width="50%" valign="top" style="border: none; padding: 12px;">
-      <b>🔄 Before vs After Comparison</b><br />
-      <sub><em>Stationary split-slider: Legacy v1.x vs Studio 2.0</em></sub><br /><br />
-      <img src="https://raw.githubusercontent.com/omid-io/FontWoW-2.0/main/docs/compare-slider.gif" width="280" alt="Before vs After Slider" />
+    <td align="center" width="50%" valign="top" style="border: none; padding: 10px;">
+      <b>🔄 اسلایدر مقایسه قبل و بعد</b><br />
+      <sub><em>مقایسه اسلایدر ثابت: نسخه پیشین ۱ در برابر استودیو ۲.۰</em></sub><br /><br />
+      <img src="https://raw.githubusercontent.com/omid-io/FontWoW-2.0/main/docs/compare-slider.gif" width="280" alt="اسلایدر مقایسه قبل و بعد" />
     </td>
-    <td align="center" width="50%" valign="top" style="border: none; padding: 12px;">
-      <b>⚡ 5-Step Studio Walkthrough</b><br />
-      <sub><em>Canvas ➔ Tabs (Fonts/Neon/Box) ➔ Bg ➔ Settings ➔ 900px Save</em></sub><br /><br />
-      <img src="https://raw.githubusercontent.com/omid-io/FontWoW-2.0/main/docs/tour-showcase.gif" width="280" alt="FontWoW Studio 2.0 Tour" />
+    <td align="center" width="50%" valign="top" style="border: none; padding: 10px;">
+      <b>⚡ گردش ۵ مرحله‌ای در استودیو</b><br />
+      <sub><em>بوم اولیه ➔ تب‌ها (فونت/نئون/کادر) ➔ پس‌زمینه ➔ تنظیمات ➔ ذخیره</em></sub><br /><br />
+      <img src="https://raw.githubusercontent.com/omid-io/FontWoW-2.0/main/docs/tour-showcase.gif" width="280" alt="تور متحرک استودیو فونت‌واو ۲.۰" />
     </td>
   </tr>
 </table>
 
 ---
 
-## 🚀 Detailed Summary of Improvements
+## 🎯 مسئله (Problems Addressed)
 
-### 1. 🎨 14 Advanced Visual Text Effects & Dynamic Gradients
-- **Modern Shader Presets:** Added Cyber Neon, Retro Synthwave, Pop 3D, Digital Glitch, Hologram, Aurora Borealis, Imperial Gold, and Deep Ocean.
-- **Dynamic Color Palettes:** 11 perceptual color gradients engineered for high contrast across both light and dark canvas backgrounds.
-- **17 Glassmorphic Text Boxes:** Crystal glass, iOS/macOS window, code terminal, and pill styles with hardware-accelerated backdrop filters.
-- **Bilingual Typographic Perfection:** First-class Persian & Arabic cursive text support with smart Kashida/Tatweel elongation and multi-line line-height adjustments.
-
-### 2. 🖱️ Desktop Drag-to-Scroll Pointer Physics Engine
-- Solved the desktop UX friction where horizontal lists required horizontal trackpad scrolling.
-- All horizontal toolbars (Fonts, Effects, Palettes, Tabs) can now be smoothly dragged with mouse cursor on desktop just like a touch screen.
-- Built with a **zero-re-render pointer physics engine** using `requestAnimationFrame` and velocity decay.
-- Intelligent 6px threshold prevents accidental clicks while dragging; navigation chevrons fade dynamically based on scroll boundaries.
-
-### 3. ✋ Draggable Canvas Text & Magnetic Snap Alignment
-- **Smart Separation of Modes:** In default sticker mode, text remains rock-solid in the center. When Background Mode is toggled on, the text becomes freely draggable anywhere across the canvas.
-- **Magnetic Crosshair Guides:** Snaps dynamically to exact 50% horizontal and vertical canvas center coordinates.
-- **Visual Affordance:** Subtle dashed outline with a floating `✥ جابجایی` (`✥ Drag to Move`) badge, automatically excluded during image export (`.is-exporting`).
-
-### 4. ⚡ Ultra-Smooth 60fps Bottom Sheet
-- Overhauled `.controls-grab-bar` interaction with calibrated spring physics (`cubic-bezier(0.2, 0.9, 0.3, 1)`).
-- Eliminated micro-stuttering and redundant `ResizeObserver` re-layouts on low-end mobile devices.
-- Added tactile haptic feedback (`@capacitor/haptics`) on sheet gestures and tab switches.
-
-### 5. 🎯 Balanced 900px High-Resolution Transparent Sticker Pipeline
-- Auto-crops transparent whitespace around rendered typography (`trimTransparentImage`) with 3x retina oversampling.
-- Normalized output resolution: transparent stickers are automatically scaled to a balanced 900px bounding box with high-quality bicubic smoothing (`imageSmoothingQuality = 'high'`).
-- Solves pixelation when stickers are enlarged on 1080p Instagram Stories and Telegram while keeping file sizes lightweight (~40–80 KB).
-
-### 6. 📱 Edge-to-Edge Native Mobile Studio & Hardening
-- **Reclaimed Vertical Space:** The footer is cleanly hidden in native mobile environments (`!isNative()`), granting 100% vertical canvas area to users, while remaining present on web for attribution.
-- **Resilient Network Handling:** Font loading timeout extended to 25s with graceful fallback fonts for intermittent mobile networks.
-- **Native Android APK:** Hardware back button handling, direct GIF and WebP saving into the Android system media gallery via `FontWowNativePlugin.java`.
-- **Security & Hygiene:** Resolved all `npm audit` dependency vulnerabilities and TDZ hoisting warnings.
+1. **ارگونومی کار با ماوس روی دسکتاپ:** در کامپیوترها، نوارهای افقی (فونت‌ها، افکت‌ها و تب‌ها) نیازمند اسکرول افقی ماوس یا ترک‌پد بودند که تجربه کاربری یکپارچه‌ای با موبایل نداشت.
+2. **افت کیفیت استیکر در استوری:** استیکرهای شفاف هنگام بزرگ‌نمایی در استوری اینستاگرام و تلگرام به دلیل ابعاد کوچک تار می‌شدند، یا به دلیل حاشیه‌های خالی اضافی چیدمان مناسبی نداشتند.
+3. **محدودیت جابجایی متن روی تصویر:** کاربر هنگام فعال‌سازی پس‌زمینه نیاز داشت متن اصلی را آزادانه روی کادر حرکت دهد و دقیقاً در مرکز تراز کند.
+4. **تداخل فضای بوم با فوتر در موبایل:** نوار فوتر در نسخه نصبی موبایل (APK) مقداری از فضای مفید عمودی را می‌گرفت که مناسب یک اپلیکیشن بومی نبود.
+5. **تایم‌اوت‌های شبکه در دانلود فونت‌ها:** خطاهای موقت اینترنت موبایل باعث نمایش خطای کاذب در دریافت برخی قلم‌ها می‌شد.
 
 ---
 
-## 🧪 Testing & Verification Matrix
+## 🛠️ راه‌حل‌ها و تغییرات کلیدی (Solutions & Features)
 
-| Target Environment | Verification Status | Notes |
-| :--- | :---: | :--- |
-| **Desktop Chrome / Edge (Windows 11)** | ✅ Passed | Verified mouse drag-to-scroll, font slider, quick-bar, and canvas export. |
-| **Desktop Safari (macOS Sonoma)** | ✅ Passed | Verified WebKit backdrop-filter glassmorphism and clipboard write. |
-| **Mobile Chrome / Safari (Android / iOS)** | ✅ Passed | Verified touch gestures, layout adaptability, and virtual keyboard handling. |
-| **Native Android APK (API 24 - 34)** | ✅ Passed | Tested hardware back button, native gallery write, and edge-to-edge layout. |
-| **Offline PWA** | ✅ Passed | Service worker caching functions offline with cached fonts. |
-| **RTL / LTR BiDi** | ✅ Passed | Verified English and Persian/Arabic strings with correct icon directionality. |
+1. **موتور درگ و اسکرول اینرسی با ماوس (Desktop Drag-to-Scroll):**
+   - تمامی نوارهای ابزار با درگ ماوس مانند لمس گوشی به صورت کاملاً ۶۰ فریم و روان اسکرول می‌شوند.
+   - مجهز به ترشولد هوشمند ۶ پیکسلی جهت تفکیک کلیک از درگ، به همراه فلش‌های جهت‌نمای محوشونده در لبه‌ها.
+
+2. **۱۴ افکت متنی و شیدرهای نوین (Typography Shaders):**
+   - افزودن افکت‌های مدرن سایبر نئون، سینت‌ویو رترو، سه‌بعدی پاپ، گلیچ، هولوگرام، شفق قطبی (Aurora) و گرادیانت‌های متنی با پشتیبانی کامل از کشیدگی هوشمند حروف فارسی (تطویل).
+   - ۱۷ استایل مدرن جعبه متن شیشه‌ای (Crystal Glass)، پنجره‌های سیستم‌عامل و کپسولی.
+
+3. **جابجایی مغناطیسی متن روی بوم (Magnetic Draggable Text):**
+   - در حالت عادی متن در مرکز قفل است؛ اما با روشن شدن پس‌زمینه، متن کاملاً آزاد و قابل جابجایی می‌شود.
+   - مجهز به خطوط راهنمای مغناطیسی ۵۰٪ افقی و عمودی (Snap Guides) و نشانگر بصری `✥ جابجایی` (که در زمان خروجی نهایی به صورت خودکار پنهان می‌شود).
+
+4. **خط لوله بهینه استیکر شفاف با وضوح ۹۰۰ پیکسل (900px High-Res Pipeline):**
+   - برش خودکار حاشیه‌های شفاف با الگوریتم دقیق آلفا (`trimTransparentImage`) و مقیاس‌گذاری متوازن به عرض هدف ۹۰۰ پیکسل با صاف‌سازی بای‌کیوبیک بدون افزایش نامتعارف حجم فایل.
+
+5. **طراحی تمام‌صفحه در نسخه نیتیو اپلیکیشن (Native Edge-to-Edge):**
+   - پنهان‌سازی هوشمند نوار فوتر در محیط نیتیو (`!isNative()`) جهت آزادسازی ۱۰۰٪ فضای عمودی صفحه برای بوم، هم‌زمان با حفظ استاندارد فوتر در نسخه وب دسکتاپ.
+
+6. **پایداری، عملکرد و امنیت (Hardening):**
+   - افزایش تایم‌اوت دانلود فونت به ۲۵ ثانیه برای اینترنت‌های ناپایدار موبایل با فونت جایگزین امن.
+   - چیدمان تک‌ستونه رسپانسیو در پنجره ذخیره برای موبایل‌های با عرض کم.
+   - برطرف کردن کامل هشدارهای امنیتی `npm audit` و سازگاری کامل با اکستنشن‌های آینده.
 
 ---
 
-## 🤝 Note to Maintainer
+## 🏷️ نوع تغییر
 
-All changes have been designed to be 100% additive and backward-compatible. No existing user preferences or saved designs will be lost upon upgrading.
-
-Please feel free to review the code, test the live link or APK, and suggest any adjustments or refinements. I would be more than happy to make any changes you recommend!
+- [x] قابلیت جدید (Feature)
+- [x] بهبود رابط/دسترس‌پذیری (UX/UI Enhancement)
+- [x] رفع باگ و تاب‌آوری (Bug Fix & Resilience)
+- [x] بهبود نسخه Android / Capacitor
 
 ---
 
-<details>
-<summary>🇮🇷 توضیحات و یادداشت به زبان فارسی (Persian Note)</summary>
+## ✅ اعتبارسنجی و تست‌ها
 
-با سلام و احترام خدمت سازنده محترم پروژه فونت‌واو و جامعه توسعه‌دهندگان،
+- [x] اجرای موفق بیلد پروداکشن: `npm run build`
+- [x] اجرای موفق لینتر بدون خطا: `npm run lint`
+- [x] تست همگام‌سازی کلاینت نیتیو: `npx cap sync android`
+- [x] تست دستی کامل وب در Chrome ،Firefox و Safari
+- [x] تست عملکرد روی دستگاه‌های موبایل و دسکتاپ
+- [x] بررسی خروجی تصاویر (PNG ،WebP ،GIF) و اطمینان از ایزوله بودن المان‌های راهنما
+- [x] بررسی جهت متن و زبان‌های دوجهته (RTL فارسی و LTR انگلیسی)
 
-این پول ریکوئست حاصل مجموعه‌ای از بازطراحی‌ها و ارتقاهای مهندسی تحت عنوان **Studio 2.0** است که با هدف ارتقای تجربه کاربری، افزایش خوانایی، اضافه کردن شیدرهای بصری نوین و بهبود تجربه استفاده روی دسکتاپ و اپلیکیشن موبایل توسعه یافته است.
+محیط‌های تست‌شده:
+- دسکتاپ: ویندوز ۱۱ (کروم، اج)، مک او‌اس (سافاری)
+- موبایل: اندروید ۷ تا ۱۴ (مرورگر موبایل و فایل APK نصبی)، آی‌او‌اس (سافاری)
 
-تمامی تغییرات با حفظ کامل سازگاری با نسخه‌های قبلی، احترام به حریم خصوصی کاربر و بدون افزودن بار سروری طراحی شده‌اند. لینک پیش‌نمایش آنلاین وب و فایل نصب مستقیم APK در ابتدای متن قرار داده شده تا بدون نیاز به کامپایل بتوانید تغییرات را از نزدیک تست فرمایید.
+---
 
-باعث افتخار خواهد بود که این پول ریکوئست مورد بررسی شما قرار گیرد و در صورت نیاز به هرگونه اصلاح، ادیت یا تغییر در کدها با کمال میل در خدمت خواهم بود.
-</details>
+## 📋 چک‌لیست نهایی
+
+- [x] تغییرات نامرتبط وارد PR نشده‌اند.
+- [x] متن‌های فارسی (`fa`) و انگلیسی (`en`) در `strings.js` و `updates.js` کاملاً همگام‌اند.
+- [x] نسخه و یادداشت‌های انتشار برای کاربر به‌روزرسانی شده‌اند.
+- [x] هیچ سکرت، آرتیفکت یا فایل موقتی کامیت نشده است (`PROJECT_STATE.md` در `.gitignore` ثبت است).
+- [x] سازگاری ۱۰۰٪ با طرح‌های ذخیره‌شده قبلی و حریم خصوصی کلاینت‌ساید کاربران حفظ شده است.
+
+---
+
+## 🤝 سخن پایانی با سازنده محترم
+
+تمامی کدهای این پول ریکوئست با نیت ارتقای پروژه و ایجاد تجربه‌ای لذت‌بخش‌تر برای کاربران فارسی‌زبان طراحی شده‌اند. 
+کدها کاملاً ماژولار و تفکیک‌شده هستند و هیچ تغییری رفتار پایه‌ای قبلی برنامه را مختل نمی‌کند.
+
+خواهشمند است هر جا که نیاز به اصلاح، بازنویسی، تغییر در استایل‌ها یا بهینه‌سازی دیدید بفرمایید تا در اسرع وقت اعمال کنم. پیشاپیش از وقتی که برای بررسی این مشارکت می‌گذارید سپاسگزارم.
