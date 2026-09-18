@@ -995,51 +995,65 @@ export default function App() {
         recursive: true
       }).catch(() => {})
 
+      let successfulSubsets = 0
+
       for (const fontUrl of gstaticUrls) {
-        const hash = btoa(fontUrl).replace(/[^a-zA-Z0-9]/g, '').substring(0, 16)
-        const fontFilePath = `fonts/${fontKey}-${hash}.woff2`
+        try {
+          const hash = btoa(fontUrl).replace(/[^a-zA-Z0-9]/g, '').substring(0, 16)
+          const fontFilePath = `fonts/${fontKey}-${hash}.woff2`
 
-        const woff2Exists = await Filesystem.stat({
-          path: fontFilePath,
-          directory: Directory.Data
-        }).then(() => true).catch(() => false)
-
-        let base64Data = ''
-
-        if (woff2Exists) {
-          const woff2File = await Filesystem.readFile({
+          const woff2Exists = await Filesystem.stat({
             path: fontFilePath,
             directory: Directory.Data
-          })
-          base64Data = woff2File.data
-        } else {
-          const fontRes = await fetch(fontUrl)
-          if (!fontRes.ok) throw new Error(`Failed to download font file: ${fontUrl}`)
-          const arrayBuffer = await fontRes.arrayBuffer()
-          
-          base64Data = arrayBufferToBase64(arrayBuffer)
+          }).then(() => true).catch(() => false)
 
-          await Filesystem.writeFile({
-            path: fontFilePath,
-            directory: Directory.Data,
-            data: base64Data
-          })
+          let base64Data = ''
+
+          if (woff2Exists) {
+            const woff2File = await Filesystem.readFile({
+              path: fontFilePath,
+              directory: Directory.Data
+            })
+            base64Data = woff2File.data
+            successfulSubsets++
+          } else {
+            const fontRes = await fetch(fontUrl)
+            if (fontRes.ok) {
+              const arrayBuffer = await fontRes.arrayBuffer()
+              base64Data = arrayBufferToBase64(arrayBuffer)
+              await Filesystem.writeFile({
+                path: fontFilePath,
+                directory: Directory.Data,
+                data: base64Data
+              })
+              successfulSubsets++
+            }
+          }
+
+          if (base64Data) {
+            const dataUri = `data:font/woff2;charset=utf-8;base64,${base64Data}`
+            localCssText = localCssText.split(fontUrl).join(dataUri)
+          }
+        } catch (fontErr) {
+          console.warn(`Font subset download issue for ${fontUrl}:`, fontErr)
         }
-
-        const dataUri = `data:font/woff2;charset=utf-8;base64,${base64Data}`
-        localCssText = localCssText.split(fontUrl).join(dataUri)
       }
 
-      await Filesystem.writeFile({
-        path: cssPath,
-        directory: Directory.Data,
-        data: localCssText,
-        encoding: 'utf8'
-      })
+      if (successfulSubsets > 0 || gstaticUrls.length === 0) {
+        await Filesystem.writeFile({
+          path: cssPath,
+          directory: Directory.Data,
+          data: localCssText,
+          encoding: 'utf8'
+        })
 
-      injectStyleBlock(f.id, localCssText)
-      setLoadedFontIds((prev) => new Set(prev).add(f.id))
-      setLoadingFontId((id) => (id === f.id ? null : id))
+        injectStyleBlock(f.id, localCssText)
+        setLoadedFontIds((prev) => new Set(prev).add(f.id))
+        setLoadingFontId((id) => (id === f.id ? null : id))
+        return
+      } else {
+        throw new Error('All font subsets failed to download')
+      }
     } catch (err) {
       console.error('Error loading native font:', err)
       setToast({ text: t('fontError'), type: 'error' })
@@ -1072,10 +1086,12 @@ export default function App() {
     if (!f || f.dataUrl) return Promise.resolve()
     if (loadedFontIds.has(f.id)) return Promise.resolve()
 
+    const familyName = f.family ? f.family.split(',')[0].trim().replace(/['"]/g, '') : ''
+
     // 1. Check if font is already available in document.fonts
-    if (typeof document !== 'undefined' && document.fonts && f.family) {
+    if (typeof document !== 'undefined' && document.fonts && familyName) {
       try {
-        if (document.fonts.check(`16px ${f.family}`)) {
+        if (document.fonts.check(`16px "${familyName}"`) || document.fonts.check(`16px ${f.family}`)) {
           setLoadedFontIds((prev) => new Set(prev).add(f.id))
           return Promise.resolve()
         }
@@ -1132,7 +1148,7 @@ export default function App() {
         // Check if font actually rendered in document.fonts before alarming
         let fontActuallyReady = false
         try {
-          if (document.fonts && f.family && document.fonts.check(`16px ${f.family}`)) {
+          if (document.fonts && familyName && (document.fonts.check(`16px "${familyName}"`) || document.fonts.check(`16px ${f.family}`))) {
             fontActuallyReady = true
           }
         } catch {
@@ -1147,24 +1163,36 @@ export default function App() {
         resolve()
       }
 
-      const timer = setTimeout(fail, 12000)
+      const timer = setTimeout(fail, 25000)
 
       const link = document.createElement('link')
       link.id = linkId
       link.rel = 'stylesheet'
-      link.crossOrigin = 'anonymous'
       link.href = url
 
       link.onload = () => {
-        if (document.fonts && f.family) {
-          document.fonts.load(`16px ${f.family}`).then(succeed).catch(succeed)
+        if (document.fonts && familyName) {
+          document.fonts.load(`16px "${familyName}"`).then(succeed).catch(succeed)
         } else {
           succeed()
         }
       }
 
       link.onerror = () => {
-        fail()
+        // Double-check if font succeeded or was already cached before failing
+        setTimeout(() => {
+          let fontActuallyReady = false
+          try {
+            if (document.fonts && familyName && (document.fonts.check(`16px "${familyName}"`) || document.fonts.check(`16px ${f.family}`))) {
+              fontActuallyReady = true
+            }
+          } catch {}
+          if (fontActuallyReady) {
+            succeed()
+          } else {
+            fail()
+          }
+        }, 1200)
       }
 
       document.head.appendChild(link)
