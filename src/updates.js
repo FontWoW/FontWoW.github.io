@@ -5,6 +5,32 @@
 // build once that release goes out.
 export const UPDATES = [
   {
+    version: '1.7.0',
+    date: '2026-09-18',
+    fa: {
+      title: 'استودیوی پیشرفته فونت‌واو: افکت‌های بصری، نوار ابزار بوم و ارگونومی دسکتاپ',
+      changes: [
+        'افزودن ۱۴ افکت متنی پیشرفته شامل سایبر نئون، سینت‌ویو رترو، سه‌بعدی پاپ، گلیچ دیجیتال، هولوگرام، ارورا و گرادیان‌های لوکس طلایی و اقیانوسی.',
+        'نوار ابزار سریع بوم (Canvas Quick-Bar) برای دسترسی آنی به ابعاد، استایل جعبه متن، مدیریت لایه‌ها و زوم سریع.',
+        'اسلایدر عمودی سایز قلم برای کنترل پیوسته، روان و بسیار دقیق اندازه فونت.',
+        'موتور اسکرول درگ ماوس روی دسکتاپ همراه با دکمه‌های ناوبری سریع در تمامی تب‌ها و نوارهای افقی ابزار.',
+        'بهینه‌سازی عمیق نسخه اندروید: پشتیبانی از دکمه بازگشت سخت‌افزاری، ذخیره مستقیم انیمیشن GIF در گالری سیستم، بازخورد لرزشی (Haptics) و کادر متن چندخطی.',
+        'رفع باگ زمان اجرای متغیرها (TDZ) و ارتقای مکانیزم کش آفلاین سرویس‌ورکر.'
+      ]
+    },
+    en: {
+      title: 'FontWoW Studio: Advanced Typography Effects, Quick-Bar & Desktop Ergonomics',
+      changes: [
+        'Added 14 advanced canvas typography effects including Cyber Neon, Retro Synthwave, Pop 3D, Glitch, Aurora, Hologram, and Luxury Gradients.',
+        'Canvas Quick-Bar for instant access to aspect ratios, text box styling, layer ordering, and quick zoom.',
+        'Vertical font size slider for seamless, real-time, high-precision typography scaling.',
+        'Desktop drag-to-scroll engine with zero-latency pointer mechanics and chevron navigation across all toolbars.',
+        'Enhanced native Android UX: Hardware back button handling, direct animated GIF export to system gallery, tactile haptic feedback, and multiline prompt support.',
+        'Engineered runtime TDZ crash protection and strengthened offline PWA service worker caching.'
+      ]
+    }
+  },
+  {
     version: '1.6.2',
     date: '2026-08-19',
     fa: {
