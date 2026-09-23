@@ -1,5 +1,5 @@
-const SHELL_CACHE = 'fontwow-shell-v1.4.1'
-const RUNTIME_CACHE = 'fontwow-runtime-v1'
+const SHELL_CACHE = 'fontwow-shell-v1.5.0'
+const RUNTIME_CACHE = 'fontwow-runtime-v1.5.0'
 const FONT_CACHE = 'fontwow-fonts-v1'
 const APP_SHELL = [
   '/',
@@ -176,6 +176,14 @@ self.addEventListener('fetch', function (event) {
     return
   }
   if (url.origin !== self.location.origin) return
+  if (
+    url.pathname.startsWith('/src/') ||
+    url.pathname.startsWith('/@') ||
+    url.pathname.startsWith('/__vite') ||
+    url.pathname.includes('node_modules')
+  ) {
+    return
+  }
   if (request.mode === 'navigate') {
     event.respondWith(staleWhileRevalidate(request))
     return

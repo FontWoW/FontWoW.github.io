@@ -1,8 +1,12 @@
 [
-  { "id": "t1", "label": "مینیمال", "fontId": "vazirmatn", "color": "#ffffff", "textBoxStyle": "none", "bgId": "grad-6", "effect": "none" },
-  { "id": "t2", "label": "نئون شب", "fontId": "righteous", "color": "#4dd0e1", "textBoxStyle": "none", "bgId": "solid-2", "effect": "neon" },
-  { "id": "t3", "label": "طلایی VIP", "fontId": "playfair", "color": "#ffd700", "textBoxStyle": "frame", "bgId": "solid-2", "effect": "gradient", "textGradient": "g1" },
-  { "id": "t4", "label": "پاستیلی", "fontId": "caveat", "color": "#ffffff", "textBoxStyle": "glass", "bgId": "f1", "effect": "none" },
-  { "id": "t5", "label": "خیابونی", "fontId": "bebas", "color": "#ffffff", "textBoxStyle": "box", "bgId": "grad-1", "effect": "none" },
-  { "id": "t6", "label": "رنگین‌کمانی", "fontId": "anton", "color": "#ffffff", "textBoxStyle": "none", "bgId": "solid-2", "effect": "gradient", "textGradient": "g6" }
+  {
+    "id": "t_sample",
+    "label": "نمونه: استوری شیک و درخشان",
+    "fontId": "vazirmatn",
+    "color": "#ffffff",
+    "textBoxStyle": "story",
+    "bgId": "grad-6",
+    "effect": "soft-bloom"
+  }
 ]
+
