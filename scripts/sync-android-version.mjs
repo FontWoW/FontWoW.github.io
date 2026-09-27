@@ -16,7 +16,9 @@ gradle = gradle.replace(/versionName "[^"]+"/, `versionName "${appVersion}"`)
 writeFileSync(gradleFile, gradle, 'utf8')
 
 const bullets = latest.fa.changes.map((line) => `- ${line}`).join('\n')
-const releaseBody = `version: ${appVersion}\n\n${latest.fa.title}\n${bullets}\n`
+const repo = process.env.GITHUB_REPOSITORY || 'omid-io/FontWoW.github.io'
+const directApkUrl = `https://github.com/${repo}/releases/download/latest/FontWoW-v${appVersion}.apk`
+const releaseBody = `version: ${appVersion}\n\n📱 **[دانلود مستقیم فایل نصب APK نسخه ${appVersion}](${directApkUrl})**\n\n### ${latest.fa.title}\n${bullets}\n`
 writeFileSync('release-notes.txt', releaseBody, 'utf8')
 
 if (process.env.GITHUB_OUTPUT) {

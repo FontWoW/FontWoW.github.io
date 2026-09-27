@@ -234,6 +234,14 @@ export const IconGrid = icon(
   </>,
 )
 export const IconChevronDown = icon(<path d="m6 9 6 6 6-6" />)
+export const IconChevronLeft = icon(<path d="m15 18-6-6 6-6" />)
+export const IconChevronRight = icon(<path d="m9 18 6-6-6-6" />)
+export const IconPin = icon(
+  <>
+    <line x1="12" y1="17" x2="12" y2="22" />
+    <path d="M5 17h14v-2a2 2 0 0 0-1-1.73l-2-1V6h1a1 1 0 0 0 0-2H8a1 1 0 0 0 0 2h1v6.27l-2 1A2 2 0 0 0 5 15v2z" />
+  </>
+)
 export const IconHistory = icon(
   <>
     <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
@@ -328,6 +336,20 @@ export const IconShare = icon(
     <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
     <polyline points="16 6 12 2 8 6" />
     <line x1="12" y1="2" x2="12" y2="15" />
+  </>
+)
+
+export const IconMaximize = icon(
+  <>
+    <path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3" />
+  </>
+)
+
+export const IconLayers = icon(
+  <>
+    <polygon points="12 2 2 7 12 12 22 7 12 2" />
+    <polyline points="2 17 12 22 22 17" />
+    <polyline points="2 12 12 17 22 12" />
   </>
 )
 

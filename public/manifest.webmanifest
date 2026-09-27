@@ -2,9 +2,9 @@
   "name": "FontWoW — متن‌آرایی آنلاین",
   "short_name": "FontWoW",
   "description": "ابزار متن‌آرایی آنلاین. متن خودت رو با فونت، رنگ و افکت‌های مختلف بساز و به‌صورت عکس ذخیره یا کپی کن.",
-  "id": "/",
-  "start_url": "/",
-  "scope": "/",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#0b0a12",
@@ -14,25 +14,25 @@
   "categories": ["utilities", "productivity", "photo"],
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-192.png",
+      "src": "icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
@@ -40,28 +40,28 @@
   ],
   "screenshots": [
     {
-      "src": "/screenshots/screen-wide.png",
+      "src": "screenshots/screen-wide.png",
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",
       "label": "FontWoW on desktop — editor, layout, and export"
     },
     {
-      "src": "/screenshots/screen-editor.png",
+      "src": "screenshots/screen-editor.png",
       "sizes": "390x844",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "ادیتور — نوشتن و استایل‌دهی متن"
     },
     {
-      "src": "/screenshots/screen-layout.png",
+      "src": "screenshots/screen-layout.png",
       "sizes": "390x844",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "چیدمان و تنظیمات"
     },
     {
-      "src": "/screenshots/screen-save.png",
+      "src": "screenshots/screen-save.png",
       "sizes": "390x844",
       "type": "image/png",
       "form_factor": "narrow",

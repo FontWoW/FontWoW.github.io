@@ -20,7 +20,7 @@ concurrency:
 jobs:
   zap-baseline:
     name: OWASP ZAP baseline
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    if: github.repository == 'FontWoW/FontWoW.github.io' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
