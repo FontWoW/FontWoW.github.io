@@ -43,6 +43,18 @@ export const IconDownload = icon(
   </>,
 )
 export const IconArrowUp = icon(<path d="M12 19V5M5 12l7-7 7 7" />)
+export const IconLock = icon(
+  <>
+    <rect x="5" y="11" width="14" height="10" rx="2" />
+    <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+  </>,
+)
+export const IconLockOpen = icon(
+  <>
+    <rect x="5" y="11" width="14" height="10" rx="2" />
+    <path d="M8 11V7a4 4 0 0 1 7.5-2" />
+  </>,
+)
 export const IconArrowDown = icon(<path d="M12 5v14M19 12l-7 7-7-7" />)
 export const IconImages = icon(
   <>
