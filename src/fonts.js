@@ -212,6 +212,7 @@ export const TEXT_EFFECTS = [
   { id: 'none', label: 'بدون افکت' },
   { id: 'gradient', label: 'گرادیان' },
   { id: 'neon', label: 'نئون' },
+  { id: 'retro16', label: '۱۶ بیت' },
 ]
 
 export const TEXT_GRADIENTS = [
