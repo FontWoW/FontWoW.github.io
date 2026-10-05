@@ -1,4 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
 :root {
+  /* Original Theme (default) */
   --bg-0: #0b0a12;
   --bg-1: #14121e;
   --surface-1: #191724;
@@ -20,6 +23,40 @@
   --dur-slow: 0.55s;
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ===== 16-bit SNES Theme ===== */
+.theme-retro16 {
+  --bg-0: #0e1621;
+  --bg-1: #162033;
+  --surface-1: #1e2d44;
+  --surface-2: #283d58;
+  --surface-3: #34506e;
+  --border-1: #3d5f84;
+  --border-2: #4d7399;
+  --text-1: #e8e0f0;
+  --text-2: #a098b8;
+  --text-3: #706888;
+  --r-s: 3px;
+  --r-m: 6px;
+  --r-l: 10px;
+  --r-pill: 999px;
+  --shadow-1: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-pop: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --dur-fast: 0.12s;
+  --dur-med: 0.2s;
+  --dur-slow: 0.35s;
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --snes-gold: #f0c040;
+  --snes-blue: #4888f8;
+  --snes-green: #50b868;
+  --snes-red: #e85060;
+  --snes-cyan: #48d8d8;
+  --snes-magenta: #b060d8;
+  --snes-orange: #e89848;
+  --snes-white: #f0e8f8;
+  --snes-black: #0a0a14;
 }
 
 * {
@@ -45,6 +82,13 @@ body {
   inset: 0;
   -webkit-user-select: none;
   user-select: none;
+}
+
+.theme-retro16 body,
+body.theme-retro16 {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  line-height: 1.8;
 }
 
 body.landing-mode {
