@@ -16,8 +16,93 @@ function describe(err) {
   return err?.message || String(err ?? 'unknown error')
 }
 
-export async function saveImageNative(dataUrl, fileName) {
-  await FontWowNative.saveImage({ data: dataUrlToBase64(dataUrl), fileName })
+export async function saveImageNative(dataUrl, fileName, mimeType = 'image/png') {
+  await FontWowNative.saveImage({ data: dataUrlToBase64(dataUrl), fileName, mimeType })
+}
+
+export async function saveMediaNative(base64Data, fileName, mimeType = 'image/png') {
+  await FontWowNative.saveImage({ data: base64Data, fileName, mimeType })
+}
+
+export async function triggerHaptic(style = 'light') {
+  if (isNative()) {
+    try {
+      const { Haptics, ImpactStyle } = await import('@capacitor/haptics')
+      const map = {
+        light: ImpactStyle.Light,
+        medium: ImpactStyle.Medium,
+        heavy: ImpactStyle.Heavy,
+      }
+      await Haptics.impact({ style: map[style] || ImpactStyle.Light })
+      return
+    } catch {
+      // Fall through to navigator.vibrate
+    }
+  }
+  if (typeof navigator !== 'undefined' && navigator.vibrate) {
+    try {
+      const duration = style === 'heavy' ? 30 : style === 'medium' ? 20 : 10
+      navigator.vibrate(duration)
+    } catch {
+      // Ignore vibration failures
+    }
+  }
+}
+
+export function registerHardwareBackHandler(callback) {
+  if (!isNative()) return () => {}
+  let removeListener = null
+  let active = true
+
+  import('@capacitor/app').then(({ App }) => {
+    if (!active) return
+    App.addListener('backButton', () => {
+      const handled = callback()
+      if (!handled) {
+        App.exitApp()
+      }
+    }).then((listener) => {
+      if (active) {
+        removeListener = () => listener.remove()
+      } else {
+        listener.remove()
+      }
+    }).catch((err) => {
+      console.warn('Failed to attach backButton listener:', err)
+    })
+  }).catch((err) => {
+    console.warn('Failed to import @capacitor/app:', err)
+  })
+
+  return () => {
+    active = false
+    if (removeListener) removeListener()
+  }
+}
+
+export async function setupBackButton(handler) {
+  if (!isNative()) return () => {}
+  try {
+    const { App } = await import('@capacitor/app')
+    const listener = await App.addListener('backButton', handler)
+    return () => {
+      listener?.remove?.()
+    }
+  } catch (err) {
+    console.warn('Failed to setup native backButton listener:', err)
+    return () => {}
+  }
+}
+
+export async function exitAppNative() {
+  if (isNative()) {
+    try {
+      const { App } = await import('@capacitor/app')
+      await App.exitApp()
+    } catch (err) {
+      console.warn('exitApp failed:', err)
+    }
+  }
 }
 
 export async function shareFileNative(data, fileName) {

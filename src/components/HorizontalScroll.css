@@ -1,0 +1,133 @@
+.hz-scroll-container {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.hz-scroll-track {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: auto !important;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hz-scroll-track::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* Mouse pointer grab styling for desktop */
+@media (pointer: fine) {
+  .hz-scroll-track {
+    cursor: grab;
+  }
+}
+
+.hz-scroll-container.is-dragging .hz-scroll-track {
+  cursor: grabbing !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+/* Smart Edge Gradient Fades */
+.hz-scroll-fade {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 32px;
+  z-index: 6;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.hz-scroll-fade.hz-fade-left {
+  left: 0;
+  background: linear-gradient(to right, rgba(14, 11, 26, 0.95) 0%, rgba(14, 11, 26, 0.4) 60%, transparent 100%);
+  border-top-left-radius: inherit;
+  border-bottom-left-radius: inherit;
+}
+
+.hz-scroll-fade.hz-fade-right {
+  right: 0;
+  background: linear-gradient(to left, rgba(14, 11, 26, 0.95) 0%, rgba(14, 11, 26, 0.4) 60%, transparent 100%);
+  border-top-right-radius: inherit;
+  border-bottom-right-radius: inherit;
+}
+
+.hz-scroll-fade.visible {
+  opacity: 1;
+}
+
+/* Glassmorphic Chevron Navigation Buttons */
+.hz-scroll-chevron {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%) scale(0.85);
+  z-index: 7;
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+  padding: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(28, 22, 45, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #e2d9f3;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.hz-scroll-chevron.hz-chevron-left {
+  left: 4px;
+}
+
+.hz-scroll-chevron.hz-chevron-right {
+  right: 4px;
+}
+
+.hz-scroll-chevron.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(-50%) scale(1);
+}
+
+.hz-scroll-chevron:hover {
+  background: rgba(139, 92, 246, 0.85);
+  border-color: rgba(196, 181, 253, 0.5);
+  color: #ffffff;
+  box-shadow: 0 6px 18px rgba(139, 92, 246, 0.4);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.hz-scroll-chevron:active {
+  transform: translateY(-50%) scale(0.94);
+}
+
+/* On mobile/touch, chevrons remain subtly accessible or hidden if swipe is preferred */
+@media (hover: none) and (pointer: coarse) {
+  .hz-scroll-chevron {
+    display: none;
+  }
+  .hz-scroll-fade {
+    width: 20px;
+  }
+}
