@@ -1,16 +1,18 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { toPng, toBlob } from 'html-to-image'
-import { isNative, saveImageNative, shareFileNative, copyImageNative, copyTextNative, openExternalUrl } from './native'
+import { isNative, saveImageNative, saveMediaNative, shareFileNative, copyImageNative, copyTextNative, openExternalUrl, registerHardwareBackHandler, triggerHaptic } from './native'
 import {
   FONTS,
   FONT_CATEGORIES,
   BACKGROUNDS,
   BG_CATEGORIES,
+  BG_COLLECTIONS,
   BG_TEMPLATES,
   ALL_BACKGROUNDS,
   TEXT_BOX_STYLES,
   TEXT_COLORS,
   THEME_COLORS,
+  getThemeStageGradient,
   googleFontsUrlForFont,
   googleFontsUrlFor,
   TEXT_EFFECTS,
@@ -20,7 +22,7 @@ import {
 } from './fonts'
 import * as I from './icons'
 import { STRINGS } from './strings'
-import { LABEL_ASSETS, LabelArtwork } from './labels'
+import { LABEL_ASSETS, LABEL_CATEGORIES, LabelArtwork } from './labels'
 import { useDesignHistory } from './useDesignHistory'
 import googleFontsList from './google-fonts.json'
 import { UPDATES, APP_VERSION } from './updates'
@@ -30,18 +32,41 @@ import PromptSheet from './PromptSheet'
 import MediaSupporters from './MediaSupporters'
 import FontGoals from './FontGoals'
 import logger from './logger'
+import HorizontalScroll from './components/HorizontalScroll'
 import './App.css'
 import './Landing.css'
 
-const STORAGE_KEY = 'fontwow_saved_v1'
-const SETTINGS_KEY = 'fontwow_settings_v1'
-const CUSTOM_FONTS_KEY = 'fontwow_custom_fonts_v1'
-const CUSTOM_TEMPLATES_KEY = 'fontwow_custom_templates_v1'
-const APP_SETTINGS_KEY = 'fontwow_app_settings_v1'
+const STORAGE_KEY = 'fontwow_saved_v2'
+const SETTINGS_KEY = 'fontwow_settings_v2'
+const CUSTOM_FONTS_KEY = 'fontwow_custom_fonts_v2'
+const PINNED_FONTS_KEY = 'fontwow_pinned_fonts_v2'
+const CUSTOM_TEMPLATES_KEY = 'fontwow_custom_templates_v2'
+const APP_SETTINGS_KEY = 'fontwow_app_settings_v2'
 const DONATE_URL = 'https://daramet.com/fontwow'
 const CRYPTO_DONATE_URL = 'https://pay.oxapay.com/15417059'
 const REPO_URL = 'https://github.com/FontWoW/FontWoW.github.io'
 const CONTRIBUTORS_API = 'https://api.github.com/repos/FontWoW/FontWoW.github.io/contributors'
+
+// Wiping cache and stored settings for fresh start from zero
+if (typeof window !== 'undefined' && window.localStorage) {
+  try {
+    const legacyKeys = [
+      'fontwow_saved_v1',
+      'fontwow_settings_v1',
+      'fontwow_custom_fonts_v1',
+      'fontwow_pinned_fonts_v1',
+      'fontwow_custom_templates_v1',
+      'fontwow_app_settings_v1',
+      'fontwow_dismissed_ios_prompt',
+      'fontwow_settings_v2',
+      'fontwow_app_settings_v2',
+    ]
+    if (!sessionStorage.getItem('fontwow_fresh_start_cleared')) {
+      legacyKeys.forEach((k) => localStorage.removeItem(k))
+      sessionStorage.setItem('fontwow_fresh_start_cleared', '1')
+    }
+  } catch {}
+}
 
 function loadJSON(key, fallback) {
   try {
@@ -84,6 +109,99 @@ function imageFromUrl(src) {
     image.onerror = reject
     image.src = src
   })
+}
+
+async function trimTransparentImage(dataUrl, padding = 16) {
+  try {
+    const img = await imageFromUrl(dataUrl)
+    const canvas = document.createElement('canvas')
+    canvas.width = img.width
+    canvas.height = img.height
+    const ctx = canvas.getContext('2d', { willReadFrequently: true })
+    if (!ctx) return dataUrl
+    ctx.drawImage(img, 0, 0)
+
+    const w = canvas.width
+    const h = canvas.height
+    const imgData = ctx.getImageData(0, 0, w, h)
+    const data = imgData.data
+
+    let minY = -1
+    for (let y = 0; y < h; y++) {
+      const rowOffset = y * w * 4
+      for (let x = 0; x < w; x++) {
+        if (data[rowOffset + x * 4 + 3] > 6) {
+          minY = y
+          break
+        }
+      }
+      if (minY !== -1) break
+    }
+
+    if (minY === -1) return dataUrl
+
+    let maxY = -1
+    for (let y = h - 1; y >= minY; y--) {
+      const rowOffset = y * w * 4
+      for (let x = 0; x < w; x++) {
+        if (data[rowOffset + x * 4 + 3] > 6) {
+          maxY = y
+          break
+        }
+      }
+      if (maxY !== -1) break
+    }
+
+    let minX = w
+    let maxX = -1
+    for (let y = minY; y <= maxY; y++) {
+      const rowOffset = y * w * 4
+      for (let x = 0; x < minX; x++) {
+        if (data[rowOffset + x * 4 + 3] > 6) {
+          minX = x
+          break
+        }
+      }
+      for (let x = w - 1; x > maxX; x--) {
+        if (data[rowOffset + x * 4 + 3] > 6) {
+          maxX = x
+          break
+        }
+      }
+    }
+
+    if (maxX < minX || maxY < minY) return dataUrl
+
+    const safeMinX = Math.max(0, minX - padding)
+    const safeMinY = Math.max(0, minY - padding)
+    const safeMaxX = Math.min(w, maxX + padding + 1)
+    const safeMaxY = Math.min(h, maxY + padding + 1)
+
+    const cropW = safeMaxX - safeMinX
+    const cropH = safeMaxY - safeMinY
+
+    const TARGET_WIDTH = 900
+    let scale = TARGET_WIDTH / cropW
+    if (cropH * scale > 1600) {
+      scale = 1600 / cropH
+    }
+    const outW = Math.max(1, Math.round(cropW * scale))
+    const outH = Math.max(1, Math.round(cropH * scale))
+
+    const croppedCanvas = document.createElement('canvas')
+    croppedCanvas.width = outW
+    croppedCanvas.height = outH
+    const croppedCtx = croppedCanvas.getContext('2d')
+    if (!croppedCtx) return dataUrl
+    croppedCtx.imageSmoothingEnabled = true
+    croppedCtx.imageSmoothingQuality = 'high'
+    croppedCtx.drawImage(canvas, safeMinX, safeMinY, cropW, cropH, 0, 0, outW, outH)
+
+    return croppedCanvas.toDataURL('image/png')
+  } catch (e) {
+    console.warn('Trim transparent image error, using untrimmed:', e)
+    return dataUrl
+  }
 }
 
 function bytesToBase64(bytes) {
@@ -144,32 +262,170 @@ function CurvedText({ text, mode, bend, style }) {
   )
 }
 
-function boxStyleFor(styleId, color) {
-  switch (styleId) {
-    case 'box':
+function boxStyleFor(styleId, color, custom = {}) {
+  const { boxBgColor, boxOpacity = 85, boxRadius, boxPadding } = custom
+  const alpha = Math.max(0.1, Math.min(1, (boxOpacity ?? 85) / 100))
+
+  const getCustomBg = (defaultBg) => {
+    if (!boxBgColor) return defaultBg
+    if (boxBgColor.startsWith('#')) {
+      const hex = boxBgColor.replace('#', '')
+      const r = parseInt(hex.slice(0, 2), 16) || 0
+      const g = parseInt(hex.slice(2, 4), 16) || 0
+      const b = parseInt(hex.slice(4, 6), 16) || 0
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`
+    }
+    return boxBgColor
+  }
+
+  const style = (() => {
+    switch (styleId) {
+    case 'story':
       return {
-        background: 'rgba(0,0,0,0.35)',
-        padding: '10px 20px',
-        borderRadius: '10px',
-      }
-    case 'underline':
-      return { borderBottom: `4px solid ${color}`, paddingBottom: '8px' }
-    case 'frame':
-      return {
-        border: `2px solid ${color}`,
-        padding: '10px 20px',
-        borderRadius: '8px',
+        background: getCustomBg(`linear-gradient(135deg, rgba(131, 58, 180, ${alpha * 0.95}) 0%, rgba(253, 29, 29, ${alpha * 0.95}) 50%, rgba(252, 176, 69, ${alpha * 0.95}) 100%)`),
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        padding: boxPadding ? `${boxPadding}px ${Math.round(boxPadding * 1.6)}px` : '14px 26px',
+        borderRadius: boxRadius !== null && boxRadius !== undefined ? `${boxRadius}px` : '14px',
+        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.22)',
       }
     case 'glass':
       return {
-        background: 'rgba(255,255,255,0.14)',
-        backdropFilter: 'blur(8px)',
-        padding: '10px 20px',
-        borderRadius: '14px',
+        background: getCustomBg(`rgba(255, 255, 255, ${Math.min(0.25, alpha * 0.16)})`),
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        border: '1px solid rgba(255, 255, 255, 0.32)',
+        borderRadius: boxRadius !== null && boxRadius !== undefined ? `${boxRadius}px` : '20px',
+        padding: boxPadding ? `${boxPadding}px ${Math.round(boxPadding * 1.6)}px` : '16px 28px',
+        boxShadow: '0 16px 40px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.45)',
+      }
+    case 'dark-glass':
+      return {
+        background: getCustomBg(`rgba(15, 15, 22, ${alpha * 0.8})`),
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        border: '1px solid rgba(255, 255, 255, 0.12)',
+        borderRadius: boxRadius !== null && boxRadius !== undefined ? `${boxRadius}px` : '20px',
+        padding: boxPadding ? `${boxPadding}px ${Math.round(boxPadding * 1.6)}px` : '16px 28px',
+        boxShadow: '0 16px 40px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+      }
+    case 'pill':
+      return {
+        background: getCustomBg(`rgba(10, 10, 16, ${alpha * 0.85})`),
+        border: '1.5px solid rgba(255, 255, 255, 0.22)',
+        borderRadius: boxRadius !== null && boxRadius !== undefined ? `${boxRadius}px` : '9999px',
+        padding: boxPadding ? `${Math.round(boxPadding * 0.8)}px ${Math.round(boxPadding * 2)}px` : '12px 32px',
+        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)',
+      }
+    case 'frame':
+      return {
+        background: getCustomBg('transparent'),
+        border: `2px solid ${color}`,
+        borderRadius: boxRadius !== null && boxRadius !== undefined ? `${boxRadius}px` : '14px',
+        padding: boxPadding ? `${boxPadding}px ${Math.round(boxPadding * 1.5)}px` : '14px 26px',
+        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.15)',
+      }
+    case 'double-frame':
+      return {
+        background: getCustomBg('transparent'),
+        border: `2px solid ${color}`,
+        outline: `1.5px solid ${color}`,
+        outlineOffset: '5px',
+        borderRadius: boxRadius !== null && boxRadius !== undefined ? `${boxRadius}px` : '12px',
+        padding: boxPadding ? `${boxPadding}px ${Math.round(boxPadding * 1.4)}px` : '16px 26px',
+      }
+    case 'neon-box':
+      return {
+        background: getCustomBg(`rgba(10, 10, 18, ${alpha * 0.9})`),
+        border: `2px solid ${color}`,
+        borderRadius: boxRadius !== null && boxRadius !== undefined ? `${boxRadius}px` : '16px',
+        padding: boxPadding ? `${boxPadding}px ${Math.round(boxPadding * 1.6)}px` : '16px 28px',
+        boxShadow: `0 0 20px ${color}, inset 0 0 12px ${color}33`,
+      }
+    case 'quote':
+      return {
+        background: getCustomBg(`rgba(255, 255, 255, ${Math.min(0.2, alpha * 0.14)})`),
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        borderInlineStart: `4px solid ${color}`,
+        borderRadius: boxRadius !== null && boxRadius !== undefined ? `${boxRadius}px` : '14px',
+        padding: boxPadding ? `${boxPadding}px ${Math.round(boxPadding * 1.6)}px` : '18px 30px',
+        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.15)',
+      }
+    case 'mac':
+      return {
+        background: getCustomBg(`rgba(250, 250, 252, ${alpha * 0.95})`),
+        border: '1px solid rgba(200, 200, 210, 0.6)',
+        borderRadius: boxRadius !== null && boxRadius !== undefined ? `${boxRadius}px` : '16px',
+        padding: boxPadding ? `${boxPadding + 28}px ${boxPadding}px ${boxPadding}px` : '44px 24px 20px',
+        boxShadow: '0 20px 48px rgba(0, 0, 0, 0.28)',
+        color: !boxBgColor && color === '#ffffff' ? '#1c1c1e' : color,
+      }
+    case 'terminal':
+      return {
+        background: getCustomBg(`rgba(20, 20, 28, ${alpha * 0.96})`),
+        border: '1px solid rgba(80, 80, 100, 0.5)',
+        borderRadius: boxRadius !== null && boxRadius !== undefined ? `${boxRadius}px` : '14px',
+        padding: boxPadding ? `${boxPadding + 26}px ${boxPadding}px ${boxPadding}px` : '42px 24px 18px',
+        boxShadow: '0 20px 50px rgba(0, 0, 0, 0.4)',
+      }
+    case 'note':
+      return {
+        background: getCustomBg(`rgba(254, 253, 246, ${alpha * 0.98})`),
+        border: '1px solid rgba(220, 215, 195, 0.7)',
+        borderRadius: boxRadius !== null && boxRadius !== undefined ? `${boxRadius}px` : '16px',
+        padding: boxPadding ? `${boxPadding + 22}px ${boxPadding}px ${boxPadding}px` : '38px 24px 20px',
+        boxShadow: '0 12px 32px rgba(0, 0, 0, 0.12)',
+        color: !boxBgColor && color === '#ffffff' ? '#2c2c2e' : color,
+      }
+    case 'sms':
+      return {
+        background: getCustomBg(`rgba(10, 132, 255, ${alpha * 0.92})`),
+        borderRadius: boxRadius !== null && boxRadius !== undefined ? `${boxRadius}px` : '22px',
+        padding: boxPadding ? `${boxPadding}px ${Math.round(boxPadding * 1.4)}px` : '14px 24px',
+        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)',
+      }
+    case 'highlight':
+      return {
+        background: getCustomBg(`rgba(255, 215, 0, ${alpha * 0.45})`),
+        borderRadius: boxRadius !== null && boxRadius !== undefined ? `${boxRadius}px` : '6px',
+        padding: boxPadding ? `${Math.round(boxPadding * 0.4)}px ${boxPadding}px` : '6px 18px',
+        boxDecorationBreak: 'clone',
+        WebkitBoxDecorationBreak: 'clone',
+      }
+    case 'ticket':
+      return {
+        background: getCustomBg(`rgba(24, 24, 34, ${alpha * 0.92})`),
+        border: `2px dashed ${color}88`,
+        borderRadius: boxRadius !== null && boxRadius !== undefined ? `${boxRadius}px` : '14px',
+        padding: boxPadding ? `${boxPadding}px ${Math.round(boxPadding * 1.5)}px` : '16px 26px',
+        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.22)',
+      }
+    case 'box':
+      return {
+        background: getCustomBg(`rgba(0, 0, 0, ${alpha * 0.65})`),
+        padding: boxPadding ? `${boxPadding}px ${Math.round(boxPadding * 1.5)}px` : '12px 24px',
+        borderRadius: boxRadius !== null && boxRadius !== undefined ? `${boxRadius}px` : '12px',
+      }
+    case 'underline':
+      return {
+        borderBottom: `4px solid ${color}`,
+        paddingBottom: boxPadding ? `${boxPadding}px` : '8px',
       }
     default:
       return {}
-  }
+    }
+  })()
+
+  return styleId !== 'none' && Object.keys(style).length > 0 ? { ...style, boxSizing: 'border-box' } : style
+}
+
+const BASE_DIMENSIONS = {
+  story: { width: 540, height: 960 },     // 9:16 (Instagram Story / Status)
+  square: { width: 640, height: 640 },    // 1:1 (Square Post)
+  portrait: { width: 540, height: 675 },  // 4:5 (Portrait Post)
+  landscape: { width: 960, height: 540 }, // 16:9 (Landscape)
+  free: { width: 540, height: 810 },      // 2:3 (Balanced Proportion for Free Aspect)
 }
 
 const defaultState = {
@@ -185,14 +441,22 @@ const defaultState = {
   opacity: 100,
   margin: 24,
   textBoxStyle: 'none',
+  boxBgColor: null,
+  boxOpacity: 85,
+  boxRadius: null,
+  boxPadding: null,
   color: '#ffffff',
-  bgId: 'none',
+  bgEnabled: false,
+  bgId: 'solid-2',
   customBgUrl: null,
+  customBgColor: '#8b5cf6',
+  customBgGradient: 'linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%)',
   align: 'center',
   letterSpacing: 0,
   lineHeight: 1.4,
   direction: 'rtl',
   effect: 'none',
+  effectColor: null,
   textGradient: 'g1',
   aspectRatio: 'free',
   bgFilter: { brightness: 100, contrast: 100, blur: 0, grayscale: 0 },
@@ -206,6 +470,8 @@ const defaultState = {
   animationType: 'rise',
   layers: [],
   activeLayerId: null,
+  textX: 50,
+  textY: 50,
 }
 
 const defaultAppSettings = {
@@ -321,10 +587,17 @@ export default function App() {
     ...defaultAppSettings,
     ...loadJSON(APP_SETTINGS_KEY, {}),
   }))
+  const t = useCallback((key) => STRINGS[appSettings.lang]?.[key] ?? STRINGS.fa[key] ?? key, [appSettings.lang])
   const [tab, setTab] = useState('font')
+  const [isControlsOpen, setIsControlsOpen] = useState(false)
   const [fontLang, setFontLang] = useState('fa')
   const [dragGuides, setDragGuides] = useState({ x: null, y: null })
-  const [bgCategory, setBgCategory] = useState('colors')
+  const [bgCategory, setBgCategory] = useState('solid')
+  const [showGradientBuilder, setShowGradientBuilder] = useState(false)
+  const [gradColor1, setGradColor1] = useState('#8e2de2')
+  const [gradColor2, setGradColor2] = useState('#4a00e0')
+  const [gradAngle, setGradAngle] = useState(135)
+  const [gradType, setGradType] = useState('linear')
   const [showSave, setShowSave] = useState(false)
   const [showGallery, setShowGallery] = useState(false)
   const [showDonate, setShowDonate] = useState(false)
@@ -345,10 +618,12 @@ export default function App() {
   const [saved, setSaved] = useState(() => normalizeSaved(loadJSON(STORAGE_KEY, [])))
   const [expandedEntry, setExpandedEntry] = useState(null)
   const [customFonts, setCustomFonts] = useState(() => loadJSON(CUSTOM_FONTS_KEY, []))
+  const [pinnedFontIds, setPinnedFontIds] = useState(() => loadJSON(PINNED_FONTS_KEY, []))
   const [customTemplates, setCustomTemplates] = useState(() => loadJSON(CUSTOM_TEMPLATES_KEY, []))
   const [showStyleStudio, setShowStyleStudio] = useState(false)
   const [styleName, setStyleName] = useState('')
   const [showLabelPicker, setShowLabelPicker] = useState(false)
+  const [labelCategory, setLabelCategory] = useState('all')
   const [toast, setToast] = useState('')
   const [availableUpdate, setAvailableUpdate] = useState(null)
   const [showGoogleFontsSearch, setShowGoogleFontsSearch] = useState(false)
@@ -356,12 +631,165 @@ export default function App() {
   const [promptState, setPromptState] = useState(null)
   const [isExportingGif, setIsExportingGif] = useState(false)
   const [isExportingVideo, setIsExportingVideo] = useState(false)
+  const [exportLoading, setExportLoading] = useState(null)
   const previewRef = useRef(null)
+  const stageRef = useRef(null)
   const textRef = useRef(null)
   const tabsRef = useRef(null)
+  const artboardScaleRef = useRef(1)
+  const [stageDimensions, setStageDimensions] = useState({ width: 0, height: 0 })
+
+  useEffect(() => {
+    if (!stageRef.current) return
+    let rafId = null
+    const updateSize = () => {
+      if (rafId) cancelAnimationFrame(rafId)
+      rafId = requestAnimationFrame(() => {
+        if (!stageRef.current) return
+        const rect = stageRef.current.getBoundingClientRect()
+        const nextW = Math.round(rect.width)
+        const nextH = Math.round(rect.height)
+        setStageDimensions((prev) => {
+          if (prev.width === nextW && prev.height === nextH) return prev
+          return { width: nextW, height: nextH }
+        })
+      })
+    }
+    updateSize()
+    const ro = new ResizeObserver(updateSize)
+    ro.observe(stageRef.current)
+    window.addEventListener('resize', updateSize)
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId)
+      ro.disconnect()
+      window.removeEventListener('resize', updateSize)
+    }
+  }, [])
+
+  const lastBackPressRef = useRef(0)
+  useEffect(() => {
+    return registerHardwareBackHandler(() => {
+      if (promptState) {
+        setPromptState(null)
+        return true
+      }
+      if (showSave) {
+        setShowSave(false)
+        return true
+      }
+      if (showGallery) {
+        setShowGallery(false)
+        return true
+      }
+      if (showSettings) {
+        setShowSettings(false)
+        return true
+      }
+      if (showDonate) {
+        setShowDonate(false)
+        return true
+      }
+      if (showChangelog) {
+        setShowChangelog(false)
+        return true
+      }
+      if (showAbout) {
+        setShowAbout(false)
+        return true
+      }
+      if (showDiagnostics) {
+        setShowDiagnostics(false)
+        return true
+      }
+      if (showGoogleFontsSearch) {
+        setShowGoogleFontsSearch(false)
+        return true
+      }
+      if (showStyleStudio) {
+        setShowStyleStudio(false)
+        return true
+      }
+      if (showLabelPicker) {
+        setShowLabelPicker(false)
+        return true
+      }
+      if (state.activeLayerId) {
+        update({ activeLayerId: null })
+        return true
+      }
+      const now = Date.now()
+      if (now - lastBackPressRef.current < 2000) {
+        return false
+      }
+      lastBackPressRef.current = now
+      setToast(t('backToExit') || 'برای خروج دوباره دکمه بازگشت را بزنید')
+      return true
+    })
+  }, [
+    promptState,
+    showSave,
+    showGallery,
+    showSettings,
+    showDonate,
+    showChangelog,
+    showAbout,
+    showDiagnostics,
+    showGoogleFontsSearch,
+    showStyleStudio,
+    showLabelPicker,
+    state.activeLayerId,
+    t,
+    update,
+  ])
+
+
   // Keep the selected layer id fresh for the once-bound keydown handler.
   const activeLayerIdRef = useRef(state.activeLayerId)
   activeLayerIdRef.current = state.activeLayerId
+
+  const grabDragStartY = useRef(null)
+  const grabHasMoved = useRef(false)
+
+  const handleControlsGrabPointerDown = useCallback(
+    (e) => {
+      grabDragStartY.current = e.clientY
+      grabHasMoved.current = false
+      const startY = e.clientY
+
+      function onPointerMove(ev) {
+        if (grabDragStartY.current === null) return
+        const deltaY = ev.clientY - startY
+        if (Math.abs(deltaY) > 8) {
+          grabHasMoved.current = true
+        }
+        if (isControlsOpen && deltaY > 26) {
+          setIsControlsOpen(false)
+          triggerHaptic('light')
+          cleanup()
+        } else if (!isControlsOpen && deltaY < -26) {
+          setIsControlsOpen(true)
+          triggerHaptic('light')
+          cleanup()
+        }
+      }
+
+      function onPointerUp() {
+        cleanup()
+      }
+
+      function cleanup() {
+        grabDragStartY.current = null
+        window.removeEventListener('pointermove', onPointerMove)
+        window.removeEventListener('pointerup', onPointerUp)
+        window.removeEventListener('pointercancel', onPointerUp)
+      }
+
+      window.addEventListener('pointermove', onPointerMove)
+      window.addEventListener('pointerup', onPointerUp)
+      window.addEventListener('pointercancel', onPointerUp)
+    },
+    [isControlsOpen]
+  )
 
   const [showIOSPrompt, setShowIOSPrompt] = useState(() => {
     if (isNative()) return false
@@ -390,22 +818,45 @@ export default function App() {
     ]
   }, [searchQuery])
 
-  const t = useCallback((key) => STRINGS[appSettings.lang]?.[key] ?? STRINGS.fa[key] ?? key, [appSettings.lang])
-
   const allFonts = useMemo(() => [...FONTS, ...customFonts], [customFonts])
-  const visibleFonts = useMemo(
-    () => allFonts.filter((f) => f.dataUrl || f.lang === fontLang),
-    [allFonts, fontLang]
-  )
+  const visibleFonts = useMemo(() => {
+    const list = allFonts.filter((f) => f.dataUrl || f.lang === fontLang)
+    return [...list].sort((a, b) => {
+      const aIdx = pinnedFontIds.indexOf(a.id)
+      const bIdx = pinnedFontIds.indexOf(b.id)
+      const aPinned = aIdx !== -1
+      const bPinned = bIdx !== -1
+      if (aPinned && bPinned) return aIdx - bIdx
+      if (aPinned) return -1
+      if (bPinned) return 1
+      return 0
+    })
+  }, [allFonts, fontLang, pinnedFontIds])
   const font = useMemo(
     () => allFonts.find((f) => f.id === state.fontId) ?? allFonts[0],
     [allFonts, state.fontId]
   )
-  const bg = useMemo(
-    () => ALL_BACKGROUNDS.find((b) => b.id === state.bgId) ?? ALL_BACKGROUNDS[0],
-    [state.bgId]
-  )
+  const currentCustomGradient = useMemo(() => {
+    if (gradType === 'radial') {
+      return `radial-gradient(circle at center, ${gradColor1} 0%, ${gradColor2} 100%)`
+    }
+    return `linear-gradient(${gradAngle}deg, ${gradColor1} 0%, ${gradColor2} 100%)`
+  }, [gradType, gradAngle, gradColor1, gradColor2])
+
+  const bg = useMemo(() => {
+    if (state.bgId === 'custom-color') {
+      return { id: 'custom-color', label: 'رنگ سفارشی', css: state.customBgColor || '#8b5cf6' }
+    }
+    if (state.bgId === 'custom-gradient') {
+      return { id: 'custom-gradient', label: 'گرادیان سفارشی', css: state.customBgGradient || currentCustomGradient }
+    }
+    return ALL_BACKGROUNDS.find((b) => b.id === state.bgId) ?? ALL_BACKGROUNDS[0]
+  }, [state.bgId, state.customBgColor, state.customBgGradient, currentCustomGradient])
   const allTemplates = useMemo(() => [...TEMPLATES, ...customTemplates], [customTemplates])
+  const visibleLabelAssets = useMemo(() => {
+    if (labelCategory === 'all') return LABEL_ASSETS
+    return LABEL_ASSETS.filter((a) => a.category === labelCategory)
+  }, [labelCategory])
   const activeLabel = state.layers.find((layer) => layer.id === state.activeLayerId && layer.type === 'label')
   const activeTextLayer = state.layers.find((layer) => layer.id === state.activeLayerId && layer.type === 'text')
   const editableFontSize = activeTextLayer?.fontSize ?? state.fontSize
@@ -463,7 +914,7 @@ export default function App() {
   useEffect(() => {
     if (!showAbout || donations || donationsError) return
     let cancelled = false
-    fetch('/donations.json')
+    fetch('./donations.json')
       .then((res) => {
         if (!res.ok) throw new Error('bad response')
         return res.json()
@@ -587,17 +1038,23 @@ export default function App() {
       if (!wrap) return
       const btn = wrap.querySelector('.tab.active')
       const ind = wrap.querySelector('.tab-indicator')
-      if (!btn || !ind) return
+      if (!ind) return
+      if (!btn || !isControlsOpen) {
+        ind.style.opacity = '0'
+        return
+      }
+      ind.style.opacity = '1'
       ind.style.width = `${btn.offsetWidth}px`
       ind.style.transform = `translateX(${btn.offsetLeft}px)`
       btn.scrollIntoView({ block: 'nearest', inline: 'nearest' })
     }
     place()
     document.fonts?.ready?.then(place)
-  }, [tab, appSettings.lang])
+  }, [tab, appSettings.lang, isControlsOpen])
 
   const [loadedFontIds, setLoadedFontIds] = useState(() => new Set())
   const [loadingFontId, setLoadingFontId] = useState(null)
+  const loadingFontsRef = useRef(new Set())
 
   const loadFontNative = useCallback(async (f) => {
     const { Filesystem, Directory } = await import('@capacitor/filesystem')
@@ -645,51 +1102,65 @@ export default function App() {
         recursive: true
       }).catch(() => {})
 
+      let successfulSubsets = 0
+
       for (const fontUrl of gstaticUrls) {
-        const hash = btoa(fontUrl).replace(/[^a-zA-Z0-9]/g, '').substring(0, 16)
-        const fontFilePath = `fonts/${fontKey}-${hash}.woff2`
+        try {
+          const hash = btoa(fontUrl).replace(/[^a-zA-Z0-9]/g, '').substring(0, 16)
+          const fontFilePath = `fonts/${fontKey}-${hash}.woff2`
 
-        const woff2Exists = await Filesystem.stat({
-          path: fontFilePath,
-          directory: Directory.Data
-        }).then(() => true).catch(() => false)
-
-        let base64Data = ''
-
-        if (woff2Exists) {
-          const woff2File = await Filesystem.readFile({
+          const woff2Exists = await Filesystem.stat({
             path: fontFilePath,
             directory: Directory.Data
-          })
-          base64Data = woff2File.data
-        } else {
-          const fontRes = await fetch(fontUrl)
-          if (!fontRes.ok) throw new Error(`Failed to download font file: ${fontUrl}`)
-          const arrayBuffer = await fontRes.arrayBuffer()
-          
-          base64Data = arrayBufferToBase64(arrayBuffer)
+          }).then(() => true).catch(() => false)
 
-          await Filesystem.writeFile({
-            path: fontFilePath,
-            directory: Directory.Data,
-            data: base64Data
-          })
+          let base64Data = ''
+
+          if (woff2Exists) {
+            const woff2File = await Filesystem.readFile({
+              path: fontFilePath,
+              directory: Directory.Data
+            })
+            base64Data = woff2File.data
+            successfulSubsets++
+          } else {
+            const fontRes = await fetch(fontUrl)
+            if (fontRes.ok) {
+              const arrayBuffer = await fontRes.arrayBuffer()
+              base64Data = arrayBufferToBase64(arrayBuffer)
+              await Filesystem.writeFile({
+                path: fontFilePath,
+                directory: Directory.Data,
+                data: base64Data
+              })
+              successfulSubsets++
+            }
+          }
+
+          if (base64Data) {
+            const dataUri = `data:font/woff2;charset=utf-8;base64,${base64Data}`
+            localCssText = localCssText.split(fontUrl).join(dataUri)
+          }
+        } catch (fontErr) {
+          console.warn(`Font subset download issue for ${fontUrl}:`, fontErr)
         }
-
-        const dataUri = `data:font/woff2;charset=utf-8;base64,${base64Data}`
-        localCssText = localCssText.split(fontUrl).join(dataUri)
       }
 
-      await Filesystem.writeFile({
-        path: cssPath,
-        directory: Directory.Data,
-        data: localCssText,
-        encoding: 'utf8'
-      })
+      if (successfulSubsets > 0 || gstaticUrls.length === 0) {
+        await Filesystem.writeFile({
+          path: cssPath,
+          directory: Directory.Data,
+          data: localCssText,
+          encoding: 'utf8'
+        })
 
-      injectStyleBlock(f.id, localCssText)
-      setLoadedFontIds((prev) => new Set(prev).add(f.id))
-      setLoadingFontId((id) => (id === f.id ? null : id))
+        injectStyleBlock(f.id, localCssText)
+        setLoadedFontIds((prev) => new Set(prev).add(f.id))
+        setLoadingFontId((id) => (id === f.id ? null : id))
+        return
+      } else {
+        throw new Error('All font subsets failed to download')
+      }
     } catch (err) {
       console.error('Error loading native font:', err)
       setToast({ text: t('fontError'), type: 'error' })
@@ -719,7 +1190,27 @@ export default function App() {
   }
 
   const loadFont = useCallback((f) => {
-    if (!f || f.dataUrl || loadedFontIds.has(f.id)) return Promise.resolve()
+    if (!f || f.dataUrl) return Promise.resolve()
+    if (loadedFontIds.has(f.id)) return Promise.resolve()
+
+    const familyName = f.family ? f.family.split(',')[0].trim().replace(/['"]/g, '') : ''
+
+    // 1. Check if font is already available in document.fonts
+    if (typeof document !== 'undefined' && document.fonts && familyName) {
+      try {
+        if (document.fonts.check(`16px "${familyName}"`) || document.fonts.check(`16px ${f.family}`)) {
+          setLoadedFontIds((prev) => new Set(prev).add(f.id))
+          return Promise.resolve()
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    // 2. Prevent concurrent duplicate loads
+    if (loadingFontsRef.current.has(f.id)) {
+      return Promise.resolve()
+    }
     
     if (isNative()) {
       return loadFontNative(f)
@@ -732,33 +1223,85 @@ export default function App() {
       return Promise.resolve()
     }
     const url = googleFontsUrlForFont(f)
-    if (!url) return Promise.resolve()
+    if (!url) {
+      // Local font (e.g. Arad, Ario, Sorena defined in CSS)
+      setLoadedFontIds((prev) => new Set(prev).add(f.id))
+      return Promise.resolve()
+    }
+
+    loadingFontsRef.current.add(f.id)
     setLoadingFontId(f.id)
+
     return new Promise((resolve) => {
-      const link = document.createElement('link')
-      link.id = linkId
-      link.rel = 'stylesheet'
-      link.href = url
       let settled = false
-      const fail = () => {
+
+      const succeed = () => {
         if (settled) return
         settled = true
         clearTimeout(timer)
-        link.remove()
-        setLoadingFontId((id) => (id === f.id ? null : id))
-        setToast({ text: t('fontError'), type: 'error' })
-        resolve()
-      }
-      const timer = setTimeout(fail, 8000)
-      link.onload = () => {
-        if (settled) return
-        settled = true
-        clearTimeout(timer)
+        loadingFontsRef.current.delete(f.id)
         setLoadedFontIds((prev) => new Set(prev).add(f.id))
         setLoadingFontId((id) => (id === f.id ? null : id))
         resolve()
       }
-      link.onerror = fail
+
+      const fail = () => {
+        if (settled) return
+        settled = true
+        clearTimeout(timer)
+        loadingFontsRef.current.delete(f.id)
+        setLoadingFontId((id) => (id === f.id ? null : id))
+
+        // Check if font actually rendered in document.fonts before alarming
+        let fontActuallyReady = false
+        try {
+          if (document.fonts && familyName && (document.fonts.check(`16px "${familyName}"`) || document.fonts.check(`16px ${f.family}`))) {
+            fontActuallyReady = true
+          }
+        } catch {
+          // ignore
+        }
+
+        if (fontActuallyReady) {
+          setLoadedFontIds((prev) => new Set(prev).add(f.id))
+        } else {
+          setToast({ text: t('fontError'), type: 'error' })
+        }
+        resolve()
+      }
+
+      const timer = setTimeout(fail, 25000)
+
+      const link = document.createElement('link')
+      link.id = linkId
+      link.rel = 'stylesheet'
+      link.href = url
+
+      link.onload = () => {
+        if (document.fonts && familyName) {
+          document.fonts.load(`16px "${familyName}"`).then(succeed).catch(succeed)
+        } else {
+          succeed()
+        }
+      }
+
+      link.onerror = () => {
+        // Double-check if font succeeded or was already cached before failing
+        setTimeout(() => {
+          let fontActuallyReady = false
+          try {
+            if (document.fonts && familyName && (document.fonts.check(`16px "${familyName}"`) || document.fonts.check(`16px ${f.family}`))) {
+              fontActuallyReady = true
+            }
+          } catch {}
+          if (fontActuallyReady) {
+            succeed()
+          } else {
+            fail()
+          }
+        }, 1200)
+      }
+
       document.head.appendChild(link)
     })
   }, [loadedFontIds, loadFontNative, t])
@@ -831,8 +1374,24 @@ export default function App() {
     const next = customFonts.filter((f) => f.id !== id)
     setCustomFonts(next)
     localStorage.setItem(CUSTOM_FONTS_KEY, JSON.stringify(next))
+    setPinnedFontIds((prev) => {
+      const nextPins = prev.filter((pId) => pId !== id)
+      localStorage.setItem(PINNED_FONTS_KEY, JSON.stringify(nextPins))
+      return nextPins
+    })
     if (state.fontId === id) update({ fontId: 'vazirmatn' })
   }
+
+  const togglePinFont = useCallback((fontId, e) => {
+    e?.stopPropagation()
+    setPinnedFontIds((prev) => {
+      const next = prev.includes(fontId)
+        ? prev.filter((id) => id !== fontId)
+        : [fontId, ...prev]
+      localStorage.setItem(PINNED_FONTS_KEY, JSON.stringify(next))
+      return next
+    })
+  }, [])
 
   function renameCustomFont(id, e) {
     e.stopPropagation()
@@ -911,6 +1470,42 @@ export default function App() {
     update({ customBgUrl: null, bgId: 'grad-1' })
   }
 
+  function updateGradient(c1, c2, angle, type) {
+    const nextC1 = c1 !== undefined ? c1 : gradColor1
+    const nextC2 = c2 !== undefined ? c2 : gradColor2
+    const nextAngle = angle !== undefined ? angle : gradAngle
+    const nextType = type !== undefined ? type : gradType
+    if (c1 !== undefined) setGradColor1(c1)
+    if (c2 !== undefined) setGradColor2(c2)
+    if (angle !== undefined) setGradAngle(angle)
+    if (type !== undefined) setGradType(type)
+    const css =
+      nextType === 'radial'
+        ? `radial-gradient(circle at center, ${nextC1} 0%, ${nextC2} 100%)`
+        : `linear-gradient(${nextAngle}deg, ${nextC1} 0%, ${nextC2} 100%)`
+    update({
+      bgId: 'custom-gradient',
+      customBgGradient: css,
+    })
+  }
+
+  function swapGradientColors() {
+    updateGradient(gradColor2, gradColor1)
+  }
+
+  function onOpenGradientBuilder() {
+    setShowGradientBuilder((prev) => {
+      const next = !prev
+      if (next && state.bgId !== 'custom-gradient') {
+        update({
+          bgId: 'custom-gradient',
+          customBgGradient: currentCustomGradient,
+        })
+      }
+      return next
+    })
+  }
+
   function onTextInput(e) {
     update({ text: e.currentTarget.innerText.replace(/ـ/g, '') })
   }
@@ -985,13 +1580,13 @@ export default function App() {
       id,
       type: 'label',
       templateId: asset.id,
-      text: t('newLabelText'),
+      text: asset.defaultText || t('newLabelText'),
       x: 50,
       y: 50,
       rotation: 0,
       width: asset.width,
       aspectRatio: asset.aspectRatio,
-      color: '#8b5cf6',
+      color: asset.defaultColor || '#8b5cf6',
       textColor: '#ffffff',
       fontId: state.fontId,
       fontSize: 22,
@@ -1020,8 +1615,10 @@ export default function App() {
     e.stopPropagation()
     const startX = e.clientX
     const origWidth = layer.width
+    const scale = (state.bgEnabled ? artboardScaleRef.current : 1) || 1
     function onMove(ev) {
-      const width = Math.min(600, Math.max(30, origWidth + (ev.clientX - startX)))
+      const delta = (ev.clientX - startX) / scale
+      const width = Math.min(600, Math.max(30, Math.round(origWidth + delta)))
       updateLayer(layer.id, { width })
     }
     function onUp() {
@@ -1092,6 +1689,82 @@ export default function App() {
     window.addEventListener('pointerup', onUp)
   }
 
+  function handleMainTextDrag(e) {
+    if (!state.bgEnabled) return
+    if (e.button !== undefined && e.button !== 0) return
+    if (!previewRef.current) return
+
+    const rect = previewRef.current.getBoundingClientRect()
+    const startX = e.clientX
+    const startY = e.clientY
+    const origX = state.textX ?? 50
+    const origY = state.textY ?? 50
+    const SNAP = 2.5
+    const layers = state.layers || []
+    let hasMoved = false
+    let currentX = origX
+    let currentY = origY
+
+    function onMove(ev) {
+      const dist = Math.hypot(ev.clientX - startX, ev.clientY - startY)
+      if (!hasMoved && dist < 4) {
+        return
+      }
+      if (!hasMoved) {
+        hasMoved = true
+        try {
+          window.getSelection()?.removeAllRanges()
+        } catch {}
+      }
+
+      const dx = ((ev.clientX - startX) / rect.width) * 100
+      const dy = ((ev.clientY - startY) / rect.height) * 100
+      let x = Math.min(95, Math.max(5, origX + dx))
+      let y = Math.min(95, Math.max(5, origY + dy))
+      let guideX = null
+      let guideY = null
+
+      if (Math.abs(x - 50) < SNAP) {
+        x = 50
+        guideX = rect.left + rect.width * 0.5
+      } else {
+        const match = layers.find((l) => Math.abs(x - l.x) < SNAP)
+        if (match) {
+          x = match.x
+          guideX = rect.left + (rect.width * match.x) / 100
+        }
+      }
+
+      if (Math.abs(y - 50) < SNAP) {
+        y = 50
+        guideY = rect.top + rect.height * 0.5
+      } else {
+        const match = layers.find((l) => Math.abs(y - l.y) < SNAP)
+        if (match) {
+          y = match.y
+          guideY = rect.top + (rect.height * match.y) / 100
+        }
+      }
+
+      currentX = Math.round(x * 10) / 10
+      currentY = Math.round(y * 10) / 10
+      update({ textX: currentX, textY: currentY }, { record: false })
+      setDragGuides({ x: guideX, y: guideY })
+    }
+
+    function onUp() {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      setDragGuides({ x: null, y: null })
+      if (hasMoved) {
+        update({ textX: currentX, textY: currentY }, { record: true })
+      }
+    }
+
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+  }
+
   function duplicateLayer(id) {
     const layer = state.layers.find((l) => l.id === id)
     if (!layer) return
@@ -1139,6 +1812,7 @@ export default function App() {
       bgId: tpl.bgId,
       effect: tpl.effect,
       ...(tpl.textGradient ? { textGradient: tpl.textGradient } : {}),
+      ...(tpl.effectColor !== undefined ? { effectColor: tpl.effectColor } : {}),
     })
   }
 
@@ -1152,6 +1826,7 @@ export default function App() {
       bgId: state.bgId,
       effect: state.effect,
       ...(state.effect === 'gradient' ? { textGradient: state.textGradient } : {}),
+      ...(state.effectColor ? { effectColor: state.effectColor } : {}),
     }
   }
 
@@ -1166,6 +1841,7 @@ export default function App() {
     localStorage.setItem(CUSTOM_TEMPLATES_KEY, JSON.stringify(next))
     setToast(t('styleSaved'))
     setStyleName('')
+    setShowStyleStudio(false)
   }
 
   async function copyStyleJSON() {
@@ -1194,19 +1870,114 @@ export default function App() {
   const strokeColor = state.color === '#111111' ? '#fff' : '#111'
 
   let effectStyle = {}
-  if (state.effect === 'gradient') {
-    const grad = TEXT_GRADIENTS.find((g) => g.id === state.textGradient) ?? TEXT_GRADIENTS[0]
-    effectStyle = {
-      backgroundImage: grad.css,
-      WebkitBackgroundClip: 'text',
-      backgroundClip: 'text',
-      color: 'transparent',
-      WebkitTextFillColor: 'transparent',
+  switch (state.effect) {
+    case 'gradient': {
+      const grad = TEXT_GRADIENTS.find((g) => g.id === state.textGradient) ?? TEXT_GRADIENTS[0]
+      effectStyle = {
+        backgroundImage: grad.css,
+        WebkitBackgroundClip: 'text',
+        backgroundClip: 'text',
+        color: 'transparent',
+        WebkitTextFillColor: 'transparent',
+      }
+      break
     }
-  } else if (state.effect === 'neon') {
-    effectStyle = {
-      textShadow: `0 0 6px ${state.color}, 0 0 14px ${state.color}, 0 0 28px ${state.color}, 0 0 48px ${state.color}`,
+    case 'neon': {
+      const glow = state.effectColor || (state.color === '#ffffff' ? '#00f0ff' : state.color)
+      effectStyle = {
+        color: '#ffffff',
+        textShadow: `0 0 6px #ffffff, 0 0 14px ${glow}, 0 0 28px ${glow}, 0 0 45px ${glow}, 0 0 70px ${glow}`,
+      }
+      break
     }
+    case 'pop3d': {
+      const shadowCol = state.effectColor || '#141420'
+      const baseCol = state.color === '#111111' ? '#f1f2f6' : state.color
+      effectStyle = {
+        color: baseCol,
+        textShadow: `1px 1px 0 ${shadowCol}, 2px 2px 0 ${shadowCol}, 3px 3px 0 ${shadowCol}, 4px 4px 0 ${shadowCol}, 5px 5px 0 ${shadowCol}, 6px 6px 0 ${shadowCol}, 7px 7px 14px rgba(0, 0, 0, 0.55)`,
+      }
+      break
+    }
+    case 'glitch': {
+      effectStyle = {
+        textShadow: `-2.5px -1.5px 0 #00f0ff, 2.5px 1.5px 0 #ff0055, 0 0 12px rgba(0, 240, 255, 0.45)`,
+      }
+      break
+    }
+    case 'retro': {
+      const offsetCol = state.effectColor || '#121218'
+      effectStyle = {
+        textShadow: `4px 4px 0px ${offsetCol}, 6px 6px 0px rgba(0, 0, 0, 0.25)`,
+      }
+      break
+    }
+    case 'soft-bloom': {
+      const bloom = state.effectColor || state.color || '#a78bfa'
+      effectStyle = {
+        textShadow: `0 0 18px ${bloom}cc, 0 0 35px ${bloom}88, 0 0 60px ${bloom}44`,
+      }
+      break
+    }
+    case 'emboss': {
+      effectStyle = {
+        textShadow: `-1px -1px 1px rgba(255, 255, 255, 0.65), 1px 1px 2px rgba(0, 0, 0, 0.8), 2px 2px 4px rgba(0, 0, 0, 0.5)`,
+      }
+      break
+    }
+    case 'glass': {
+      effectStyle = {
+        color: 'rgba(255, 255, 255, 0.88)',
+        WebkitTextStroke: '1px rgba(255, 255, 255, 0.45)',
+        textShadow: '0 8px 24px rgba(0, 0, 0, 0.35), 0 2px 4px rgba(255, 255, 255, 0.3)',
+      }
+      break
+    }
+    case 'outline': {
+      const strokeCol = state.effectColor || state.color || '#ffffff'
+      effectStyle = {
+        color: 'transparent',
+        WebkitTextFillColor: 'transparent',
+        WebkitTextStroke: `2px ${strokeCol}`,
+        textShadow: `0 0 14px ${strokeCol}33`,
+      }
+      break
+    }
+    case 'fire': {
+      effectStyle = {
+        color: '#fffbe6',
+        textShadow: `0 0 4px #ffeb3b, 0 -2px 10px #ff9800, 0 -4px 18px #ff5722, 0 -7px 28px #e64a19, 0 -10px 40px #b71c1c`,
+      }
+      break
+    }
+    case 'duo-stroke': {
+      const c1 = state.color || '#ffffff'
+      const outerCol = state.effectColor || '#8b5cf6'
+      effectStyle = {
+        color: c1,
+        textShadow: `-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, -4px 0 0 ${outerCol}, 4px 0 0 ${outerCol}, 0 -4px 0 ${outerCol}, 0 4px 0 ${outerCol}`,
+      }
+      break
+    }
+    case 'chrome': {
+      effectStyle = {
+        backgroundImage: 'linear-gradient(180deg, #ffe899 0%, #d4af37 38%, #8c6d1f 48%, #ffffff 52%, #fdf5c9 60%, #aa771c 85%, #593e0b 100%)',
+        WebkitBackgroundClip: 'text',
+        backgroundClip: 'text',
+        color: 'transparent',
+        WebkitTextFillColor: 'transparent',
+        filter: 'drop-shadow(0 2px 8px rgba(0, 0, 0, 0.45))',
+      }
+      break
+    }
+    case 'shadow-cast': {
+      effectStyle = {
+        textShadow: `1px 2px 2px rgba(0, 0, 0, 0.25), 2px 4px 5px rgba(0, 0, 0, 0.25), 4px 8px 10px rgba(0, 0, 0, 0.3), 8px 16px 20px rgba(0, 0, 0, 0.35)`,
+      }
+      break
+    }
+    default:
+      break
   }
 
   if (state.textMaskUrl) {
@@ -1237,17 +2008,35 @@ export default function App() {
     direction: state.direction,
     opacity: state.opacity / 100,
     WebkitTextStroke: state.stroke ? `${state.strokeWidth}px ${strokeColor}` : 'none',
-    position: 'relative',
+    position: state.bgEnabled ? 'absolute' : 'relative',
+    ...(state.bgEnabled
+      ? {
+          left: `${state.textX ?? 50}%`,
+          top: `${state.textY ?? 50}%`,
+          transform: 'translate(-50%, -50%)',
+          width: state.textBoxStyle !== 'none' ? 'fit-content' : 'max-content',
+          maxWidth: '92%',
+          cursor: 'move',
+          touchAction: 'none',
+        }
+      : {}),
     zIndex: 1,
+    boxSizing: 'border-box',
+    wordBreak: 'normal',
+    overflowWrap: 'break-word',
     ...effectStyle,
     textShadow: [effectStyle.textShadow, baseShadow, depthShadow !== 'none' ? depthShadow : ''].filter(Boolean).join(', ') || 'none',
-    ...boxStyleFor(state.textBoxStyle, state.color),
-    ...(state.textBoxStyle !== 'none'
+    ...boxStyleFor(state.textBoxStyle, state.color, {
+      boxBgColor: state.boxBgColor,
+      boxOpacity: state.boxOpacity,
+      boxRadius: state.boxRadius,
+      boxPadding: state.boxPadding,
+    }),
+    ...(state.textBoxStyle !== 'none' && !state.bgEnabled
       ? {
           width: 'fit-content',
-          maxWidth: '100%',
-          marginInlineStart: state.align !== 'left' ? 'auto' : 0,
-          marginInlineEnd: state.align !== 'right' ? 'auto' : 0,
+          maxWidth: '96%',
+          boxSizing: 'border-box',
         }
       : {}),
   }
@@ -1319,41 +2108,83 @@ export default function App() {
     URL.revokeObjectURL(link.href)
   }
 
-  const ratio = ASPECT_RATIOS.find((r) => r.id === state.aspectRatio)?.value ?? null
+  const baseArtboardDim = BASE_DIMENSIONS[state.aspectRatio] || BASE_DIMENSIONS.story
+  const artboardPaddingX = 64 // 46px left slider + 18px right padding
+  const artboardPaddingY = 64 // 48px top quick bar + 16px bottom padding
+  const availStageW = Math.max(120, (stageDimensions.width || 360) - artboardPaddingX)
+  const availStageH = Math.max(120, (stageDimensions.height || 480) - artboardPaddingY)
+  const artboardScale = state.bgEnabled
+    ? Math.min(availStageW / baseArtboardDim.width, availStageH / baseArtboardDim.height)
+    : 1
+  const artboardDisplayWidth = Math.round(baseArtboardDim.width * artboardScale)
+  const artboardDisplayHeight = Math.round(baseArtboardDim.height * artboardScale)
+  artboardScaleRef.current = artboardScale
 
   const previewStyle = {
     padding: `${state.margin}px`,
     position: 'relative',
-    ...(ratio
-      ? {
-          flex: '0 0 auto',
-          width: 'auto',
-          height: '100%',
-          aspectRatio: ratio,
-        }
-      : {}),
   }
 
-  const bgLayerStyle = {
-    position: 'absolute',
-    inset: 0,
-    zIndex: 0,
-    filter: `brightness(${state.bgFilter.brightness}%) contrast(${state.bgFilter.contrast}%) blur(${state.bgFilter.blur}px) grayscale(${state.bgFilter.grayscale}%)`,
-    ...(state.bgId === 'custom-image' && state.customBgUrl
-      ? {
-          backgroundImage: `url(${state.customBgUrl})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }
-      : { background: bg.css }),
+  const bgLayerStyle = state.bgEnabled
+    ? {
+        position: 'absolute',
+        inset: 0,
+        zIndex: 0,
+        filter: `brightness(${state.bgFilter.brightness}%) contrast(${state.bgFilter.contrast}%) blur(${state.bgFilter.blur}px) grayscale(${state.bgFilter.grayscale}%)`,
+        ...(state.bgId === 'custom-image' && state.customBgUrl
+          ? {
+              backgroundImage: `url(${state.customBgUrl})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }
+          : { background: bg.css }),
+      }
+    : {
+        display: 'none',
+      }
+
+  function lockTextContainerWidth() {
+    if (!textRef.current || state.textBoxStyle === 'none') return () => {}
+    const unscaledWidth = textRef.current.offsetWidth
+    const origWidth = textRef.current.style.width
+    const origMaxWidth = textRef.current.style.maxWidth
+    // Lock exact width + 4px breathing room so subpixel font calculations in foreignObject never wrap text
+    textRef.current.style.width = `${Math.ceil(unscaledWidth) + 4}px`
+    textRef.current.style.maxWidth = 'none'
+    return () => {
+      if (textRef.current) {
+        textRef.current.style.width = origWidth || ''
+        textRef.current.style.maxWidth = origMaxWidth || ''
+      }
+    }
+  }
+
+  function prepareForExport() {
+    const unlock = lockTextContainerWidth()
+    const origRadius = previewRef.current?.style.borderRadius
+    if (state.bgEnabled && previewRef.current) {
+      previewRef.current.style.borderRadius = '0px'
+    }
+    previewRef.current?.classList.add('is-exporting')
+    return () => {
+      unlock()
+      previewRef.current?.classList.remove('is-exporting')
+      if (previewRef.current && origRadius !== undefined) {
+        previewRef.current.style.borderRadius = origRadius
+      }
+    }
   }
 
   async function ensureFontPainted() {
     await loadFont(font)
     try {
-      await document.fonts?.load(`${state.fontSize}px ${font.family}`)
+      const weight = state.bold ? '700' : '400'
+      const style = state.italic ? 'italic' : 'normal'
+      await document.fonts?.load(`${style} ${weight} ${state.fontSize}px ${font.family}`)
     } catch {}
-    await document.fonts?.ready
+    try {
+      await document.fonts?.ready
+    } catch {}
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
   }
 
@@ -1364,15 +2195,39 @@ export default function App() {
   }
 
   async function exportPng() {
-    if (!previewRef.current) return
+    if (!previewRef.current || exportLoading) return
     const fileName = `fontwow-${Date.now()}.png`
+    setShowSave(false)
+    setExportLoading({ active: true, message: t('exportingImage') || 'در حال تولید و ذخیره تصویر باکیفیت…' })
     logger.info('Export', 'شروع استخراج تصویر PNG')
     logger.preflightCheck('export_png')
+    const cleanup = prepareForExport()
     try {
       await ensureFontPainted()
-      const dataUrl = await toPng(previewRef.current, { pixelRatio: 3, cacheBust: true })
+      let width, height, pixelRatio
+      if (state.bgEnabled) {
+        const base = BASE_DIMENSIONS[state.aspectRatio] || BASE_DIMENSIONS.story
+        width = base.width
+        height = base.height
+        pixelRatio = 2
+      } else {
+        const rect = previewRef.current.getBoundingClientRect()
+        width = Math.max(200, Math.round(rect.width))
+        height = Math.max(200, Math.round(rect.height))
+        pixelRatio = 3
+      }
+      let dataUrl = await toPng(previewRef.current, {
+        pixelRatio,
+        cacheBust: false,
+        width,
+        height,
+      })
+      if (!state.bgEnabled) {
+        dataUrl = await trimTransparentImage(dataUrl, 24)
+      }
       if (isNative()) {
         await saveImageNative(dataUrl, fileName)
+        triggerHaptic('medium')
       } else {
         const link = document.createElement('a')
         link.download = fileName
@@ -1385,22 +2240,35 @@ export default function App() {
       logger.error('Export', 'خطا در خروجی PNG', err.stack || err.message)
       console.error('exportPng failed:', err)
       setToast({ text: errorToast('imageError', err), type: 'error' })
+    } finally {
+      cleanup()
+      setExportLoading(null)
     }
-    setShowSave(false)
   }
 
   async function exportGif() {
     if (!previewRef.current || isExportingGif) return
     setIsExportingGif(true)
+    setExportLoading({ active: true, message: t('gifExporting') || 'در حال ساخت فایل گیف انیمیشنی…' })
     setShowSave(false)
     const node = previewRef.current
+    const cleanup = prepareForExport()
     try {
       await ensureFontPainted()
       const { GIFEncoder, quantize, applyPalette } = await import('gifenc')
       const encoder = GIFEncoder()
       const frameCanvas = document.createElement('canvas')
-      const width = Math.max(320, Math.round(node.getBoundingClientRect().width))
-      const height = Math.max(180, Math.round(node.getBoundingClientRect().height))
+      let width, height
+      if (state.bgEnabled) {
+        const base = BASE_DIMENSIONS[state.aspectRatio] || BASE_DIMENSIONS.story
+        const maxGifDim = 480
+        const gifScale = Math.min(1, maxGifDim / Math.max(base.width, base.height))
+        width = Math.round(base.width * gifScale)
+        height = Math.round(base.height * gifScale)
+      } else {
+        width = Math.max(320, Math.round(node.getBoundingClientRect().width))
+        height = Math.max(180, Math.round(node.getBoundingClientRect().height))
+      }
       frameCanvas.width = width
       frameCanvas.height = height
       const context = frameCanvas.getContext('2d', { willReadFrequently: true })
@@ -1420,7 +2288,14 @@ export default function App() {
       const bytes = encoder.bytes()
       const fileName = `fontwow-${Date.now()}.gif`
       if (isNative()) {
-        await shareFileNative(bytesToBase64(bytes), fileName)
+        const base64Gif = bytesToBase64(bytes)
+        try {
+          await saveMediaNative(base64Gif, fileName, 'image/gif')
+          triggerHaptic('medium')
+        } catch (saveErr) {
+          logger.warn('Export', 'ذخیره مستقیم گیف در گالری ناموفق بود، باز کردن پنجره اشتراک', saveErr)
+          await shareFileNative(base64Gif, fileName)
+        }
       } else {
         const url = URL.createObjectURL(new Blob([bytes], { type: 'image/gif' }))
         const link = document.createElement('a')
@@ -1434,8 +2309,10 @@ export default function App() {
       logger.error('Export', 'خطا در خروجی GIF', error?.stack || error?.message)
       setToast({ text: errorToast('gifError', error), type: 'error' })
     } finally {
+      cleanup()
       clearAnimationProgress(node)
       setIsExportingGif(false)
+      setExportLoading(null)
     }
   }
 
@@ -1446,13 +2323,22 @@ export default function App() {
       return
     }
     setIsExportingVideo(true)
+    setExportLoading({ active: true, message: t('videoExporting') || 'در حال ضبط و رندر ویدئو…' })
     setShowSave(false)
     const node = previewRef.current
+    const cleanup = prepareForExport()
     try {
       await ensureFontPainted()
       const frameCanvas = document.createElement('canvas')
-      const width = Math.max(320, Math.round(node.getBoundingClientRect().width))
-      const height = Math.max(180, Math.round(node.getBoundingClientRect().height))
+      let width, height
+      if (state.bgEnabled) {
+        const base = BASE_DIMENSIONS[state.aspectRatio] || BASE_DIMENSIONS.story
+        width = Math.round(base.width / 2) * 2
+        height = Math.round(base.height / 2) * 2
+      } else {
+        width = Math.round(Math.max(320, node.getBoundingClientRect().width) / 2) * 2
+        height = Math.round(Math.max(180, node.getBoundingClientRect().height) / 2) * 2
+      }
       frameCanvas.width = width
       frameCanvas.height = height
       const context = frameCanvas.getContext('2d')
@@ -1483,7 +2369,14 @@ export default function App() {
       const video = new Blob(chunks, { type: mimeType })
       const fileName = `fontwow-${Date.now()}.webm`
       if (isNative()) {
-        await shareFileNative(bytesToBase64(new Uint8Array(await video.arrayBuffer())), fileName)
+        const base64Video = bytesToBase64(new Uint8Array(await video.arrayBuffer()))
+        try {
+          await saveMediaNative(base64Video, fileName, mimeType)
+          triggerHaptic('medium')
+        } catch (saveErr) {
+          logger.warn('Export', 'ذخیره مستقیم ویدئو در گالری ناموفق بود، باز کردن پنجره اشتراک', saveErr)
+          await shareFileNative(base64Video, fileName)
+        }
       } else {
         const url = URL.createObjectURL(video)
         const link = document.createElement('a')
@@ -1497,19 +2390,38 @@ export default function App() {
       logger.error('Export', 'خطا در خروجی ویدئو', error?.stack || error?.message)
       setToast({ text: errorToast('videoError', error), type: 'error' })
     } finally {
+      cleanup()
       clearAnimationProgress(node)
       setIsExportingVideo(false)
+      setExportLoading(null)
     }
   }
 
   async function copyImage() {
-    if (!previewRef.current) return
+    if (!previewRef.current || exportLoading) return
+    setShowSave(false)
+    setExportLoading({ active: true, message: t('copyingImage') || 'در حال آماده‌سازی و کپی در کلیپ‌بورد…' })
     logger.info('Clipboard', 'شروع کپی تصویر در کلیپ‌بورد')
     logger.preflightCheck('copy_image')
+    const cleanup = prepareForExport()
     try {
       await ensureFontPainted()
+      let width, height
+      if (state.bgEnabled) {
+        const base = BASE_DIMENSIONS[state.aspectRatio] || BASE_DIMENSIONS.story
+        width = base.width
+        height = base.height
+      } else {
+        const rect = previewRef.current.getBoundingClientRect()
+        width = Math.max(200, Math.round(rect.width))
+        height = Math.max(200, Math.round(rect.height))
+      }
+
       if (isNative()) {
-        const dataUrl = await toPng(previewRef.current, { pixelRatio: 3, cacheBust: true })
+        let dataUrl = await toPng(previewRef.current, { pixelRatio: 2.5, cacheBust: false, width, height })
+        if (!state.bgEnabled) {
+          dataUrl = await trimTransparentImage(dataUrl, 20)
+        }
         const mode = await copyImageNative(dataUrl, `fontwow-${Date.now()}.png`)
         // 'canceled' means the user dismissed the share sheet — say nothing.
         if (mode !== 'canceled') {
@@ -1519,25 +2431,60 @@ export default function App() {
           logger.info('Clipboard', 'عملیات کپی/اشتراک‌گذاری تصویر توسط کاربر لغو شد.')
         }
       } else {
-        const blob = await toBlob(previewRef.current, { pixelRatio: 3, cacheBust: true })
-        await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })])
-        logger.info('Clipboard', 'تصویر با موفقیت در کلیپ‌بورد کپی شد.')
-        setToast(t('imageCopied'))
+        let targetBlob = null
+        if (!state.bgEnabled) {
+          const dataUrl = await toPng(previewRef.current, { pixelRatio: 2.5, cacheBust: false, width, height })
+          const trimmedUrl = await trimTransparentImage(dataUrl, 20)
+          const res = await fetch(trimmedUrl)
+          targetBlob = await res.blob()
+        } else {
+          targetBlob = await toBlob(previewRef.current, { pixelRatio: 2, cacheBust: false, width, height })
+        }
+        if (!targetBlob) throw new Error('Blob generation returned null')
+
+        let copied = false
+        if (navigator.clipboard && typeof navigator.clipboard.write === 'function' && typeof ClipboardItem !== 'undefined') {
+          try {
+            await navigator.clipboard.write([new ClipboardItem({ 'image/png': targetBlob })])
+            copied = true
+            logger.info('Clipboard', 'تصویر با موفقیت در کلیپ‌بورد کپی شد.')
+            setToast(t('imageCopied'))
+          } catch (clipErr) {
+            console.warn('Direct clipboard.write failed, falling back:', clipErr)
+          }
+        }
+
+        if (!copied) {
+          // If clipboard write is restricted in iframe/browser environment, automatically download the image
+          const url = URL.createObjectURL(targetBlob)
+          const link = document.createElement('a')
+          link.download = `fontwow-${Date.now()}.png`
+          link.href = url
+          link.click()
+          setTimeout(() => URL.revokeObjectURL(url), 1500)
+          setToast({
+            text: t('clipboardFallbackDownload') || 'به دلیل محدودیت کلیپ‌بورد در این محیط، تصویر مستقیم ذخیره شد.',
+            type: 'info',
+          })
+          logger.info('Clipboard', 'به دلیل محدودیت محیط، تصویر به عنوان جایگزین مستقیم دانلود شد.')
+        }
       }
     } catch (err) {
       logger.error('Clipboard', 'خطا در کپی تصویر', err.stack || err.message)
       console.error('copyImage failed:', err)
       try {
         if (isNative()) await copyTextNative(state.text)
-        else await navigator.clipboard.writeText(state.text)
+        else if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(state.text)
         logger.info('Clipboard', 'حالت پشتیبان: متن جایگزین کپی شد.')
         setToast(t('imageCopyFallback'))
       } catch {
         logger.error('Clipboard', 'حالت پشتیبان کپی متن نیز با خطا مواجه شد.')
         setToast({ text: t('copyFailed'), type: 'error' })
       }
+    } finally {
+      cleanup()
+      setExportLoading(null)
     }
-    setShowSave(false)
   }
 
   async function copyText() {
@@ -1630,9 +2577,10 @@ export default function App() {
   }
 
   function resetAppSettings() {
-    localStorage.removeItem(SETTINGS_KEY)
-    localStorage.removeItem(APP_SETTINGS_KEY)
-    localStorage.removeItem(CUSTOM_FONTS_KEY)
+    try {
+      localStorage.clear()
+      sessionStorage.clear()
+    } catch {}
     window.location.reload()
   }
 
@@ -1651,7 +2599,6 @@ export default function App() {
     { id: 'font', label: t('tabFont'), Icon: I.IconType },
     { id: 'style', label: t('tabStyle'), Icon: I.IconSparkles },
     { id: 'box', label: t('tabBox'), Icon: I.IconSquare },
-    { id: 'color', label: t('tabColor'), Icon: I.IconPalette },
     { id: 'bg', label: t('tabBg'), Icon: I.IconImage },
     { id: 'layout', label: t('tabLayout'), Icon: I.IconSliders },
     { id: 'magic', label: t('tabMagic'), Icon: I.IconSparkles },
@@ -1666,10 +2613,203 @@ export default function App() {
 
   const HTML_ELEMENTS = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'span', 'div']
 
-  const bgSwatches = bgCategory === 'colors' ? BACKGROUNDS : (BG_TEMPLATES[bgCategory] ?? [])
+  const bgSwatches = useMemo(() => {
+    if (bgCategory === 'solid' || bgCategory === 'colors') {
+      return BG_COLLECTIONS.solid || BACKGROUNDS
+    }
+    if (BG_COLLECTIONS[bgCategory]) {
+      return BG_COLLECTIONS[bgCategory]
+    }
+    if (BG_TEMPLATES[bgCategory]) {
+      return BG_TEMPLATES[bgCategory]
+    }
+    return BG_COLLECTIONS.solid || BACKGROUNDS
+  }, [bgCategory])
+
+  const renderCanvasInner = () => (
+    <>
+      <div className="bg-layer" style={bgLayerStyle} />
+      {state.warpMode === 'none' ? (
+        <div
+          className={`text-canvas tb-${state.textBoxStyle} ${state.textBoxStyle !== 'none' ? 'has-box' : ''} ${state.bgEnabled ? 'is-draggable' : ''}`}
+          ref={textRef}
+          style={textStyle}
+          contentEditable
+          suppressContentEditableWarning
+          dir={state.direction}
+          data-placeholder={t('placeholder')}
+          onInput={onTextInput}
+          onPointerDown={state.bgEnabled ? handleMainTextDrag : undefined}
+        />
+      ) : (
+        <div
+          ref={textRef}
+          className={state.bgEnabled ? 'is-draggable' : ''}
+          style={
+            state.bgEnabled
+              ? {
+                  position: 'absolute',
+                  left: `${state.textX ?? 50}%`,
+                  top: `${state.textY ?? 50}%`,
+                  transform: 'translate(-50%, -50%)',
+                  cursor: 'move',
+                  touchAction: 'none',
+                  zIndex: 1,
+                  width: '100%',
+                }
+              : { position: 'relative', zIndex: 1, width: '100%' }
+          }
+          onPointerDown={state.bgEnabled ? handleMainTextDrag : undefined}
+        >
+          <CurvedText text={displayText || t('placeholder')} mode={state.warpMode} bend={state.warpBend} style={curvedTextStyle} />
+        </div>
+      )}
+      {state.layers.map((layer) => {
+        if (layer.type === 'label') {
+          const layerFont = allFonts.find((f) => f.id === layer.fontId) ?? font
+          return (
+            <div
+              key={layer.id}
+              className={`text-layer label-layer ${state.activeLayerId === layer.id ? 'active' : ''}`}
+              style={{
+                left: `${layer.x}%`,
+                top: `${layer.y}%`,
+                width: `${layer.width}px`,
+                aspectRatio: layer.aspectRatio ?? '16 / 9',
+                transform: `translate(-50%, -50%) rotate(${layer.rotation}deg)`,
+              }}
+              onPointerDown={(e) => handleLayerDrag(e, layer)}
+              onClick={(e) => e.stopPropagation()}
+              onDoubleClick={() => {
+                setPromptState({ layerId: layer.id, initialText: layer.text, promptKey: 'editLabelText' })
+              }}
+            >
+              <LabelArtwork templateId={layer.templateId} color={layer.color} />
+              <span
+                className="label-layer-text"
+                style={{
+                  color: layer.textColor,
+                  fontFamily: layerFont.family,
+                  fontSize: `${layer.fontSize}px`,
+                  transform: `translate(${layer.textOffsetX ?? 0}%, ${layer.textOffsetY ?? 0}%)`,
+                }}
+              >
+                {layer.text}
+              </span>
+              {state.activeLayerId === layer.id && (
+                <>
+                  <LayerToolbar layer={layer} onMoveLayer={moveLayer} onDuplicateLayer={duplicateLayer} t={t} />
+                  <span className="layer-del" onPointerDown={(e) => e.stopPropagation()} onClick={() => deleteLayer(layer.id)}>
+                    <I.IconX size={11} />
+                  </span>
+                  <span className="layer-rotate-handle" onPointerDown={(e) => handleLayerRotate(e, layer)}>
+                    <I.IconRotate size={11} />
+                  </span>
+                  <span className="layer-resize-handle" onPointerDown={(e) => handleLayerResize(e, layer)}>
+                    <I.IconArrowsLR size={11} />
+                  </span>
+                </>
+              )}
+            </div>
+          )
+        }
+        if (layer.type === 'image') {
+          return (
+            <div
+              key={layer.id}
+              className={`text-layer image-layer ${state.activeLayerId === layer.id ? 'active' : ''}`}
+              style={{
+                left: `${layer.x}%`,
+                top: `${layer.y}%`,
+                width: `${layer.width}px`,
+                transform: `translate(-50%, -50%) rotate(${layer.rotation}deg)`,
+              }}
+              onPointerDown={(e) => handleLayerDrag(e, layer)}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img src={layer.src} alt="" draggable={false} />
+              {state.activeLayerId === layer.id && (
+                <>
+                  <LayerToolbar layer={layer} onMoveLayer={moveLayer} onDuplicateLayer={duplicateLayer} t={t} />
+                  <span
+                    className="layer-del"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={() => deleteLayer(layer.id)}
+                  >
+                    <I.IconX size={11} />
+                  </span>
+                  <span
+                    className="layer-rotate-handle"
+                    onPointerDown={(e) => handleLayerRotate(e, layer)}
+                  >
+                    <I.IconRotate size={11} />
+                  </span>
+                  <span
+                    className="layer-resize-handle"
+                    onPointerDown={(e) => handleLayerResize(e, layer)}
+                  >
+                    <I.IconArrowsLR size={11} />
+                  </span>
+                </>
+              )}
+            </div>
+          )
+        }
+        const layerFont = allFonts.find((f) => f.id === layer.fontId) ?? font
+        return (
+          <div
+            key={layer.id}
+            className={`text-layer ${state.activeLayerId === layer.id ? 'active' : ''}`}
+            style={{
+              left: `${layer.x}%`,
+              top: `${layer.y}%`,
+              transform: `translate(-50%, -50%) rotate(${layer.rotation}deg)`,
+              fontFamily: layerFont.family,
+              fontSize: `${layer.fontSize}px`,
+              color: layer.color,
+              direction: layerFont.rtl ? 'rtl' : 'ltr',
+            }}
+            onPointerDown={(e) => handleLayerDrag(e, layer)}
+            onClick={(e) => e.stopPropagation()}
+            onDoubleClick={() => {
+              setPromptState({ layerId: layer.id, initialText: layer.text, promptKey: 'editLayerText' })
+            }}
+          >
+            {layer.text}
+            {state.activeLayerId === layer.id && (
+              <>
+                <LayerToolbar layer={layer} onMoveLayer={moveLayer} onDuplicateLayer={duplicateLayer} t={t} />
+                <span
+                  className="layer-del"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={() => deleteLayer(layer.id)}
+                >
+                  <I.IconX size={11} />
+                </span>
+                <span
+                  className="layer-rotate-handle"
+                  onPointerDown={(e) => handleLayerRotate(e, layer)}
+                >
+                  <I.IconRotate size={11} />
+                </span>
+              </>
+            )}
+          </div>
+        )
+      })}
+    </>
+  )
 
   return (
-    <div className="app" style={{ '--accent': appSettings.themeColor }}>
+    <div
+      className="app"
+      style={{
+        '--accent': appSettings.themeColor,
+        '--stage-gradient': getThemeStageGradient(appSettings.themeColor),
+      }}
+      data-theme-black={appSettings.themeColor === '#09090b' || appSettings.themeColor === '#000000'}
+      data-theme-white={appSettings.themeColor === '#ffffff' || appSettings.themeColor === '#fff'}
+    >
       <h1 className="sr-only">FontWoW — متن‌آرایی و فونت‌نویسی آنلاین فارسی</h1>
       <div className="aurora" aria-hidden="true">
         <i />
@@ -1693,21 +2833,21 @@ export default function App() {
         <div className="header-actions">
           <button
             className="pill-btn ghost icon-only"
-            onClick={undo}
-            aria-label={t('undo')}
-            title={`${t('undo')} (Ctrl/Cmd + Z)`}
-            disabled={!canUndo}
-          >
-            <I.IconUndo size={16} />
-          </button>
-          <button
-            className="pill-btn ghost icon-only"
             onClick={redo}
             aria-label={t('redo')}
             title={`${t('redo')} (Ctrl/Cmd + Shift + Z)`}
             disabled={!canRedo}
           >
             <I.IconRedo size={16} />
+          </button>
+          <button
+            className="pill-btn ghost icon-only"
+            onClick={undo}
+            aria-label={t('undo')}
+            title={`${t('undo')} (Ctrl/Cmd + Z)`}
+            disabled={!canUndo}
+          >
+            <I.IconUndo size={16} />
           </button>
           <button
             className="pill-btn ghost icon-only"
@@ -1729,240 +2869,185 @@ export default function App() {
         </div>
       </header>
 
-      <main className="stage">
-        <div
-          className="stage-inner"
-          ref={previewRef}
-          style={previewStyle}
-          onClick={() => state.activeLayerId && update({ activeLayerId: null }, { record: false })}
-        >
-          <div className="bg-layer" style={bgLayerStyle} />
-          {state.warpMode === 'none' ? (
+      <main
+        className="stage"
+        ref={stageRef}
+        onClick={(e) => {
+          if (e.target.closest('.text-layer, .text-canvas, .curved-text-svg, .canvas-size-slider-left, .canvas-quick-bar, .quick-bar, .canvas-quick-actions, .artboard-viewport')) return
+          if (isControlsOpen) {
+            setIsControlsOpen(false)
+          }
+        }}
+      >
+        {state.bgEnabled ? (
+          <div
+            className="artboard-viewport"
+            style={{
+              width: `${artboardDisplayWidth}px`,
+              height: `${artboardDisplayHeight}px`,
+              borderRadius: `${Math.max(8, Math.round(18 * artboardScale))}px`,
+            }}
+          >
             <div
-              className={`text-canvas tb-${state.textBoxStyle}`}
-              ref={textRef}
-              style={textStyle}
-              contentEditable
-              suppressContentEditableWarning
-              dir={state.direction}
-              data-placeholder={t('placeholder')}
-              onInput={onTextInput}
-            />
-          ) : (
-            <CurvedText text={displayText || t('placeholder')} mode={state.warpMode} bend={state.warpBend} style={curvedTextStyle} />
-          )}
-          {state.layers.map((layer) => {
-            if (layer.type === 'label') {
-              const layerFont = allFonts.find((f) => f.id === layer.fontId) ?? font
-              return (
-                <div
-                  key={layer.id}
-                  className={`text-layer label-layer ${state.activeLayerId === layer.id ? 'active' : ''}`}
-                  style={{
-                    left: `${layer.x}%`,
-                    top: `${layer.y}%`,
-                    width: `${layer.width}px`,
-                    aspectRatio: layer.aspectRatio ?? '16 / 9',
-                    transform: `translate(-50%, -50%) rotate(${layer.rotation}deg)`,
-                  }}
-                  onPointerDown={(e) => handleLayerDrag(e, layer)}
-                  onClick={(e) => e.stopPropagation()}
-                  onDoubleClick={() => {
-                    setPromptState({ layerId: layer.id, initialText: layer.text, promptKey: 'editLabelText' })
-                  }}
-                >
-                  <LabelArtwork templateId={layer.templateId} color={layer.color} />
-                  <span
-                    className="label-layer-text"
-                    style={{
-                      color: layer.textColor,
-                      fontFamily: layerFont.family,
-                      fontSize: `${layer.fontSize}px`,
-                      transform: `translate(${layer.textOffsetX ?? 0}%, ${layer.textOffsetY ?? 0}%)`,
-                    }}
-                  >
-                    {layer.text}
-                  </span>
-                  {state.activeLayerId === layer.id && (
-                    <>
-                      <LayerToolbar layer={layer} onMoveLayer={moveLayer} onDuplicateLayer={duplicateLayer} t={t} />
-                      <span className="layer-del" onPointerDown={(e) => e.stopPropagation()} onClick={() => deleteLayer(layer.id)}>
-                        <I.IconX size={11} />
-                      </span>
-                      <span className="layer-rotate-handle" onPointerDown={(e) => handleLayerRotate(e, layer)}>
-                        <I.IconRotate size={11} />
-                      </span>
-                      <span className="layer-resize-handle" onPointerDown={(e) => handleLayerResize(e, layer)}>
-                        <I.IconArrowsLR size={11} />
-                      </span>
-                    </>
-                  )}
-                </div>
-              )
-            }
-            if (layer.type === 'image') {
-              return (
-                <div
-                  key={layer.id}
-                  className={`text-layer image-layer ${state.activeLayerId === layer.id ? 'active' : ''}`}
-                  style={{
-                    left: `${layer.x}%`,
-                    top: `${layer.y}%`,
-                    width: `${layer.width}px`,
-                    transform: `translate(-50%, -50%) rotate(${layer.rotation}deg)`,
-                  }}
-                  onPointerDown={(e) => handleLayerDrag(e, layer)}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <img src={layer.src} alt="" draggable={false} />
-                  {state.activeLayerId === layer.id && (
-                    <>
-                      <LayerToolbar layer={layer} onMoveLayer={moveLayer} onDuplicateLayer={duplicateLayer} t={t} />
-                      <span
-                        className="layer-del"
-                        onPointerDown={(e) => e.stopPropagation()}
-                        onClick={() => deleteLayer(layer.id)}
-                      >
-                        <I.IconX size={11} />
-                      </span>
-                      <span
-                        className="layer-rotate-handle"
-                        onPointerDown={(e) => handleLayerRotate(e, layer)}
-                      >
-                        <I.IconRotate size={11} />
-                      </span>
-                      <span
-                        className="layer-resize-handle"
-                        onPointerDown={(e) => handleLayerResize(e, layer)}
-                      >
-                        <I.IconArrowsLR size={11} />
-                      </span>
-                    </>
-                  )}
-                </div>
-              )
-            }
-            const layerFont = allFonts.find((f) => f.id === layer.fontId) ?? font
-            return (
+              className="artboard-transformer"
+              style={{
+                width: `${baseArtboardDim.width}px`,
+                height: `${baseArtboardDim.height}px`,
+                transform: `scale(${artboardScale})`,
+              }}
+            >
               <div
-                key={layer.id}
-                className={`text-layer ${state.activeLayerId === layer.id ? 'active' : ''}`}
+                className="stage-inner is-artboard"
+                ref={previewRef}
                 style={{
-                  left: `${layer.x}%`,
-                  top: `${layer.y}%`,
-                  transform: `translate(-50%, -50%) rotate(${layer.rotation}deg)`,
-                  fontFamily: layerFont.family,
-                  fontSize: `${layer.fontSize}px`,
-                  color: layer.color,
-                  direction: layerFont.rtl ? 'rtl' : 'ltr',
+                  ...previewStyle,
+                  width: `${baseArtboardDim.width}px`,
+                  height: `${baseArtboardDim.height}px`,
                 }}
-                onPointerDown={(e) => handleLayerDrag(e, layer)}
-                onClick={(e) => e.stopPropagation()}
-                onDoubleClick={() => {
-                  setPromptState({ layerId: layer.id, initialText: layer.text, promptKey: 'editLayerText' })
-                }}
+                onClick={() => state.activeLayerId && update({ activeLayerId: null }, { record: false })}
               >
-                {layer.text}
-                {state.activeLayerId === layer.id && (
-                  <>
-                    <LayerToolbar layer={layer} onMoveLayer={moveLayer} onDuplicateLayer={duplicateLayer} t={t} />
-                    <span
-                      className="layer-del"
-                      onPointerDown={(e) => e.stopPropagation()}
-                      onClick={() => deleteLayer(layer.id)}
-                    >
-                      <I.IconX size={11} />
-                    </span>
-                    <span
-                      className="layer-rotate-handle"
-                      onPointerDown={(e) => handleLayerRotate(e, layer)}
-                    >
-                      <I.IconRotate size={11} />
-                    </span>
-                  </>
-                )}
+                {renderCanvasInner()}
               </div>
-            )
-          })}
-        </div>
+            </div>
+          </div>
+        ) : (
+          <div
+            className="stage-inner"
+            ref={previewRef}
+            style={previewStyle}
+            onClick={() => state.activeLayerId && update({ activeLayerId: null }, { record: false })}
+          >
+            {renderCanvasInner()}
+          </div>
+        )}
         {dragGuides.x != null && (
           <div className="snap-guide snap-guide-v" style={{ left: dragGuides.x }} />
         )}
         {dragGuides.y != null && (
           <div className="snap-guide snap-guide-h" style={{ top: dragGuides.y }} />
         )}
-        <button className="add-layer-btn" onClick={addLayer} aria-label={t('addLayer')}>
-          <I.IconPlus size={12} /> Aa
-        </button>
-        <label className="add-layer-btn add-image-layer-btn" aria-label={t('addSticker')}>
-          <input type="file" accept="image/*" onChange={onUploadLayerImage} hidden />
-          <I.IconPlus size={12} /> <I.IconImage size={13} />
-        </label>
-        <button className="add-layer-btn add-label-layer-btn" onClick={() => setShowLabelPicker(true)} aria-label={t('addLabel')}>
-          <I.IconTag size={13} />
-        </button>
-        {state.text && (
-          <div className="canvas-rail">
-              <button
-                className="rail-btn"
-                onClick={cycleAlign}
-                aria-label={t(`align_${state.align}`)}
-              >
-                {state.align === 'right' ? (
-                  <I.IconAlignRight size={16} />
-                ) : state.align === 'left' ? (
-                  <I.IconAlignLeft size={16} />
-                ) : (
-                  <I.IconAlignCenter size={16} />
-                )}
+        {/* Floating Quick Actions Bar at the top of the canvas */}
+        <div className="canvas-quick-bar" role="toolbar" aria-label="ابزارهای سریع متن">
+          <button
+            className="quick-bar-btn"
+            onClick={cycleAlign}
+            aria-label={t(`align_${state.align}`)}
+            title={t(`align_${state.align}`)}
+          >
+            {state.align === 'right' ? (
+              <I.IconAlignRight size={15} />
+            ) : state.align === 'left' ? (
+              <I.IconAlignLeft size={15} />
+            ) : (
+              <I.IconAlignCenter size={15} />
+            )}
+          </button>
+          <button
+            className={`quick-bar-btn ${state.underline ? 'on' : ''}`}
+            onClick={() => update({ underline: !state.underline })}
+            aria-label={t('underline')}
+            title={t('underline')}
+          >
+            <I.IconUnderline size={14} />
+          </button>
+          <button
+            className={`quick-bar-btn ${state.direction === 'rtl' ? 'on' : ''}`}
+            onClick={() =>
+              update({
+                direction: state.direction === 'rtl' ? 'ltr' : 'rtl',
+              })
+            }
+            aria-label="RTL / LTR"
+            title="RTL / LTR"
+          >
+            <span style={{ fontSize: '10.5px', fontWeight: 700 }}>RTL</span>
+          </button>
+          <div className="quick-bar-divider" />
+          <button className="quick-bar-btn" onClick={addLayer} aria-label={t('addLayer')} title={t('addLayer')}>
+            <I.IconPlus size={11} /> <span style={{ fontSize: '11px', fontWeight: 700 }}>Aa</span>
+          </button>
+          <label className="quick-bar-btn" aria-label={t('addSticker')} title={t('addSticker')}>
+            <input type="file" accept="image/*" onChange={onUploadLayerImage} hidden />
+            <I.IconImage size={14} />
+          </label>
+          <button className="quick-bar-btn" onClick={() => setShowLabelPicker(true)} aria-label={t('addLabel')} title={t('addLabel')}>
+            <I.IconTag size={13} />
+          </button>
+          {state.text && (
+            <>
+              <div className="quick-bar-divider" />
+              <button className="quick-bar-btn danger" onClick={clearAll} aria-label={t('clear')} title={t('clear')}>
+                <I.IconTrash size={14} />
               </button>
-              <button
-                className={`rail-btn ${state.underline ? 'on' : ''}`}
-                onClick={() => update({ underline: !state.underline })}
-                aria-label={t('underline')}
-              >
-                <I.IconUnderline size={15} />
-              </button>
-              <button
-                className={`rail-btn ${state.direction === 'rtl' ? 'on' : ''}`}
-                onClick={() =>
-                  update({
-                    direction: state.direction === 'rtl' ? 'ltr' : 'rtl',
-                  })
-                }
-                aria-label="RTL"
-              >
-                RTL
-              </button>
-              <button className="rail-btn danger" onClick={clearAll} aria-label={t('clear')}>
-                <I.IconTrash size={15} />
-              </button>
+            </>
+          )}
+        </div>
+
+        {/* Vertical Transparent Font Size Slider on the Left */}
+        <div className="canvas-size-slider-left" title={t('size')} aria-label={t('size')}>
+          <div className="size-slider-indicator">
+            <span className="size-slider-val">{editableFontSize}</span>
           </div>
-        )}
+          <div className="size-slider-track-wrap">
+            <input
+              type="range"
+              min={16}
+              max={120}
+              value={editableFontSize}
+              onChange={(e) => updateEditableFontSize(+e.target.value)}
+              className="size-slider-input"
+              aria-label={t('size')}
+            />
+          </div>
+          <span className="size-slider-icon">
+            <I.IconTextSize size={14} />
+          </span>
+        </div>
       </main>
 
-      <section className="controls">
-        <div className="pinned-size-row">
-          {activeTextLayer && <p className="settings-label">{t('editingSelectedText')}</p>}
-          <SliderRow
-            label={t('size')}
-            min={16}
-            max={120}
-            value={editableFontSize}
-            onChange={(e) => updateEditableFontSize(+e.target.value)}
-          />
+      <section className={`controls ${!isControlsOpen ? 'is-closed' : ''}`}>
+        <div
+          className="controls-grab-bar"
+          onPointerDown={handleControlsGrabPointerDown}
+          onClick={() => {
+            if (grabHasMoved.current) return
+            setIsControlsOpen((prev) => !prev)
+            triggerHaptic('light')
+          }}
+          role="button"
+          tabIndex={0}
+          aria-label={isControlsOpen ? 'بستن پنل تنظیمات' : 'باز کردن پنل تنظیمات'}
+        >
+          <span className="controls-grab-pill" />
         </div>
-        <div className="tabs" ref={tabsRef}>
-          <span className="tab-indicator" aria-hidden="true" />
-          {TABS.map((tb) => (
-            <button
-              key={tb.id}
-              className={`tab ${tab === tb.id ? 'active' : ''}`}
-              onClick={() => setTab(tb.id)}
-            >
-              <tb.Icon size={14} /> {tb.label}
-            </button>
-          ))}
+
+        <div className="controls-bar">
+          <HorizontalScroll
+            className="controls-tabs-scroll"
+            trackClassName="tabs"
+            trackRef={tabsRef}
+            ariaLabel="تب‌های تنظیمات"
+          >
+            <span className="tab-indicator" aria-hidden="true" />
+            {TABS.map((tb) => (
+              <button
+                key={tb.id}
+                className={`tab ${isControlsOpen && tab === tb.id ? 'active' : ''}`}
+                onClick={(e) => {
+                  if (isControlsOpen && tab === tb.id) {
+                    setIsControlsOpen(false)
+                  } else {
+                    setTab(tb.id)
+                    setIsControlsOpen(true)
+                    e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+                  }
+                }}
+              >
+                <span className="tab-icon-wrap"><tb.Icon size={14} /></span>
+                <span className="tab-label-text">{tb.label}</span>
+              </button>
+            ))}
+          </HorizontalScroll>
         </div>
 
         <div className="panel" key={tab}>
@@ -2007,7 +3092,7 @@ export default function App() {
           )}
           {tab === 'font' && (
             <>
-              <div className="chip-row sub-row">
+              <HorizontalScroll trackClassName="chip-row sub-row" ariaLabel="دسته‌بندی فونت‌ها">
                 {FONT_CATEGORIES.map((c) => (
                   <button
                     key={c.id}
@@ -2017,136 +3102,344 @@ export default function App() {
                     {c.label}
                   </button>
                 ))}
-              </div>
-              <div className="chip-row">
-                {visibleFonts.map((f) => (
-                  <button
-                    key={f.id}
-                    className={`chip font-chip ${state.fontId === f.id ? 'selected' : ''} ${loadingFontId === f.id ? 'loading' : ''}`}
-                    onClick={() => {
-                      update({ fontId: f.id, direction: f.rtl ? 'rtl' : 'ltr' })
-                      loadFont(f)
-                    }}
-                  >
-                    {f.dataUrl && (
-                      <span className="rename-font" onClick={(e) => renameCustomFont(f.id, e)}>
-                        <I.IconEdit size={9} />
+              </HorizontalScroll>
+              <HorizontalScroll trackClassName="chip-row" ariaLabel="فهرست فونت‌ها">
+                {visibleFonts.map((f) => {
+                  const isPinned = pinnedFontIds.includes(f.id)
+                  return (
+                    <button
+                      key={f.id}
+                      className={`chip font-chip ${state.fontId === f.id ? 'selected' : ''} ${isPinned ? 'is-pinned' : ''} ${loadingFontId === f.id ? 'loading' : ''}`}
+                      onClick={() => {
+                        update({ fontId: f.id, direction: f.rtl ? 'rtl' : 'ltr' })
+                        loadFont(f)
+                      }}
+                    >
+                      <span
+                        className={`pin-font-btn ${isPinned ? 'pinned' : ''}`}
+                        onClick={(e) => togglePinFont(f.id, e)}
+                        title={isPinned ? 'برداشتن سنجاق (آنپین)' : 'سنجاق کردن به اول لیست'}
+                        aria-label={isPinned ? 'برداشتن سنجاق' : 'سنجاق کردن فونت'}
+                      >
+                        <I.IconPin size={11} />
                       </span>
-                    )}
-                    {(f.dataUrl || f.id.startsWith('gfont-')) && (
-                      <span className="del-font" onClick={(e) => deleteCustomFont(f.id, e)}>
-                        <I.IconX size={9} />
-                      </span>
-                    )}
-                    {loadingFontId === f.id && (
-                      <span className="font-loader">
-                        <I.IconLoader size={16} />
-                      </span>
-                    )}
-                    <span style={{ fontFamily: f.family }}>
-                      {state.text.trim() ? state.text.trim().slice(0, 8) : (f.rtl ? 'ابر' : 'Aa')}
-                    </span>
-                    <span className="chip-label" style={{ fontFamily: f.family }}>{f.label}</span>
-                    {f.creator && (
-                      <span className="chip-creator" style={{ fontSize: '0.65em', color: 'var(--text-3)', marginTop: '2px', fontFamily: 'system-ui', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{f.creator}</span>
-                    )}
-                  </button>
-                ))}
-                <label className="chip font-chip upload-chip">
+                      {f.dataUrl && (
+                        <span className="rename-font" onClick={(e) => renameCustomFont(f.id, e)}>
+                          <I.IconEdit size={9} />
+                        </span>
+                      )}
+                      {(f.dataUrl || f.id.startsWith('gfont-')) && (
+                        <span className="del-font" onClick={(e) => deleteCustomFont(f.id, e)}>
+                          <I.IconX size={9} />
+                        </span>
+                      )}
+                      {loadingFontId === f.id && (
+                        <span className="font-loader">
+                          <I.IconLoader size={16} />
+                        </span>
+                      )}
+                      <div className="font-chip-specimen" style={{ fontFamily: f.family }}>
+                        {state.text.trim() ? state.text.trim().slice(0, 7) : (f.rtl ? 'ابر' : 'Aa')}
+                      </div>
+                      <div className="font-chip-meta">
+                        <span className="chip-label" style={{ fontFamily: f.family }}>{f.label}</span>
+                        {f.creator && (
+                          <span className="chip-creator">{f.creator}</span>
+                        )}
+                      </div>
+                    </button>
+                  )
+                })}
+                <label className="chip font-chip upload-chip" title={t('yourFont')}>
                   <input
                     type="file"
                     accept=".ttf,.otf,.woff,.woff2"
                     onChange={onUploadFont}
                     hidden
                   />
-                  <I.IconPlus size={17} />
-                  <span className="chip-label">{t('yourFont')}</span>
+                  <div className="font-chip-specimen">
+                    <I.IconPlus size={20} />
+                  </div>
+                  <div className="font-chip-meta">
+                    <span className="chip-label">{t('yourFont')}</span>
+                  </div>
                 </label>
-                <button className="chip font-chip upload-chip" onClick={() => setShowGoogleFontsSearch(true)}>
-                  <I.IconSearch size={17} />
-                  <span className="chip-label">{t('addGoogleFont')}</span>
+                <button className="chip font-chip upload-chip" onClick={() => setShowGoogleFontsSearch(true)} title={t('addGoogleFont')}>
+                  <div className="font-chip-specimen">
+                    <I.IconSearch size={20} />
+                  </div>
+                  <div className="font-chip-meta">
+                    <span className="chip-label">{t('addGoogleFont')}</span>
+                  </div>
+                </button>
+              </HorizontalScroll>
+            </>
+          )}
+
+          {tab === 'style' && (
+            <div className="fx-tab-wrapper">
+              {/* بخش رنگ متن بالای افکت و استایل متن */}
+              <div className="box-section-header" style={{ marginTop: 0 }}>
+                <span className="settings-label" style={{ margin: 0 }}>
+                  <I.IconPalette size={15} style={{ display: 'inline', marginInlineEnd: 6 }} />
+                  {t('tabColor')}
+                </span>
+                <span
+                  className="color-current-preview"
+                  style={{
+                    display: 'inline-block',
+                    width: 15,
+                    height: 15,
+                    borderRadius: '50%',
+                    background: state.color,
+                    border: '1.5px solid rgba(255,255,255,0.4)',
+                    boxShadow: '0 0 8px rgba(0,0,0,0.5)',
+                  }}
+                  title={state.color}
+                />
+              </div>
+
+              <HorizontalScroll trackClassName="text-color-row" ariaLabel="رنگ متن">
+                <label className="text-color-swatch text-color-custom" title="انتخاب رنگ دلخواه">
+                  <input
+                    type="color"
+                    value={state.color}
+                    onChange={(e) => update({ color: e.target.value })}
+                  />
+                  <I.IconPlus size={13} style={{ color: '#fff', pointerEvents: 'none', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.8))' }} />
+                </label>
+                {!TEXT_COLORS.includes(state.color) && (
+                  <button
+                    type="button"
+                    className="text-color-swatch selected"
+                    style={{ background: state.color }}
+                    onClick={() => update({ color: state.color })}
+                    title={`رنگ انتخابی: ${state.color}`}
+                  />
+                )}
+                {TEXT_COLORS.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    className={`text-color-swatch ${state.color === c ? 'selected' : ''}`}
+                    style={{ background: c }}
+                    onClick={() => update({ color: c })}
+                    title={c}
+                  />
+                ))}
+              </HorizontalScroll>
+
+              <div className="box-section-header">
+                <span className="settings-label" style={{ margin: 0 }}>
+                  <I.IconType size={15} style={{ display: 'inline', marginInlineEnd: 6 }} />
+                  {t('tabStyle')}
+                </span>
+              </div>
+
+              <div className="style-grid">
+                <button
+                  type="button"
+                  className={`toggle ${state.bold ? 'on' : ''}`}
+                  onClick={() => update({ bold: !state.bold })}
+                  title={t('bold')}
+                >
+                  <b className="style-glyph">B</b>
+                  <span className="style-label">{t('bold')}</span>
+                </button>
+                <button
+                  type="button"
+                  className={`toggle ${state.italic ? 'on' : ''}`}
+                  onClick={() => update({ italic: !state.italic })}
+                  title={t('italic')}
+                >
+                  <i className="style-glyph">I</i>
+                  <span className="style-label">{t('italic')}</span>
+                </button>
+                <button
+                  type="button"
+                  className={`toggle ${state.underline ? 'on' : ''}`}
+                  onClick={() => update({ underline: !state.underline })}
+                  title={t('underline')}
+                >
+                  <u className="style-glyph">U</u>
+                  <span className="style-label">{t('underline')}</span>
+                </button>
+                <button
+                  type="button"
+                  className={`toggle ${state.shadow ? 'on' : ''}`}
+                  onClick={() => update({ shadow: !state.shadow })}
+                  title={t('shadow')}
+                >
+                  <I.IconShadow size={15} />
+                  <span className="style-label">{t('shadow')}</span>
+                </button>
+                <button
+                  type="button"
+                  className={`toggle ${state.stroke ? 'on' : ''}`}
+                  onClick={() => update({ stroke: !state.stroke })}
+                  title={t('stroke')}
+                >
+                  <I.IconCircle size={15} />
+                  <span className="style-label">{t('stroke')}</span>
+                </button>
+                <button
+                  type="button"
+                  className={`toggle ${state.direction === 'ltr' ? 'on' : ''}`}
+                  onClick={() =>
+                    update({
+                      direction: state.direction === 'rtl' ? 'ltr' : 'rtl',
+                    })
+                  }
+                  title={state.direction === 'rtl' ? 'RTL' : 'LTR'}
+                >
+                  <I.IconArrowsLR size={15} />
+                  <span className="style-label">{state.direction === 'rtl' ? 'RTL' : 'LTR'}</span>
                 </button>
               </div>
-            </>
-          )}
 
-          {tab === 'style' && (
-            <div className="style-grid">
-              <button
-                className={`toggle ${state.bold ? 'on' : ''}`}
-                onClick={() => update({ bold: !state.bold })}
-              >
-                <b>B</b> {t('bold')}
-              </button>
-              <button
-                className={`toggle ${state.italic ? 'on' : ''}`}
-                onClick={() => update({ italic: !state.italic })}
-              >
-                <i>I</i> {t('italic')}
-              </button>
-              <button
-                className={`toggle ${state.underline ? 'on' : ''}`}
-                onClick={() => update({ underline: !state.underline })}
-              >
-                <u>U</u> {t('underline')}
-              </button>
-              <button
-                className={`toggle ${state.shadow ? 'on' : ''}`}
-                onClick={() => update({ shadow: !state.shadow })}
-              >
-                <I.IconShadow size={14} /> {t('shadow')}
-              </button>
-              <button
-                className={`toggle ${state.stroke ? 'on' : ''}`}
-                onClick={() => update({ stroke: !state.stroke })}
-              >
-                <I.IconCircle size={14} /> {t('stroke')}
-              </button>
-              <button
-                className={`toggle ${state.direction === 'ltr' ? 'on' : ''}`}
-                onClick={() =>
-                  update({
-                    direction: state.direction === 'rtl' ? 'ltr' : 'rtl',
-                  })
-                }
-              >
-                <I.IconArrowsLR size={14} /> {state.direction === 'rtl' ? 'RTL' : 'LTR'}
-              </button>
-            </div>
-          )}
-
-          {tab === 'style' && (
-            <>
-              <p className="settings-label">{t('effect')}</p>
-              <div className="chip-row">
-                {TEXT_EFFECTS.map((fx) => (
-                  <button
-                    key={fx.id}
-                    className={`chip ${state.effect === fx.id ? 'selected' : ''}`}
-                    onClick={() => update({ effect: fx.id })}
-                  >
-                    <span className="chip-label">{fx.label}</span>
-                  </button>
-                ))}
+              <div className="box-section-header">
+                <span className="settings-label" style={{ margin: 0 }}>
+                  <I.IconSparkles size={15} style={{ display: 'inline', marginInlineEnd: 6 }} />
+                  {t('effect')}
+                </span>
+                <span className="box-count-badge">{TEXT_EFFECTS.length}</span>
               </div>
-              {state.effect === 'gradient' && (
-                <div className="chip-row">
-                  {TEXT_GRADIENTS.map((g) => (
+
+              <div className="fx-chips-grid">
+                {TEXT_EFFECTS.map((fx) => {
+                  const isSelected = state.effect === fx.id
+                  const keyMap = {
+                    none: 'fx_none',
+                    neon: 'fx_neon',
+                    gradient: 'fx_gradient',
+                    pop3d: 'fx_pop3d',
+                    glitch: 'fx_glitch',
+                    retro: 'fx_retro',
+                    'soft-bloom': 'fx_softBloom',
+                    emboss: 'fx_emboss',
+                    glass: 'fx_glass',
+                    outline: 'fx_outline',
+                    fire: 'fx_fire',
+                    'duo-stroke': 'fx_duoStroke',
+                    chrome: 'fx_chrome',
+                    'shadow-cast': 'fx_shadowCast',
+                  }
+                  const transKey = keyMap[fx.id]
+                  const displayLabel = transKey && t(transKey) !== transKey ? t(transKey) : fx.label
+
+                  return (
                     <button
-                      key={g.id}
-                      className={`swatch ${state.textGradient === g.id ? 'selected' : ''}`}
-                      style={{ background: g.css }}
-                      onClick={() => update({ textGradient: g.id })}
-                      title={g.label}
-                    />
-                  ))}
+                      key={fx.id}
+                      type="button"
+                      className={`fx-chip ${isSelected ? 'selected' : ''}`}
+                      onClick={() => update({ effect: fx.id })}
+                    >
+                      <div className="fx-chip-preview-stage">
+                        <div className={`fx-mini-specimen mini-fx-${fx.id}`}>
+                          <span>Aa</span>
+                        </div>
+                      </div>
+                      <span className="fx-chip-label">{displayLabel}</span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {state.effect === 'gradient' && (
+                <div className="fx-customizer-panel">
+                  <div className="fx-customizer-header">
+                    <span className="fx-customizer-title">
+                      <I.IconPalette size={15} />
+                      {t('fxGradientSelect')}
+                    </span>
+                  </div>
+                  <div className="gradient-swatches-grid">
+                    {TEXT_GRADIENTS.map((g) => (
+                      <button
+                        key={g.id}
+                        type="button"
+                        className={`gradient-swatch-card ${state.textGradient === g.id ? 'selected' : ''}`}
+                        onClick={() => update({ textGradient: g.id })}
+                        title={g.label}
+                      >
+                        <div className="gradient-preview-bar" style={{ background: g.css }} />
+                        <span className="gradient-name">{g.label}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
-            </>
+
+              {['neon', 'pop3d', 'retro', 'soft-bloom', 'outline', 'duo-stroke'].includes(state.effect) && (
+                <div className="fx-customizer-panel">
+                  <div className="fx-customizer-header">
+                    <span className="fx-customizer-title">
+                      <I.IconSliders size={15} />
+                      {t('fxColor')}
+                    </span>
+                    {state.effectColor !== null && (
+                      <button
+                        type="button"
+                        className="box-reset-btn"
+                        onClick={() => update({ effectColor: null })}
+                        title={t('fxReset')}
+                      >
+                        <I.IconRotate size={13} />
+                        <span>{t('fxReset')}</span>
+                      </button>
+                    )}
+                  </div>
+                  <div className="box-color-row">
+                    {[
+                      { label: 'هماهنگ با متن', value: null, isAuto: true },
+                      { label: 'سایبر بلو', value: '#00f0ff' },
+                      { label: 'صورتی نئون', value: '#ff007f' },
+                      { label: 'سبز نئون', value: '#00ff88' },
+                      { label: 'طلایی آفتابی', value: '#ffd700' },
+                      { label: 'بنفش ارغوانی', value: '#b5179e' },
+                      { label: 'قرمز شعله', value: '#ff3838' },
+                      { label: 'سفید خالص', value: '#ffffff' },
+                      { label: 'مشکی دودی', value: '#121218' },
+                    ].map((cp) => (
+                      <button
+                        key={cp.label}
+                        type="button"
+                        className={`box-color-swatch ${cp.isAuto ? (state.effectColor === null ? 'selected' : '') : (state.effectColor === cp.value ? 'selected' : '')}`}
+                        style={cp.isAuto ? {} : { backgroundColor: cp.value }}
+                        onClick={() => update({ effectColor: cp.value })}
+                        title={cp.label}
+                      >
+                        {cp.isAuto && <span className="auto-text">Auto</span>}
+                      </button>
+                    ))}
+                    <label className="box-color-swatch custom-picker" title="انتخاب رنگ دلخواه">
+                      <input
+                        type="color"
+                        value={state.effectColor && state.effectColor.startsWith('#') ? state.effectColor : '#00f0ff'}
+                        onChange={(e) => update({ effectColor: e.target.value })}
+                      />
+                      <I.IconPalette size={14} />
+                    </label>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
 
           {tab === 'magic' && (
             <div className="layout-panel magic-panel">
+              <div className="magic-intro-card">
+                <div className="magic-intro-header">
+                  <span className="magic-intro-badge">
+                    <I.IconSparkles size={16} />
+                  </span>
+                  <div className="magic-intro-text-wrap">
+                    <h4 className="magic-intro-title">{t('magicIntroTitle')}</h4>
+                    <p className="magic-intro-desc">{t('magicIntroDesc')}</p>
+                  </div>
+                </div>
+              </div>
+
               <button className="sheet-item recommended" onClick={applyMagicLayout}>
                 <I.IconSparkles size={17} /> {t('magicLayout')}
               </button>
@@ -2213,211 +3506,668 @@ export default function App() {
           )}
 
           {tab === 'box' && (
-            <div className="chip-row">
-              {TEXT_BOX_STYLES.map((s) => (
-                <button
-                  key={s.id}
-                  className={`chip ${state.textBoxStyle === s.id ? 'selected' : ''}`}
-                  onClick={() => update({ textBoxStyle: s.id })}
-                >
-                  <span className="chip-label">{s.label}</span>
-                </button>
-              ))}
-            </div>
-          )}
+            <div className="box-tab-wrapper">
+              <div className="box-chips-grid">
+                {TEXT_BOX_STYLES.map((s) => {
+                  const isSelected = state.textBoxStyle === s.id
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      className={`box-chip ${isSelected ? 'selected' : ''}`}
+                      onClick={() => update({ textBoxStyle: s.id })}
+                    >
+                      <div className="box-chip-preview-stage">
+                        <div className={`box-mini-specimen mini-tb-${s.id}`}>
+                          <span className="mini-text">Aa</span>
+                        </div>
+                      </div>
+                      <span className="box-chip-label">{s.label}</span>
+                    </button>
+                  )
+                })}
+              </div>
 
-          {tab === 'color' && (
-            <div className="chip-row">
-              {TEXT_COLORS.map((c) => (
-                <button
-                  key={c}
-                  className={`swatch ${state.color === c ? 'selected' : ''}`}
-                  style={{ background: c }}
-                  onClick={() => update({ color: c })}
-                />
-              ))}
-              <label className="swatch custom-swatch">
-                <input
-                  type="color"
-                  value={state.color}
-                  onChange={(e) => update({ color: e.target.value })}
-                />
-              </label>
+              {state.textBoxStyle !== 'none' && (
+                <div className="box-customizer-panel">
+                  <div className="box-customizer-header">
+                    <span className="box-customizer-title">
+                      <I.IconSliders size={15} />
+                      {t('boxCustomize')}
+                    </span>
+                    {(state.boxBgColor || state.boxOpacity !== 85 || state.boxRadius !== null || state.boxPadding !== null) && (
+                      <button
+                        type="button"
+                        className="box-reset-btn"
+                        onClick={() => update({ boxBgColor: null, boxOpacity: 85, boxRadius: null, boxPadding: null })}
+                        title={t('boxReset')}
+                      >
+                        <I.IconRotate size={13} />
+                        <span>{t('boxReset')}</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="box-control-block">
+                    <span className="box-control-label">{t('boxBgColor')}</span>
+                    <HorizontalScroll trackClassName="box-color-row" ariaLabel="رنگ پس‌زمینه کادر">
+                      {[
+                        {
+                          label: 'پیش‌فرض استایل',
+                          value: null,
+                          isAuto: true,
+                          bg: state.textBoxStyle === 'story'
+                            ? 'linear-gradient(135deg, #833ab4 0%, #fd1d1d 50%, #fcb045 100%)'
+                            : state.textBoxStyle === 'glass'
+                              ? 'rgba(255, 255, 255, 0.3)'
+                              : state.textBoxStyle === 'dark-glass'
+                                ? '#0f0f16'
+                                : state.textBoxStyle === 'sms'
+                                  ? '#0a84ff'
+                                  : 'rgba(255, 255, 255, 0.12)',
+                        },
+                        { label: 'غروب اینستاگرام', value: 'linear-gradient(135deg, #833ab4 0%, #fd1d1d 50%, #fcb045 100%)' },
+                        { label: 'رز نئون', value: 'linear-gradient(135deg, #f43f5e 0%, #fb7185 50%, #fda4af 100%)' },
+                        { label: 'آبی اقیانوسی', value: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)' },
+                        { label: 'طلایی لوکس', value: 'linear-gradient(135deg, #d97706 0%, #fbbf24 50%, #fef3c7 100%)' },
+                        { label: 'شفق زمردی', value: 'linear-gradient(135deg, #059669 0%, #34d399 50%, #6ee7b7 100%)' },
+                        { label: 'بنفش کیهانی', value: 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 50%, #c4b5fd 100%)' },
+                        { label: 'سان‌ست پرتقالی', value: 'linear-gradient(135deg, #ea580c 0%, #f97316 50%, #fed7aa 100%)' },
+                        { label: 'یاقوت سرخ', value: 'linear-gradient(135deg, #be123c 0%, #fb7185 100%)' },
+                        { label: 'فانتزی صورتی', value: 'linear-gradient(160deg, #ff9a9e 0%, #fecfef 100%)' },
+                        { label: 'سوال آبی', value: 'linear-gradient(160deg, #1e3c72 0%, #2a5298 100%)' },
+                        { label: 'مشکی ترنسلوسنت', value: '#111111' },
+                        { label: 'سفید مات', value: '#ffffff' },
+                      ].map((cp) => (
+                        <button
+                          key={cp.label}
+                          type="button"
+                          className={`box-color-swatch ${cp.isAuto ? (state.boxBgColor === null ? 'selected' : '') : (state.boxBgColor === cp.value ? 'selected' : '')}`}
+                          style={{ background: cp.isAuto ? cp.bg : cp.value }}
+                          onClick={() => update({ boxBgColor: cp.value })}
+                          title={cp.label}
+                        >
+                          {cp.isAuto && <span className="auto-text">Auto</span>}
+                        </button>
+                      ))}
+                      <label className="box-color-swatch custom-picker" title="انتخاب رنگ دلخواه">
+                        <input
+                          type="color"
+                          value={state.boxBgColor && state.boxBgColor.startsWith('#') ? state.boxBgColor : '#833ab4'}
+                          onChange={(e) => update({ boxBgColor: e.target.value })}
+                        />
+                        <I.IconPalette size={13} />
+                      </label>
+                    </HorizontalScroll>
+                  </div>
+
+                  <div className="box-sliders-row">
+                    <div className="box-slider-cell">
+                      <div className="box-slider-meta">
+                        <span>{t('boxOpacity')}</span>
+                        <span className="box-slider-val">{state.boxOpacity ?? 85}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="15"
+                        max="100"
+                        value={state.boxOpacity ?? 85}
+                        onChange={(e) => update({ boxOpacity: Number(e.target.value) })}
+                      />
+                    </div>
+
+                    <div className="box-slider-cell">
+                      <div className="box-slider-meta">
+                        <span>{t('boxRadius')}</span>
+                        <span className="box-slider-val">{state.boxRadius !== null ? `${state.boxRadius}px` : 'Auto'}</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="40"
+                        value={state.boxRadius ?? 16}
+                        onChange={(e) => update({ boxRadius: Number(e.target.value) })}
+                      />
+                    </div>
+
+                    <div className="box-slider-cell">
+                      <div className="box-slider-meta">
+                        <span>{t('boxPadding')}</span>
+                        <span className="box-slider-val">{state.boxPadding !== null ? `${state.boxPadding}px` : 'Auto'}</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="8"
+                        max="36"
+                        value={state.boxPadding ?? 16}
+                        onChange={(e) => update({ boxPadding: Number(e.target.value) })}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
           {tab === 'bg' && (
-            <>
-              <div className="chip-row sub-row">
-                {BG_CATEGORIES.map((c) => (
-                  <button
-                    key={c.id}
-                    className={`pill-tab ${bgCategory === c.id ? 'active' : ''}`}
-                    onClick={() => setBgCategory(c.id)}
-                  >
-                    {c.label}
-                  </button>
-                ))}
-              </div>
-              <div className="chip-row">
-                {bgCategory === 'colors' && state.customBgUrl && (
-                  <button
-                    className={`swatch bg-swatch image-swatch ${state.bgId === 'custom-image' ? 'selected' : ''}`}
-                    style={{
-                      backgroundImage: `url(${state.customBgUrl})`,
-                    }}
-                    onClick={() => update({ bgId: 'custom-image' })}
-                    title={t('myImage')}
-                  >
-                    <span className="del-font" onClick={removeBgImage}>
-                      <I.IconX size={9} />
+            <div className="bg-tab-container">
+              {/* Background On/Off Toggle Card */}
+              <div className="bg-toggle-card">
+                <div className="bg-toggle-info">
+                  <div className="bg-toggle-header-row">
+                    <span className="bg-toggle-title">{t('enableBg')}</span>
+                    <span className={`bg-status-pill ${state.bgEnabled ? 'active' : 'inactive'}`}>
+                      {t(state.bgEnabled ? 'statusActive' : 'statusInactive')}
                     </span>
-                  </button>
-                )}
-                {bgSwatches.map((b) => (
-                  <button
-                    key={b.id}
-                    className={`swatch bg-swatch ${state.bgId === b.id ? 'selected' : ''}`}
-                    style={{
-                      background:
-                        b.css === 'transparent'
-                          ? 'repeating-conic-gradient(#3a3a3a 0% 25%, #2a2a2a 0% 50%) 50% / 10px 10px'
-                          : b.css,
-                    }}
-                    onClick={() => update({ bgId: b.id })}
-                    title={b.label}
-                  />
-                ))}
-                {bgCategory === 'colors' && (
-                  <label className="swatch bg-swatch upload-chip" title={t('uploadImage')}>
-                    <input type="file" accept="image/*" onChange={onUploadBgImage} hidden />
-                    <I.IconPlus size={17} />
-                  </label>
-                )}
+                  </div>
+                  <span className="bg-toggle-desc">{t('bgTabHelp')}</span>
+                </div>
+                <button
+                  type="button"
+                  className={`bg-switch-btn ${state.bgEnabled ? 'is-on' : ''}`}
+                  onClick={() => update({ bgEnabled: !state.bgEnabled })}
+                  aria-label={t('enableBg')}
+                >
+                  <span className="bg-switch-thumb" />
+                </button>
               </div>
-              <div className="layout-panel">
-                <SliderRow
-                  label={t('brightness')}
-                  min={50}
-                  max={150}
-                  value={state.bgFilter.brightness}
-                  display={`${state.bgFilter.brightness}%`}
-                  onChange={(e) =>
-                    update({
-                      bgFilter: {
-                        ...state.bgFilter,
-                        brightness: +e.target.value,
-                      },
-                    })
-                  }
-                />
-                <SliderRow
-                  label={t('contrast')}
-                  min={50}
-                  max={150}
-                  value={state.bgFilter.contrast}
-                  display={`${state.bgFilter.contrast}%`}
-                  onChange={(e) =>
-                    update({
-                      bgFilter: {
-                        ...state.bgFilter,
-                        contrast: +e.target.value,
-                      },
-                    })
-                  }
-                />
-                <SliderRow
-                  label={t('blur')}
-                  min={0}
-                  max={20}
-                  value={state.bgFilter.blur}
-                  onChange={(e) =>
-                    update({
-                      bgFilter: {
-                        ...state.bgFilter,
-                        blur: +e.target.value,
-                      },
-                    })
-                  }
-                />
-                <SliderRow
-                  label={t('grayscale')}
-                  min={0}
-                  max={100}
-                  value={state.bgFilter.grayscale}
-                  display={`${state.bgFilter.grayscale}%`}
-                  onChange={(e) =>
-                    update({
-                      bgFilter: {
-                        ...state.bgFilter,
-                        grayscale: +e.target.value,
-                      },
-                    })
-                  }
-                />
-              </div>
-            </>
+
+              {state.bgEnabled && (
+                <div className="bg-options-wrapper">
+                  {/* Aspect Ratio Section (Minimal, single row, icons only) */}
+                  <div className="bg-aspect-ratio-section">
+                    <p className="settings-label">{t('aspectRatio')}</p>
+                    <div className="aspect-ratio-minimal-row">
+                      {ASPECT_RATIOS.map((r) => (
+                        <button
+                          key={r.id}
+                          type="button"
+                          className={`aspect-ratio-minimal-btn ${state.aspectRatio === r.id ? 'selected' : ''}`}
+                          onClick={() => update({ aspectRatio: r.id })}
+                          title={r.label}
+                        >
+                          <span className="aspect-ratio-visual" aria-hidden="true">
+                            {r.id === 'free' && <I.IconMaximize size={15} />}
+                            {r.id === 'story' && <span className="aspect-box" style={{ width: 9, height: 16 }} />}
+                            {r.id === 'square' && <span className="aspect-box" style={{ width: 13, height: 13 }} />}
+                            {r.id === 'portrait' && <span className="aspect-box" style={{ width: 11, height: 14 }} />}
+                            {r.id === 'landscape' && <span className="aspect-box" style={{ width: 16, height: 9 }} />}
+                          </span>
+                          <span className="aspect-ratio-num">
+                            {r.id === 'free' ? 'آزاد' : r.shortLabel || r.id}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Categories Row */}
+                  <HorizontalScroll trackClassName="chip-row sub-row" ariaLabel="دسته‌بندی‌های پس‌زمینه">
+                    {BG_CATEGORIES.map((c) => (
+                      <button
+                        key={c.id}
+                        className={`pill-tab ${bgCategory === c.id ? 'active' : ''}`}
+                        onClick={() => {
+                          setBgCategory(c.id)
+                          if (c.id !== 'gradients') {
+                            setShowGradientBuilder(false)
+                          }
+                        }}
+                      >
+                        {c.label}
+                      </button>
+                    ))}
+                  </HorizontalScroll>
+
+                  {/* Swatches Row (Single line, minimal) */}
+                  <HorizontalScroll trackClassName="bg-swatches-row" ariaLabel="پالت‌های پس‌زمینه">
+                    {/* Category specific dynamic buttons */}
+
+                    {/* 1. Solid / Colors: + button is a Color Picker */}
+                    {(bgCategory === 'solid' || bgCategory === 'colors') && (
+                      <>
+                        <label className="swatch bg-swatch bg-custom-color-btn" title="انتخاب رنگ از پالت دلخواه (کالر پیکر)">
+                          <input
+                            type="color"
+                            value={state.customBgColor || '#8b5cf6'}
+                            onChange={(e) => {
+                              update({
+                                bgId: 'custom-color',
+                                customBgColor: e.target.value,
+                              })
+                            }}
+                          />
+                          <I.IconPlus size={16} />
+                        </label>
+                        {state.customBgColor && (
+                          <button
+                            type="button"
+                            className={`swatch bg-swatch ${state.bgId === 'custom-color' ? 'selected' : ''}`}
+                            style={{ background: state.customBgColor }}
+                            onClick={() => update({ bgId: 'custom-color' })}
+                            title={`رنگ انتخابی: ${state.customBgColor}`}
+                          />
+                        )}
+                      </>
+                    )}
+
+                    {/* 2. Gradients: + button opens Custom Gradient Builder */}
+                    {bgCategory === 'gradients' && (
+                      <>
+                        <button
+                          type="button"
+                          className={`swatch bg-swatch bg-add-btn ${showGradientBuilder || state.bgId === 'custom-gradient' ? 'active' : ''}`}
+                          onClick={onOpenGradientBuilder}
+                          title="ساخت گرادیان سفارشی"
+                        >
+                          <I.IconPlus size={16} />
+                        </button>
+                        {state.customBgGradient && (
+                          <button
+                            type="button"
+                            className={`swatch bg-swatch ${state.bgId === 'custom-gradient' ? 'selected' : ''}`}
+                            style={{ background: state.customBgGradient }}
+                            onClick={() => {
+                              update({ bgId: 'custom-gradient' })
+                              setShowGradientBuilder(true)
+                            }}
+                            title="گرادیان سفارشی شما"
+                          />
+                        )}
+                      </>
+                    )}
+
+                    {/* 3. Mesh: + button uploads image from device/gallery */}
+                    {bgCategory === 'mesh' && (
+                      <>
+                        <label className="swatch bg-swatch upload-chip" title="انتخاب عکس پس‌زمینه از گالری">
+                          <input type="file" accept="image/*" onChange={onUploadBgImage} hidden />
+                          <I.IconPlus size={17} />
+                        </label>
+                        {state.customBgUrl && (
+                          <button
+                            className={`swatch bg-swatch image-swatch ${state.bgId === 'custom-image' ? 'selected' : ''}`}
+                            style={{
+                              backgroundImage: `url(${state.customBgUrl})`,
+                            }}
+                            onClick={() => update({ bgId: 'custom-image' })}
+                            title={t('myImage')}
+                          >
+                            <span className="del-font" onClick={removeBgImage} title="حذف تصویر">
+                              <I.IconX size={9} />
+                            </span>
+                          </button>
+                        )}
+                      </>
+                    )}
+
+                    {/* Note: 'dark' and 'pastel' have NO '+' button as requested */}
+
+                    {/* Preset Swatches */}
+                    {bgSwatches.map((b) => (
+                      <button
+                        key={b.id}
+                        className={`swatch bg-swatch ${state.bgId === b.id ? 'selected' : ''}`}
+                        style={{
+                          background:
+                            b.css === 'transparent'
+                              ? 'repeating-conic-gradient(#3a3a3a 0% 25%, #2a2a2a 0% 50%) 50% / 10px 10px'
+                              : b.css,
+                        }}
+                        onClick={() => update({ bgId: b.id })}
+                        title={b.label}
+                      />
+                    ))}
+                  </HorizontalScroll>
+
+                  {/* Gradient Builder Panel */}
+                  {bgCategory === 'gradients' && showGradientBuilder && (
+                    <div className="gradient-builder-card">
+                      <div className="gradient-builder-header">
+                        <span className="gradient-builder-title">
+                          <I.IconSparkles size={14} />
+                          ساخت گرادیان سفارشی
+                        </span>
+                        <button
+                          type="button"
+                          className="gradient-builder-close"
+                          onClick={() => setShowGradientBuilder(false)}
+                          title="بستن"
+                        >
+                          <I.IconX size={14} />
+                        </button>
+                      </div>
+
+                      <div
+                        className="gradient-live-preview"
+                        style={{ background: state.customBgGradient || currentCustomGradient }}
+                        title="پیش‌نمایش زنده گرادیان"
+                      />
+
+                      <div className="gradient-colors-row">
+                        <label className="gradient-color-pick-item" title="انتخاب رنگ شروع">
+                          <div className="gradient-color-input-wrap" style={{ background: gradColor1 }}>
+                            <input
+                              type="color"
+                              value={gradColor1}
+                              onChange={(e) => updateGradient(e.target.value, undefined)}
+                            />
+                          </div>
+                          <div className="gradient-color-meta">
+                            <span className="gradient-color-label">رنگ اول</span>
+                            <span className="gradient-color-val">{gradColor1.toUpperCase()}</span>
+                          </div>
+                        </label>
+
+                        <button
+                          type="button"
+                          className="gradient-swap-btn"
+                          onClick={swapGradientColors}
+                          title="جابجایی رنگ‌ها"
+                        >
+                          <I.IconArrowsLR size={15} />
+                        </button>
+
+                        <label className="gradient-color-pick-item" title="انتخاب رنگ پایان">
+                          <div className="gradient-color-input-wrap" style={{ background: gradColor2 }}>
+                            <input
+                              type="color"
+                              value={gradColor2}
+                              onChange={(e) => updateGradient(undefined, e.target.value)}
+                            />
+                          </div>
+                          <div className="gradient-color-meta">
+                            <span className="gradient-color-label">رنگ دوم</span>
+                            <span className="gradient-color-val">{gradColor2.toUpperCase()}</span>
+                          </div>
+                        </label>
+                      </div>
+
+                      <div className="gradient-angles-row">
+                        <button
+                          type="button"
+                          className={`gradient-angle-btn ${gradType === 'linear' && gradAngle === 135 ? 'active' : ''}`}
+                          onClick={() => updateGradient(undefined, undefined, 135, 'linear')}
+                          title="مورب ۱۳۵ درجه"
+                        >
+                          ۱۳۵° مورب
+                        </button>
+                        <button
+                          type="button"
+                          className={`gradient-angle-btn ${gradType === 'linear' && gradAngle === 90 ? 'active' : ''}`}
+                          onClick={() => updateGradient(undefined, undefined, 90, 'linear')}
+                          title="عمودی ۹۰ درجه"
+                        >
+                          ۹۰° عمودی
+                        </button>
+                        <button
+                          type="button"
+                          className={`gradient-angle-btn ${gradType === 'linear' && gradAngle === 180 ? 'active' : ''}`}
+                          onClick={() => updateGradient(undefined, undefined, 180, 'linear')}
+                          title="افقی ۱۸۰ درجه"
+                        >
+                          ۱۸۰° افقی
+                        </button>
+                        <button
+                          type="button"
+                          className={`gradient-angle-btn ${gradType === 'linear' && gradAngle === 45 ? 'active' : ''}`}
+                          onClick={() => updateGradient(undefined, undefined, 45, 'linear')}
+                          title="مورب ۴۵ درجه"
+                        >
+                          ۴۵° مورب
+                        </button>
+                        <button
+                          type="button"
+                          className={`gradient-angle-btn ${gradType === 'radial' ? 'active' : ''}`}
+                          onClick={() => updateGradient(undefined, undefined, undefined, 'radial')}
+                          title="شعاعی مرکز"
+                        >
+                          شعاعی ⭕
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Sliders */}
+                  <div className="layout-panel">
+                    <SliderRow
+                      label={t('brightness')}
+                      min={50}
+                      max={150}
+                      value={state.bgFilter.brightness}
+                      display={`${state.bgFilter.brightness}%`}
+                      onChange={(e) =>
+                        update({
+                          bgFilter: {
+                            ...state.bgFilter,
+                            brightness: +e.target.value,
+                          },
+                        })
+                      }
+                    />
+                    <SliderRow
+                      label={t('contrast')}
+                      min={50}
+                      max={150}
+                      value={state.bgFilter.contrast}
+                      display={`${state.bgFilter.contrast}%`}
+                      onChange={(e) =>
+                        update({
+                          bgFilter: {
+                            ...state.bgFilter,
+                            contrast: +e.target.value,
+                          },
+                        })
+                      }
+                    />
+                    <SliderRow
+                      label={t('blur')}
+                      min={0}
+                      max={20}
+                      value={state.bgFilter.blur}
+                      onChange={(e) =>
+                        update({
+                          bgFilter: {
+                            ...state.bgFilter,
+                            blur: +e.target.value,
+                          },
+                        })
+                      }
+                    />
+                    <SliderRow
+                      label={t('grayscale')}
+                      min={0}
+                      max={100}
+                      value={state.bgFilter.grayscale}
+                      display={`${state.bgFilter.grayscale}%`}
+                      onChange={(e) =>
+                        update({
+                          bgFilter: {
+                            ...state.bgFilter,
+                            grayscale: +e.target.value,
+                          },
+                        })
+                      }
+                    />
+                  </div>
+
+                  {/* Reset Button */}
+                  <div className="bg-reset-row">
+                    <button
+                      type="button"
+                      className="pill-btn soft reset-bg-btn"
+                      onClick={() => {
+                        update({
+                          bgEnabled: false,
+                          bgId: 'solid-2',
+                          customBgUrl: null,
+                          customBgColor: '#8b5cf6',
+                          customBgGradient: 'linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%)',
+                          aspectRatio: 'free',
+                          bgFilter: { brightness: 100, contrast: 100, blur: 0, grayscale: 0 },
+                        })
+                        setShowGradientBuilder(false)
+                        setToast(t('bgResetSuccess'))
+                      }}
+                    >
+                      <I.IconRefresh size={13} />
+                      <span>{t('resetBgSettings')}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
 
           {tab === 'templates' && (
-            <div className="chip-row">
-              {allTemplates.map((tpl) => {
-                const tplBg = ALL_BACKGROUNDS.find((b) => b.id === tpl.bgId)
-                const isCustom = tpl.id.startsWith('custom-')
-                return (
-                  <button
-                    key={tpl.id}
-                    className="chip template-chip"
-                    style={tplBg ? { background: tplBg.css } : undefined}
-                    onClick={() => applyTemplate(tpl)}
-                  >
-                    {isCustom && (
-                      <span className="del-font" onClick={(e) => deleteCustomTemplate(tpl.id, e)}>
-                        <I.IconX size={9} />
-                      </span>
-                    )}
-                    <span className="chip-label">{tpl.label}</span>
-                  </button>
-                )
-              })}
-              <button
-                className="chip template-chip upload-chip"
-                onClick={() => {
-                  setStyleName('')
-                  setShowStyleStudio(true)
-                }}
-              >
-                <I.IconPlus size={17} />
-                <span className="chip-label">{t('newStyle')}</span>
-              </button>
+            <div className="templates-tab-wrapper">
+              <div className="templates-intro-card">
+                <div className="templates-intro-header">
+                  <span className="templates-intro-badge">
+                    <I.IconGrid size={16} />
+                  </span>
+                  <div className="templates-intro-text-wrap">
+                    <h4 className="templates-intro-title">{t('templatesIntroTitle')}</h4>
+                    <p className="templates-intro-desc">{t('templatesIntroDesc')}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="templates-grid">
+                {allTemplates.map((tpl) => {
+                  const tplBg = ALL_BACKGROUNDS.find((b) => b.id === tpl.bgId)
+                  const isCustom = tpl.id.startsWith('custom-')
+                  return (
+                    <button
+                      key={tpl.id}
+                      type="button"
+                      className="template-card"
+                      onClick={() => applyTemplate(tpl)}
+                    >
+                      <div
+                        className="template-card-canvas"
+                        style={tplBg ? { background: tplBg.css } : { background: '#18181b' }}
+                      >
+                        <div className="template-card-preview-text" style={{ color: tpl.color || '#ffffff' }}>
+                          <span>Aa</span>
+                        </div>
+                        {isCustom && (
+                          <button
+                            type="button"
+                            className="template-card-delete-btn"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              deleteCustomTemplate(tpl.id, e)
+                            }}
+                            title="حذف این قالب"
+                          >
+                            <I.IconX size={10} />
+                          </button>
+                        )}
+                      </div>
+                      <div className="template-card-label-bar">
+                        <span className="template-card-title">{tpl.label}</span>
+                      </div>
+                    </button>
+                  )
+                })}
+
+                <button
+                  type="button"
+                  className="template-card template-card-add"
+                  onClick={() => {
+                    setStyleName('')
+                    setShowStyleStudio(true)
+                  }}
+                >
+                  <div className="template-card-canvas add-canvas">
+                    <I.IconPlus size={22} />
+                  </div>
+                  <div className="template-card-label-bar">
+                    <span className="template-card-title">{t('saveAsTemplate')}</span>
+                  </div>
+                </button>
+              </div>
             </div>
           )}
 
           {tab === 'assets' && (
             <div className="assets-panel">
-              <p className="settings-label">{t('labelAssetsHint')}</p>
+              <div className="assets-intro-card">
+                <div className="assets-intro-header">
+                  <span className="assets-intro-badge">
+                    <I.IconTag size={16} />
+                  </span>
+                  <div className="assets-intro-text-wrap">
+                    <h4 className="assets-intro-title">{t('tabAssets')}</h4>
+                    <p className="assets-intro-desc">{t('labelAssetsHint')}</p>
+                  </div>
+                </div>
+              </div>
+
+              <HorizontalScroll trackClassName="label-category-pills" className="label-category-pills-scroll" ariaLabel="دسته‌بندی برچسب‌ها">
+                {LABEL_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    className={`pill-tab ${labelCategory === cat.id ? 'active' : ''}`}
+                    onClick={() => setLabelCategory(cat.id)}
+                  >
+                    {t(cat.labelKey)}
+                  </button>
+                ))}
+              </HorizontalScroll>
+
               <div className="label-asset-grid">
-                {LABEL_ASSETS.map((asset) => (
-                  <button key={asset.id} className="label-asset-card" onClick={() => addLabel(asset)}>
-                    <LabelArtwork templateId={asset.id} />
-                    <span>{t(asset.labelKey)}</span>
+                {visibleLabelAssets.map((asset) => (
+                  <button
+                    key={asset.id}
+                    type="button"
+                    className="label-asset-card"
+                    onClick={() => addLabel(asset)}
+                  >
+                    <div className="label-artwork-wrap">
+                      <LabelArtwork templateId={asset.id} color={asset.defaultColor || '#8b5cf6'} />
+                    </div>
+                    <span className="label-asset-title">{t(asset.labelKey)}</span>
                   </button>
                 ))}
               </div>
+
               {activeLabel && (
                 <div className="label-editor">
-                  <p className="settings-label">{t('editSelectedLabel')}</p>
+                  <div className="label-editor-header">
+                    <span className="label-editor-title">
+                      <I.IconSliders size={14} />
+                      {t('editSelectedLabel')}
+                    </span>
+                    <div className="layer-quick-actions">
+                      <button
+                        type="button"
+                        className="del-font-action"
+                        onClick={() => deleteLayer(activeLabel.id)}
+                        title={t('deleteLayer')}
+                      >
+                        <I.IconTrash size={13} />
+                        <span>{t('deleteLayer')}</span>
+                      </button>
+                    </div>
+                  </div>
+
                   <textarea
                     className="text-input label-text-input"
-                    rows={3}
+                    rows={2}
                     value={activeLabel.text}
+                    placeholder={t('editLabelText')}
                     onChange={(e) => updateLayer(activeLabel.id, { text: e.target.value })}
                   />
+
                   <p className="settings-label">{t('labelFont')}</p>
                   <div className="chip-row label-font-row">
                     {visibleFonts.map((labelFont) => (
                       <button
                         key={labelFont.id}
+                        type="button"
                         className={`chip font-chip ${activeLabel.fontId === labelFont.id ? 'selected' : ''}`}
                         onClick={() => {
                           updateLayer(activeLabel.id, { fontId: labelFont.id })
@@ -2431,11 +4181,13 @@ export default function App() {
                       </button>
                     ))}
                   </div>
+
                   <div className="label-color-row">
                     <label>{t('labelColor')}<input type="color" value={activeLabel.color} onChange={(e) => updateLayer(activeLabel.id, { color: e.target.value })} /></label>
                     <label>{t('labelTextColor')}<input type="color" value={activeLabel.textColor} onChange={(e) => updateLayer(activeLabel.id, { textColor: e.target.value })} /></label>
                   </div>
-                  <SliderRow label={t('size')} min={12} max={56} value={activeLabel.fontSize} onChange={(e) => updateLayer(activeLabel.id, { fontSize: +e.target.value })} />
+
+                  <SliderRow label={t('size')} min={12} max={64} value={activeLabel.fontSize} onChange={(e) => updateLayer(activeLabel.id, { fontSize: +e.target.value })} />
                   <SliderRow label={t('labelTextHorizontal')} min={-45} max={45} value={activeLabel.textOffsetX ?? 0} display={`${activeLabel.textOffsetX ?? 0}%`} onChange={(e) => updateLayer(activeLabel.id, { textOffsetX: +e.target.value })} />
                   <SliderRow label={t('labelTextVertical')} min={-45} max={45} value={activeLabel.textOffsetY ?? 0} display={`${activeLabel.textOffsetY ?? 0}%`} onChange={(e) => updateLayer(activeLabel.id, { textOffsetY: +e.target.value })} />
                 </div>
@@ -2445,66 +4197,110 @@ export default function App() {
 
           {tab === 'layout' && (
             <div className="layout-panel">
-              <SliderRow
-                label={t('letterSpacing')}
-                min={-4}
-                max={20}
-                value={state.letterSpacing}
-                onChange={(e) => update({ letterSpacing: +e.target.value })}
-              />
-              <SliderRow
-                label={t('lineHeight')}
-                min={0.8}
-                max={2.4}
-                step={0.1}
-                value={state.lineHeight}
-                onChange={(e) => update({ lineHeight: +e.target.value })}
-              />
-              <SliderRow
-                label={t('strokeWidth')}
-                min={0.5}
-                max={6}
-                step={0.5}
-                value={state.strokeWidth}
-                onChange={(e) => update({ strokeWidth: +e.target.value })}
-              />
-              <SliderRow
-                label={t('opacity')}
-                min={10}
-                max={100}
-                value={state.opacity}
-                display={`${state.opacity}%`}
-                onChange={(e) => update({ opacity: +e.target.value })}
-              />
-              <SliderRow
-                label={t('margin')}
-                min={0}
-                max={60}
-                value={state.margin}
-                onChange={(e) => update({ margin: +e.target.value })}
-              />
-              <div className="align-row">
-                {['right', 'center', 'left'].map((a) => (
-                  <button
-                    key={a}
-                    className={`toggle ${state.align === a ? 'on' : ''}`}
-                    onClick={() => update({ align: a })}
-                  >
-                    {t(`align_${a}`)}
-                  </button>
-                ))}
+              {/* Text Alignment Card */}
+              <div className="layout-section-card">
+                <div className="layout-section-header">
+                  <span>{t('textAlign')}</span>
+                </div>
+                <div className="align-row">
+                  {['right', 'center', 'left'].map((a) => (
+                    <button
+                      key={a}
+                      className={`toggle ${state.align === a ? 'on' : ''}`}
+                      onClick={() => update({ align: a })}
+                    >
+                      {t(`align_${a}`)}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <p className="settings-label">{t('aspectRatio')}</p>
-              <div className="chip-row">
-                {ASPECT_RATIOS.map((r) => (
-                  <button
-                    key={r.id}
-                    className={`chip ${state.aspectRatio === r.id ? 'selected' : ''}`}
-                    onClick={() => update({ aspectRatio: r.id })}
-                  >
-                    <span className="chip-label">{r.label}</span>
-                  </button>
-                ))}
+
+              {/* Canvas Text Position Card (Visible when Background is enabled) */}
+              {state.bgEnabled && (
+                <div className="layout-section-card">
+                  <div className="layout-section-header">
+                    <span>{t('textPosition')}</span>
+                    {(state.textX !== 50 || state.textY !== 50) && (
+                      <button
+                        type="button"
+                        className="layout-reset-btn"
+                        onClick={() => update({ textX: 50, textY: 50 })}
+                        title={t('resetPosition')}
+                      >
+                        {t('resetPosition')}
+                      </button>
+                    )}
+                  </div>
+                  <div className="align-row position-row">
+                    <button
+                      className={`toggle ${state.textY === 25 ? 'on' : ''}`}
+                      onClick={() => update({ textY: 25, textX: 50 })}
+                    >
+                      {t('posTop')}
+                    </button>
+                    <button
+                      className={`toggle ${state.textY === 50 && state.textX === 50 ? 'on' : ''}`}
+                      onClick={() => update({ textY: 50, textX: 50 })}
+                    >
+                      {t('posCenter')}
+                    </button>
+                    <button
+                      className={`toggle ${state.textY === 75 ? 'on' : ''}`}
+                      onClick={() => update({ textY: 75, textX: 50 })}
+                    >
+                      {t('posBottom')}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Typography Spacing & Opacity Card */}
+              <div className="layout-section-card">
+                <div className="layout-section-header">
+                  <span>{t('typographySpacing')}</span>
+                </div>
+                <div className="layout-sliders-group">
+                  <SliderRow
+                    label={t('letterSpacing')}
+                    min={-4}
+                    max={20}
+                    value={state.letterSpacing}
+                    onChange={(e) => update({ letterSpacing: +e.target.value })}
+                  />
+                  <SliderRow
+                    label={t('lineHeight')}
+                    min={0.8}
+                    max={2.4}
+                    step={0.1}
+                    value={state.lineHeight}
+                    onChange={(e) => update({ lineHeight: +e.target.value })}
+                  />
+                  <SliderRow
+                    label={t('opacity')}
+                    min={10}
+                    max={100}
+                    value={state.opacity}
+                    display={`${state.opacity}%`}
+                    onChange={(e) => update({ opacity: +e.target.value })}
+                  />
+                  <SliderRow
+                    label={t('margin')}
+                    min={0}
+                    max={60}
+                    value={state.margin}
+                    onChange={(e) => update({ margin: +e.target.value })}
+                  />
+                  {state.stroke && (
+                    <SliderRow
+                      label={t('strokeWidth')}
+                      min={0.5}
+                      max={6}
+                      step={0.5}
+                      value={state.strokeWidth}
+                      onChange={(e) => update({ strokeWidth: +e.target.value })}
+                    />
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -2513,34 +4309,130 @@ export default function App() {
 
       {showSave && (
         <Sheet title={t('save')} onClose={() => setShowSave(false)}>
-          <button className="sheet-item recommended" onClick={exportPng}>
-            <I.IconDownload size={17} /> {t('saveToDevice')}
-          </button>
-          <button className="sheet-item" onClick={exportGif} disabled={isExportingGif}>
-            <I.IconSparkles size={17} /> {isExportingGif ? t('gifExporting') : t('saveAnimatedGif')}
-          </button>
-          <button className="sheet-item" onClick={exportVideo} disabled={isExportingVideo}>
-            <I.IconDownload size={17} /> {isExportingVideo ? t('videoExporting') : t('saveAnimatedVideo')}
-          </button>
-          <button className="sheet-item" onClick={copyImage}>
-            <I.IconCopy size={17} /> {t('copyImageBtn')}
-          </button>
-          <button className="sheet-item" onClick={copyText}>
-            <I.IconType size={17} /> {t('copyTextBtn')}
-          </button>
-          <button className="sheet-item" onClick={saveToGallery}>
-            <I.IconStar size={17} /> {t('saveToAppGallery')}
-          </button>
+          <div className="save-options-grid">
+            <div
+              className="save-option-card primary"
+              role="button"
+              tabIndex={0}
+              onClick={exportPng}
+            >
+              <span className="save-card-icon-wrap">
+                <I.IconDownload size={18} />
+              </span>
+              <div className="save-card-content">
+                <span className="save-card-title">{t('saveToDevice')}</span>
+                <span className="save-card-badge">PNG</span>
+              </div>
+            </div>
+
+            <div
+              className="save-option-card"
+              role="button"
+              tabIndex={0}
+              onClick={copyImage}
+            >
+              <span className="save-card-icon-wrap">
+                <I.IconCopy size={18} />
+              </span>
+              <div className="save-card-content">
+                <span className="save-card-title">{t('copyImageBtn')}</span>
+                <span className="save-card-badge">{t('clipboard')}</span>
+              </div>
+            </div>
+
+            <div
+              className={`save-option-card ${isExportingGif ? 'disabled' : ''}`}
+              role="button"
+              tabIndex={0}
+              onClick={isExportingGif ? undefined : exportGif}
+            >
+              <span className="save-card-icon-wrap">
+                <I.IconSparkles size={18} />
+              </span>
+              <div className="save-card-content">
+                <span className="save-card-title">
+                  {isExportingGif ? t('gifExporting') : t('saveAnimatedGif')}
+                </span>
+                <span className="save-card-badge">GIF</span>
+              </div>
+            </div>
+
+            <div
+              className={`save-option-card ${isExportingVideo ? 'disabled' : ''}`}
+              role="button"
+              tabIndex={0}
+              onClick={isExportingVideo ? undefined : exportVideo}
+            >
+              <span className="save-card-icon-wrap">
+                <I.IconDownload size={18} />
+              </span>
+              <div className="save-card-content">
+                <span className="save-card-title">
+                  {isExportingVideo ? t('videoExporting') : t('saveAnimatedVideo')}
+                </span>
+                <span className="save-card-badge">MP4</span>
+              </div>
+            </div>
+
+            <div
+              className="save-option-card"
+              role="button"
+              tabIndex={0}
+              onClick={copyText}
+            >
+              <span className="save-card-icon-wrap">
+                <I.IconType size={18} />
+              </span>
+              <div className="save-card-content">
+                <span className="save-card-title">{t('copyTextBtn')}</span>
+                <span className="save-card-badge">TXT</span>
+              </div>
+            </div>
+
+            <div
+              className="save-option-card"
+              role="button"
+              tabIndex={0}
+              onClick={saveToGallery}
+            >
+              <span className="save-card-icon-wrap">
+                <I.IconStar size={18} />
+              </span>
+              <div className="save-card-content">
+                <span className="save-card-title">{t('saveToAppGallery')}</span>
+                <span className="save-card-badge">{t('gallery')}</span>
+              </div>
+            </div>
+          </div>
         </Sheet>
       )}
 
       {showLabelPicker && (
         <Sheet title={t('labelAssets')} onClose={() => setShowLabelPicker(false)}>
+          <HorizontalScroll trackClassName="label-category-pills in-sheet" className="label-category-pills-scroll in-sheet" ariaLabel="دسته‌بندی برچسب‌ها">
+            {LABEL_CATEGORIES.map((cat) => (
+              <button
+                key={cat.id}
+                type="button"
+                className={`pill-tab ${labelCategory === cat.id ? 'active' : ''}`}
+                onClick={() => setLabelCategory(cat.id)}
+              >
+                {t(cat.labelKey)}
+              </button>
+            ))}
+          </HorizontalScroll>
           <div className="label-asset-grid">
-            {LABEL_ASSETS.map((asset) => (
-              <button key={asset.id} className="label-asset-card" onClick={() => addLabel(asset)}>
-                <LabelArtwork templateId={asset.id} />
-                <span>{t(asset.labelKey)}</span>
+            {visibleLabelAssets.map((asset) => (
+              <button
+                key={asset.id}
+                type="button"
+                className="label-asset-card"
+                onClick={() => addLabel(asset)}
+              >
+                <div className="label-artwork-wrap">
+                  <LabelArtwork templateId={asset.id} color={asset.defaultColor || '#8b5cf6'} />
+                </div>
+                <span className="label-asset-title">{t(asset.labelKey)}</span>
               </button>
             ))}
           </div>
@@ -2637,8 +4529,8 @@ export default function App() {
       )}
 
       {showStyleStudio && (
-        <Sheet title={t('styleStudio')} onClose={() => setShowStyleStudio(false)}>
-          <p className="donate-text">{t('styleStudioHint')}</p>
+        <Sheet title={t('saveAsTemplate')} onClose={() => setShowStyleStudio(false)}>
+          <p className="donate-text">{t('templatesIntroDesc')}</p>
           <p className="settings-label">{t('styleNameLabel')}</p>
           <input
             className="text-input"
@@ -2761,146 +4653,267 @@ export default function App() {
 
       {showSettings && (
         <Sheet title={t('settings')} tall onClose={() => setShowSettings(false)}>
-          <p className="settings-label">{t('themeColor')}</p>
-          <div className="chip-row">
-            {THEME_COLORS.map((c) => (
-              <button
-                key={c}
-                className={`swatch ${appSettings.themeColor === c ? 'selected' : ''}`}
-                style={{ background: c }}
-                onClick={() =>
-                  setAppSettings((s) => ({
-                    ...s,
-                    themeColor: c,
-                  }))
-                }
-              />
-            ))}
-          </div>
-
-          <p className="settings-label">{t('language')}</p>
-          <div className="align-row">
-            <button
-              className={`toggle ${appSettings.lang === 'fa' ? 'on' : ''}`}
-              onClick={() => setAppSettings((s) => ({ ...s, lang: 'fa' }))}
-            >
-              فارسی
-            </button>
-            <button
-              className={`toggle ${appSettings.lang === 'en' ? 'on' : ''}`}
-              onClick={() => setAppSettings((s) => ({ ...s, lang: 'en' }))}
-            >
-              English
-            </button>
-          </div>
-
-          <p className="settings-label">{t('contact')}</p>
-          <a
-            className="sheet-item"
-            href="https://t.me/FontWoW"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <I.IconTelegram size={17} style={{ color: '#229ed9' }} /> کانال تلگرام (@FontWoW)
-          </a>
-          <a
-            className="sheet-item"
-            href="https://t.me/+IAzR2ntpvNVkMWI0"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <I.IconTelegram size={17} style={{ color: '#229ed9' }} /> گروه گفتگو و حل مشکل
-          </a>
-          <a
-            className="sheet-item"
-            href="https://github.com/FontWoW/FontWoW.github.io"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <I.IconGithub size={17} /> GitHub
-          </a>
-          <a className="sheet-item" href="mailto:m4tinbeigi@gmail.com">
-            <I.IconMail size={17} /> m4tinbeigi@gmail.com
-          </a>
-          <button
-            className="sheet-item"
-            onClick={() => {
-              setShowSettings(false)
-              setShowAbout(true)
-            }}
-          >
-            <I.IconSparkles size={17} /> درباره‌ی FontWoW
-          </button>
-          <button
-            className="sheet-item recommended"
-            onClick={() => {
-              setShowSettings(false)
-              setShowDonate(true)
-            }}
-          >
-            <I.IconHeart size={17} style={{ color: 'var(--accent)' }} /> {t('donate')}
-          </button>
-          <button
-            className="sheet-item"
-            onClick={() => {
-              setShowSettings(false)
-              setShowChangelog(true)
-            }}
-          >
-            <I.IconStar size={17} style={{ color: 'var(--accent)' }} /> {t('whatsNew')}
-          </button>
-          <a
-            className="sheet-item"
-            href="#/share"
-            onClick={() => setShowSettings(false)}
-          >
-            <I.IconImages size={17} style={{ color: 'var(--accent)' }} /> {t('shareKitLink')}
-          </a>
-
-          <button
-            className="sheet-item"
-            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', border: 'none', background: 'none', textAlign: 'inherit', padding: '12px 16px', color: 'inherit', cursor: 'pointer' }}
-            onClick={() => {
-              setShowSettings(false)
-              setShowDiagnostics(true)
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <I.IconTerminal size={17} style={{ color: 'var(--accent)' }} />
-              <span>{t('diagnosticsTitle')}</span>
+          <div className="settings-container">
+            {/* App Brand Header */}
+            <div className="settings-brand-card">
+              <div className="settings-brand-info">
+                <div className="settings-brand-logo">FW</div>
+                <div>
+                  <div className="settings-brand-title">FontWoW Studio</div>
+                  <div className="settings-brand-sub">تایپوگرافی و طراحی کاور متن</div>
+                </div>
+              </div>
+              <span className="settings-version-pill">v{APP_VERSION}</span>
             </div>
-            <span
-              className={`health-dot ${systemHealth.hasError ? 'red' : systemHealth.hasWarning ? 'yellow' : 'green'}`}
-              style={{
-                width: '10px',
-                height: '10px',
-                borderRadius: '50%',
-                display: 'inline-block',
-                background: systemHealth.hasError ? '#ef4444' : systemHealth.hasWarning ? '#eab308' : '#22c55e',
-                boxShadow: systemHealth.hasError 
-                  ? '0 0 10px #ef4444' 
-                  : systemHealth.hasWarning 
-                    ? '0 0 10px #eab308' 
-                    : '0 0 10px #22c55e'
-              }}
-            />
-          </button>
 
-          <p className="settings-label">{t('fontLicenses')}</p>
-          <p className="donate-text">{t('fontLicensesText')}</p>
-          <a
-            className="sheet-item"
-            href="https://fonts.google.com/attribution"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <I.IconExternal size={17} /> Google Fonts Attribution
-          </a>
+            {/* Customization Group */}
+            <div className="settings-group">
+              <span className="settings-group-header">شخصی‌سازی و ظاهر</span>
 
-          <p className="settings-label">{t('version')}: {APP_VERSION}</p>
-          <button className="sheet-item" onClick={resetAppSettings}>
-            <I.IconRefresh size={17} /> {t('resetSettings')}
-          </button>
+              {/* Theme Color */}
+              <div className="settings-row">
+                <span className="settings-row-label">
+                  <I.IconPalette size={16} />
+                  {t('themeColor')}
+                </span>
+                <div className="settings-theme-swatches">
+                  {THEME_COLORS.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      className={`settings-theme-swatch ${appSettings.themeColor === c ? 'selected' : ''}`}
+                      style={{ background: c, color: c }}
+                      onClick={() =>
+                        setAppSettings((s) => ({
+                          ...s,
+                          themeColor: c,
+                        }))
+                      }
+                      title={c}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Language */}
+              <div className="settings-row">
+                <span className="settings-row-label">
+                  <I.IconGlobe size={16} />
+                  {t('language')}
+                </span>
+                <div className="settings-seg-control">
+                  <button
+                    type="button"
+                    className={`settings-seg-btn ${appSettings.lang === 'fa' ? 'active' : ''}`}
+                    onClick={() => setAppSettings((s) => ({ ...s, lang: 'fa' }))}
+                  >
+                    فارسی
+                  </button>
+                  <button
+                    type="button"
+                    className={`settings-seg-btn ${appSettings.lang === 'en' ? 'active' : ''}`}
+                    onClick={() => setAppSettings((s) => ({ ...s, lang: 'en' }))}
+                  >
+                    English
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Tools & Features Group */}
+            <div className="settings-group">
+              <span className="settings-group-header">ابزارها و قابلیت‌ها</span>
+
+              <button
+                type="button"
+                className="settings-item-btn highlight"
+                onClick={() => {
+                  setShowSettings(false)
+                  setShowDonate(true)
+                }}
+              >
+                <div className="settings-item-lead">
+                  <I.IconHeart size={16} style={{ color: '#f43f5e' }} />
+                  <span>{t('donate')}</span>
+                </div>
+                <div className="settings-item-trail">
+                  <span style={{ color: 'var(--accent)', fontSize: '11px', fontWeight: 600 }}>حمایت مالی</span>
+                  <I.IconChevronLeft size={14} />
+                </div>
+              </button>
+
+              <button
+                type="button"
+                className="settings-item-btn"
+                onClick={() => {
+                  setShowSettings(false)
+                  setShowChangelog(true)
+                }}
+              >
+                <div className="settings-item-lead">
+                  <I.IconStar size={16} />
+                  <span>{t('whatsNew')}</span>
+                </div>
+                <div className="settings-item-trail">
+                  <span>تغییرات جدید</span>
+                  <I.IconChevronLeft size={14} />
+                </div>
+              </button>
+
+              <a
+                className="settings-item-btn"
+                href="#/share"
+                onClick={() => setShowSettings(false)}
+              >
+                <div className="settings-item-lead">
+                  <I.IconImages size={16} />
+                  <span>{t('shareKitLink')}</span>
+                </div>
+                <div className="settings-item-trail">
+                  <I.IconChevronLeft size={14} />
+                </div>
+              </a>
+
+              <button
+                type="button"
+                className="settings-item-btn"
+                onClick={() => {
+                  setShowSettings(false)
+                  setShowDiagnostics(true)
+                }}
+              >
+                <div className="settings-item-lead">
+                  <I.IconTerminal size={16} />
+                  <span>{t('diagnosticsTitle')}</span>
+                </div>
+                <div className="settings-item-trail">
+                  <span
+                    className={`health-dot ${systemHealth.hasError ? 'red' : systemHealth.hasWarning ? 'yellow' : 'green'}`}
+                    style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      display: 'inline-block',
+                      background: systemHealth.hasError ? '#ef4444' : systemHealth.hasWarning ? '#eab308' : '#22c55e',
+                      boxShadow: systemHealth.hasError
+                        ? '0 0 8px #ef4444'
+                        : systemHealth.hasWarning
+                          ? '0 0 8px #eab308'
+                          : '0 0 8px #22c55e',
+                    }}
+                  />
+                  <I.IconChevronLeft size={14} />
+                </div>
+              </button>
+
+              <button
+                type="button"
+                className="settings-item-btn"
+                onClick={() => {
+                  setShowSettings(false)
+                  setShowAbout(true)
+                }}
+              >
+                <div className="settings-item-lead">
+                  <I.IconSparkles size={16} />
+                  <span>درباره‌ی FontWoW</span>
+                </div>
+                <div className="settings-item-trail">
+                  <I.IconChevronLeft size={14} />
+                </div>
+              </button>
+            </div>
+
+            {/* Community & Links Group */}
+            <div className="settings-group">
+              <span className="settings-group-header">ارتباط و جامعه</span>
+
+              <a
+                className="settings-item-btn"
+                href="https://t.me/FontWoW"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <div className="settings-item-lead">
+                  <I.IconTelegram size={16} style={{ color: '#229ed9' }} />
+                  <span>کانال تلگرام</span>
+                </div>
+                <div className="settings-item-trail">
+                  <span style={{ direction: 'ltr', fontFamily: 'monospace' }}>@FontWoW</span>
+                  <I.IconExternal size={13} />
+                </div>
+              </a>
+
+              <a
+                className="settings-item-btn"
+                href="https://t.me/+IAzR2ntpvNVkMWI0"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <div className="settings-item-lead">
+                  <I.IconTelegram size={16} style={{ color: '#229ed9' }} />
+                  <span>گروه گفتگو و پشتیبانی</span>
+                </div>
+                <div className="settings-item-trail">
+                  <I.IconExternal size={13} />
+                </div>
+              </a>
+
+              <a
+                className="settings-item-btn"
+                href="https://github.com/FontWoW/FontWoW.github.io"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <div className="settings-item-lead">
+                  <I.IconGithub size={16} />
+                  <span>گیت‌هاب پروژه</span>
+                </div>
+                <div className="settings-item-trail">
+                  <I.IconExternal size={13} />
+                </div>
+              </a>
+
+              <a className="settings-item-btn" href="mailto:m4tinbeigi@gmail.com">
+                <div className="settings-item-lead">
+                  <I.IconMail size={16} />
+                  <span>ارتباط با سازنده</span>
+                </div>
+                <div className="settings-item-trail">
+                  <span style={{ direction: 'ltr', fontSize: '11px' }}>m4tinbeigi@gmail.com</span>
+                </div>
+              </a>
+            </div>
+
+            {/* Legal / Attribution */}
+            <div className="settings-group">
+              <span className="settings-group-header">{t('fontLicenses')}</span>
+              <div style={{ padding: '8px 14px 12px' }}>
+                <p style={{ margin: '0 0 8px', fontSize: '11.5px', color: 'var(--text-2)', lineHeight: 1.6 }}>
+                  {t('fontLicensesText')}
+                </p>
+                <a
+                  className="settings-item-btn"
+                  style={{ borderRadius: '8px', background: 'var(--surface-2)', padding: '8px 12px', border: '1px solid var(--border-1)' }}
+                  href="https://fonts.google.com/attribution"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <div className="settings-item-lead">
+                    <I.IconExternal size={14} />
+                    <span style={{ fontSize: '12px' }}>Google Fonts Attribution</span>
+                  </div>
+                  <I.IconExternal size={12} />
+                </a>
+              </div>
+            </div>
+
+            {/* Reset Settings Button */}
+            <button type="button" className="settings-danger-btn" onClick={resetAppSettings}>
+              <I.IconRefresh size={15} />
+              <span>{t('resetSettings')}</span>
+            </button>
+          </div>
         </Sheet>
       )}
 
@@ -3249,6 +5262,18 @@ export default function App() {
         </Sheet>
       )}
 
+      {exportLoading && (
+        <div className="export-loading-overlay" role="status" aria-live="polite">
+          <div className="export-loading-card">
+            <div className="export-spinner-ring">
+              <I.IconSparkles size={22} className="export-spinner-icon" />
+            </div>
+            <h4 className="export-loading-title">{t('save')}</h4>
+            <p className="export-loading-msg">{exportLoading.message || t('exportingImage')}</p>
+          </div>
+        </div>
+      )}
+
       {toast && (() => {
         const toastObj = typeof toast === 'string' ? { text: toast, type: 'success' } : toast
         const isError = toastObj.type === 'error'
@@ -3335,11 +5360,13 @@ export default function App() {
         </div>
       ) : null}
 
-      <footer className="footer">
-        <a href="https://github.com/FontWoW/FontWoW.github.io" target="_blank" rel="noreferrer">
-          {t('openSource')} <I.IconExternal size={11} className="flip-rtl" />
-        </a>
-      </footer>
+      {!isNative() && (
+        <footer className="footer">
+          <a href="https://github.com/FontWoW/FontWoW.github.io" target="_blank" rel="noreferrer">
+            {t('openSource')} <I.IconExternal size={11} className="flip-rtl" />
+          </a>
+        </footer>
+      )}
     </div>
   )
 }

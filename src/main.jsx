@@ -166,24 +166,37 @@ createRoot(document.getElementById('root')).render(
   </StrictMode>,
 )
 
-// The native bundle already lives on-device. On the web, keep the application
-// shell and every font fetched through the app available for later offline use.
-if (!Capacitor.isNativePlatform() && 'serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').then((registration) => {
-      // Fire-and-forget: ask the worker to fetch and store every Persian font
-      // in the background, well after first paint, so the editor works fully
-      // offline without slowing down the initial load. Skipped while offline
-      // and retried once connectivity returns.
-      const cachePersianFonts = () => {
-        if (!navigator.onLine) return
-        const target = navigator.serviceWorker.controller || registration.active
-        target?.postMessage('CACHE_PERSIAN_FONTS')
+// In development, never register the service worker and clear any stale caches
+// so live code edits are immediately reflected in the browser preview.
+if ('serviceWorker' in navigator) {
+  if (import.meta.env.DEV) {
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      for (const registration of registrations) {
+        registration.unregister()
       }
-      cachePersianFonts()
-      window.addEventListener('online', cachePersianFonts)
-    }).catch((error) => {
-      logger.warn('Offline', 'Service worker registration failed', error?.message || String(error))
     })
-  })
+    if ('caches' in window) {
+      caches.keys().then((names) => {
+        for (const name of names) {
+          if (name.startsWith('fontwow-')) {
+            caches.delete(name)
+          }
+        }
+      })
+    }
+  } else if (!Capacitor.isNativePlatform()) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').then((registration) => {
+        const cachePersianFonts = () => {
+          if (!navigator.onLine) return
+          const target = navigator.serviceWorker.controller || registration.active
+          target?.postMessage('CACHE_PERSIAN_FONTS')
+        }
+        cachePersianFonts()
+        window.addEventListener('online', cachePersianFonts)
+      }).catch((error) => {
+        logger.warn('Offline', 'Service worker registration failed', error?.message || String(error))
+      })
+    })
+  }
 }
