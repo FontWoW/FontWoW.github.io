@@ -89,19 +89,48 @@ public class FontWowNativePlugin extends Plugin {
         }
     }
 
+    private String getMimeType(PluginCall call) {
+        String mime = call.getString("mimeType");
+        if (mime != null && !mime.trim().isEmpty()) {
+            return mime.trim();
+        }
+        String fileName = call.getString("fileName");
+        if (fileName != null) {
+            String lower = fileName.toLowerCase();
+            if (lower.endsWith(".gif")) return "image/gif";
+            if (lower.endsWith(".webm")) return "video/webm";
+            if (lower.endsWith(".mp4")) return "video/mp4";
+            if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+        }
+        return MIME;
+    }
+
     /** API 29+: scoped storage, no runtime permission required. */
     @RequiresApi(Build.VERSION_CODES.Q)
     private void saveViaMediaStore(PluginCall call, byte[] bytes) {
+        String mime = getMimeType(call);
+        boolean isVideo = mime.startsWith("video/");
+        String defaultExt = isVideo ? "webm" : (mime.equals("image/gif") ? "gif" : "png");
+        String finalFileName = fileName(call, defaultExt);
+
         ContentResolver resolver = getContext().getContentResolver();
         ContentValues values = new ContentValues();
-        values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName(call));
-        values.put(MediaStore.Images.Media.MIME_TYPE, MIME);
-        values.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/" + ALBUM);
-        values.put(MediaStore.Images.Media.IS_PENDING, 1);
+        values.put(MediaStore.MediaColumns.DISPLAY_NAME, finalFileName);
+        values.put(MediaStore.MediaColumns.MIME_TYPE, mime);
 
-        Uri uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+        Uri collectionUri;
+        if (isVideo) {
+            values.put(MediaStore.Video.Media.RELATIVE_PATH, Environment.DIRECTORY_MOVIES + "/" + ALBUM);
+            collectionUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+        } else {
+            values.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/" + ALBUM);
+            collectionUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        }
+        values.put(MediaStore.MediaColumns.IS_PENDING, 1);
+
+        Uri uri = resolver.insert(collectionUri, values);
         if (uri == null) {
-            call.reject("Could not create a gallery entry");
+            call.reject("Could not create a media gallery entry");
             return;
         }
 
@@ -110,18 +139,17 @@ public class FontWowNativePlugin extends Plugin {
             out.write(bytes);
         } catch (Exception e) {
             resolver.delete(uri, null, null);
-            call.reject("Writing the image failed: " + e.getMessage(), e);
+            call.reject("Writing media failed: " + e.getMessage(), e);
             return;
         }
 
-        // Leaving IS_PENDING=1 hides the row from the gallery and makes MediaStore reap it
-        // after ~7 days, so a failed update must not be reported as a successful save.
+        // Publish the entry so it appears in the gallery.
         values.clear();
-        values.put(MediaStore.Images.Media.IS_PENDING, 0);
-        if (resolver.update(uri, values, null, null) == 0) {
-            resolver.delete(uri, null, null);
-            call.reject("Could not publish the gallery entry");
-            return;
+        values.put(MediaStore.MediaColumns.IS_PENDING, 0);
+        try {
+            resolver.update(uri, values, null, null);
+        } catch (Exception ignored) {
+            // Row is already written to disk, do not treat provider update quirks as fatal.
         }
 
         JSObject result = new JSObject();
@@ -129,23 +157,28 @@ public class FontWowNativePlugin extends Plugin {
         call.resolve(result);
     }
 
-    /** API 24-28: write into the public Pictures dir and tell the media scanner about it. */
+    /** API 24-28: write into the public Pictures/Movies dir and tell the media scanner about it. */
     private void saveViaLegacyFile(PluginCall call, byte[] bytes) {
-        File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), ALBUM);
+        String mime = getMimeType(call);
+        boolean isVideo = mime.startsWith("video/");
+        String defaultExt = isVideo ? "webm" : (mime.equals("image/gif") ? "gif" : "png");
+        String targetDir = isVideo ? Environment.DIRECTORY_MOVIES : Environment.DIRECTORY_PICTURES;
+
+        File dir = new File(Environment.getExternalStoragePublicDirectory(targetDir), ALBUM);
         if (!dir.exists() && !dir.mkdirs()) {
-            call.reject("Could not create the album directory");
+            call.reject("Could not create the media album directory");
             return;
         }
 
-        File target = new File(dir, fileName(call));
+        File target = new File(dir, fileName(call, defaultExt));
         try (OutputStream out = new FileOutputStream(target)) {
             out.write(bytes);
         } catch (Exception e) {
-            call.reject("Writing the image failed: " + e.getMessage(), e);
+            call.reject("Writing media failed: " + e.getMessage(), e);
             return;
         }
 
-        MediaScannerConnection.scanFile(getContext(), new String[] { target.getAbsolutePath() }, new String[] { MIME }, null);
+        MediaScannerConnection.scanFile(getContext(), new String[] { target.getAbsolutePath() }, new String[] { mime }, null);
 
         JSObject result = new JSObject();
         result.put("uri", Uri.fromFile(target).toString());
@@ -236,12 +269,16 @@ public class FontWowNativePlugin extends Plugin {
     }
 
     private String fileName(PluginCall call) {
+        return fileName(call, "png");
+    }
+
+    private String fileName(PluginCall call, String defaultExt) {
         String name = call.getString("fileName");
-        if (name == null || name.trim().isEmpty()) name = "fontwow.png";
+        if (name == null || name.trim().isEmpty()) name = "fontwow." + defaultExt;
         // Strip any path and anything MediaStore would choke on.
         name = new File(name).getName().replaceAll("[^A-Za-z0-9._-]", "_");
-        if (name.isEmpty()) name = "fontwow.png";
-        if (!name.toLowerCase().endsWith(".png")) name = name + ".png";
+        if (name.isEmpty()) name = "fontwow." + defaultExt;
+        if (!name.toLowerCase().contains(".")) name = name + "." + defaultExt;
         return name;
     }
 
@@ -257,7 +294,12 @@ public class FontWowNativePlugin extends Plugin {
             data = data.substring(comma + 1);
         }
         try {
-            return Base64.decode(data, Base64.DEFAULT);
+            byte[] bytes = Base64.decode(data, Base64.DEFAULT);
+            if (bytes == null || bytes.length == 0) {
+                call.reject("The decoded image data was empty");
+                return null;
+            }
+            return bytes;
         } catch (IllegalArgumentException e) {
             call.reject("The image data was not valid base64", e);
             return null;

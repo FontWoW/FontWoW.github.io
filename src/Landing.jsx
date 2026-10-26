@@ -110,7 +110,7 @@ export default function Landing() {
 
   useEffect(() => {
     let cancelled = false
-    fetch('/donations.json')
+    fetch('./donations.json')
       .then(res => {
         if (!res.ok) throw new Error('bad response')
         return res.json()
@@ -155,7 +155,7 @@ export default function Landing() {
   return (
     <div className="landing" dir="rtl">
       <header className="landing-hero">
-        <img src="/favicon.svg" width="64" height="64" alt="FontWoW" className="landing-logo" />
+        <img src="./favicon.svg" width="64" height="64" alt="FontWoW" className="landing-logo" />
         <h1>FontWoW</h1>
         <p className="landing-tagline">متن‌آرایی آنلاین — بنویس، استایل بده، عکس بگیر ⚡</p>
         <div className="landing-cta">
@@ -245,9 +245,9 @@ export default function Landing() {
       )}
 
       <section className="landing-screens">
-        <img src="/docs/screen-editor.png" alt="ادیتور FontWoW" />
-        <img src="/docs/screen-layout.png" alt="تنظیمات چیدمان FontWoW" />
-        <img src="/docs/screen-save.png" alt="ذخیره و خروجی FontWoW" />
+        <img src="./docs/screen-editor.png" alt="ادیتور FontWoW" />
+        <img src="./docs/screen-layout.png" alt="تنظیمات چیدمان FontWoW" />
+        <img src="./docs/screen-save.png" alt="ذخیره و خروجی FontWoW" />
       </section>
 
       <section className="landing-features">
