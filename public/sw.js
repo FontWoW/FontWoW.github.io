@@ -9,6 +9,7 @@ const APP_SHELL = [
   '/icons/icon-512.png',
   '/icons/apple-touch-icon.png',
   '/donations.json',
+  '/font-roadmap.json',
 ]
 const UI_FONT_STYLESHEET = 'https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;800&display=swap'
 
