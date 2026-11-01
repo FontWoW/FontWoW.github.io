@@ -14,6 +14,7 @@ const SOCIALS = {
   website2: { label: 'وب‌سایت', Icon: I.IconGlobe },
   tiktok: { label: 'تیک‌تاک', Icon: I.IconTiktok },
   youtube: { label: 'یوتیوب', Icon: I.IconYoutube },
+  aparat: { label: 'آپارات', Icon: I.IconYoutube },
 }
 
 export default function MediaSupporters({ compact = false }) {

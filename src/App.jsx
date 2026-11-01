@@ -179,29 +179,138 @@ function CurvedText({ text, mode, bend, style }) {
   )
 }
 
+function isLightColor(hex) {
+  if (!hex || typeof hex !== 'string' || !hex.startsWith('#')) return false
+  const r = parseInt(hex.slice(1, 3), 16) || 0
+  const g = parseInt(hex.slice(3, 5), 16) || 0
+  const b = parseInt(hex.slice(5, 7), 16) || 0
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000
+  return yiq > 175
+}
+
 function boxStyleFor(styleId, color) {
+  const lightBoxStyles = ['mac', 'tweet', 'note', 'notif', 'retro-sticker']
+  const autoContrast = lightBoxStyles.includes(styleId) && isLightColor(color) ? { color: '#18181b' } : {}
+
   switch (styleId) {
     case 'box':
       return {
-        background: 'rgba(0,0,0,0.35)',
-        padding: '10px 20px',
-        borderRadius: '10px',
-      }
-    case 'underline':
-      return { borderBottom: `4px solid ${color}`, paddingBottom: '8px' }
-    case 'frame':
-      return {
-        border: `2px solid ${color}`,
-        padding: '10px 20px',
-        borderRadius: '8px',
+        background: 'linear-gradient(135deg, rgba(20, 20, 30, 0.82) 0%, rgba(10, 10, 18, 0.9) 100%)',
+        border: '1px solid rgba(255, 255, 255, 0.12)',
+        padding: '16px 26px',
+        borderRadius: '16px',
+        boxShadow: '0 12px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.12)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
       }
     case 'glass':
       return {
-        background: 'rgba(255,255,255,0.14)',
-        backdropFilter: 'blur(8px)',
-        padding: '10px 20px',
-        borderRadius: '14px',
+        background: 'rgba(255, 255, 255, 0.12)',
+        border: '1px solid rgba(255, 255, 255, 0.32)',
+        padding: '16px 26px',
+        borderRadius: '18px',
+        boxShadow: '0 16px 40px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.5)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
       }
+    case 'dark-glass':
+      return {
+        background: 'rgba(10, 10, 18, 0.75)',
+        border: '1px solid rgba(255, 255, 255, 0.16)',
+        padding: '16px 26px',
+        borderRadius: '18px',
+        boxShadow: '0 16px 40px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+      }
+    case 'quote':
+      return {
+        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%)',
+        border: '1px solid rgba(255, 255, 255, 0.14)',
+        borderInlineStart: `4px solid ${color || '#8b5cf6'}`,
+        borderRadius: '16px',
+        padding: '22px 28px',
+        boxShadow: '0 12px 32px rgba(0, 0, 0, 0.25)',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+      }
+    case 'neon-box':
+      return {
+        background: 'rgba(12, 10, 24, 0.85)',
+        border: `2px solid ${color || '#8b5cf6'}`,
+        borderRadius: '16px',
+        padding: '16px 26px',
+        boxShadow: `0 0 24px ${color || '#8b5cf6'}55, inset 0 0 16px ${color || '#8b5cf6'}22, 0 8px 32px rgba(0,0,0,0.4)`,
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+      }
+    case 'cyber':
+      return {
+        background: 'rgba(10, 14, 24, 0.92)',
+        border: '1.5px solid #00f0ff',
+        borderRadius: '8px',
+        clipPath: 'polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px)',
+        padding: '18px 30px',
+        boxShadow: '0 0 24px rgba(0, 240, 255, 0.35), inset 0 0 16px rgba(0, 240, 255, 0.12)',
+      }
+    case 'retro-sticker':
+      return {
+        background: '#ffffff',
+        border: '3px solid #111111',
+        borderRadius: '16px',
+        padding: '14px 26px',
+        boxShadow: '5px 5px 0px #111111',
+        ...autoContrast,
+      }
+    case 'gold-luxury':
+      return {
+        background: 'linear-gradient(135deg, rgba(28, 22, 10, 0.92) 0%, rgba(15, 12, 6, 0.96) 100%)',
+        border: '1.5px solid rgba(234, 179, 8, 0.8)',
+        borderRadius: '18px',
+        padding: '18px 30px',
+        boxShadow: '0 12px 36px rgba(0, 0, 0, 0.5), 0 0 24px rgba(234, 179, 8, 0.25), inset 0 1px 0 rgba(254, 240, 138, 0.4)',
+      }
+    case 'pill':
+      return {
+        background: 'rgba(255, 255, 255, 0.14)',
+        border: '1.5px solid rgba(255, 255, 255, 0.3)',
+        borderRadius: '9999px',
+        padding: '12px 34px',
+        boxShadow: '0 8px 28px rgba(0, 0, 0, 0.25)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+      }
+    case 'underline':
+      return {
+        borderBottom: `4px solid ${color || '#8b5cf6'}`,
+        paddingBottom: '10px',
+      }
+    case 'frame':
+      return {
+        border: `2px solid ${color || '#ffffff'}`,
+        padding: '14px 24px',
+        borderRadius: '16px',
+        background: 'rgba(0, 0, 0, 0.18)',
+        boxShadow: '0 6px 20px rgba(0, 0, 0, 0.2)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+      }
+    case 'double-frame':
+      return {
+        border: `2px solid ${color || '#ffffff'}`,
+        outline: `1.5px solid ${color || '#ffffff'}`,
+        outlineOffset: '5px',
+        padding: '16px 28px',
+        borderRadius: '14px',
+        background: 'rgba(0, 0, 0, 0.2)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+      }
+    case 'mac':
+    case 'tweet':
+    case 'note':
+    case 'notif':
+      return autoContrast
     default:
       return {}
   }
@@ -2298,7 +2407,7 @@ export default function App() {
                   className={`chip ${state.textBoxStyle === s.id ? 'selected' : ''}`}
                   onClick={() => update({ textBoxStyle: s.id })}
                 >
-                  <span className="chip-label">{s.label}</span>
+                  <span className="chip-label">{appSettings.lang === 'en' && s.labelEn ? s.labelEn : s.label}</span>
                 </button>
               ))}
             </div>

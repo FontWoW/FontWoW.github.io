@@ -191,18 +191,25 @@ export const BG_TEMPLATES = {
 export const ALL_BACKGROUNDS = [...BACKGROUNDS, ...Object.values(BG_TEMPLATES).flat()]
 
 export const TEXT_BOX_STYLES = [
-  { id: 'none', label: 'ساده' },
-  { id: 'box', label: 'جعبه رنگی' },
-  { id: 'quote', label: 'نقل‌قول' },
-  { id: 'underline', label: 'زیرخط ضخیم' },
-  { id: 'frame', label: 'قاب' },
-  { id: 'glass', label: 'شیشه‌ای' },
-  { id: 'note', label: 'نوت آیفون' },
-  { id: 'sms', label: 'پیامک' },
-  { id: 'notif', label: 'نوتیفیکیشن' },
-  { id: 'mac', label: 'پنجره مک' },
-  { id: 'terminal', label: 'ترمینال' },
-  { id: 'tweet', label: 'توییت' },
+  { id: 'none', label: 'ساده', labelEn: 'None' },
+  { id: 'glass', label: 'شیشه‌ای شفاف', labelEn: 'Glass' },
+  { id: 'dark-glass', label: 'شیشه تاریک', labelEn: 'Dark Glass' },
+  { id: 'box', label: 'جعبه تیره', labelEn: 'Dark Box' },
+  { id: 'quote', label: 'نقل‌قول', labelEn: 'Quote' },
+  { id: 'neon-box', label: 'نئونی', labelEn: 'Neon Box' },
+  { id: 'cyber', label: 'سایبرپانک', labelEn: 'Cyber' },
+  { id: 'retro-sticker', label: 'استیکر رترو', labelEn: 'Retro Sticker' },
+  { id: 'gold-luxury', label: 'طلایی لوکس', labelEn: 'Gold Luxury' },
+  { id: 'pill', label: 'کپسولی', labelEn: 'Pill' },
+  { id: 'mac', label: 'پنجره مک', labelEn: 'macOS Window' },
+  { id: 'terminal', label: 'ترمینال', labelEn: 'Terminal' },
+  { id: 'sms', label: 'پیامک', labelEn: 'SMS Bubble' },
+  { id: 'notif', label: 'نوتیفیکیشن', labelEn: 'Notification' },
+  { id: 'tweet', label: 'توییت', labelEn: 'Tweet Post' },
+  { id: 'note', label: 'یادداشت', labelEn: 'Notes' },
+  { id: 'frame', label: 'قاب مدرن', labelEn: 'Frame' },
+  { id: 'double-frame', label: 'قاب دوبل', labelEn: 'Double Frame' },
+  { id: 'underline', label: 'زیرخط ضخیم', labelEn: 'Underline' },
 ]
 
 export const TEXT_COLORS = [
