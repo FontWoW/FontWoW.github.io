@@ -126,6 +126,43 @@ function longShadow(color, depth, angle) {
   }).join(', ')
 }
 
+function hexToHsl(hex) {
+  let r = parseInt(hex.slice(1, 3), 16) / 255
+  let g = parseInt(hex.slice(3, 5), 16) / 255
+  let b = parseInt(hex.slice(5, 7), 16) / 255
+  const max = Math.max(r, g, b), min = Math.min(r, g, b)
+  let h = 0, s = 0, l = (max + min) / 2
+  if (max !== min) {
+    const d = max - min
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
+    if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6
+    else if (max === g) h = ((b - r) / d + 2) / 6
+    else h = ((r - g) / d + 4) / 6
+  }
+  return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)]
+}
+
+function hslToHex(h, s, l) {
+  s /= 100; l /= 100
+  const a = s * Math.min(l, 1 - l)
+  const f = (n) => {
+    const k = (n + h / 30) % 12
+    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1)
+    return Math.round(255 * color).toString(16).padStart(2, '0')
+  }
+  return `#${f(0)}${f(8)}${f(4)}`
+}
+
+function darkenColor(hex, amount) {
+  const [h, s, l] = hexToHsl(hex)
+  return hslToHex(h, s, Math.max(0, l - amount * 100))
+}
+
+function lightenColor(hex, amount) {
+  const [h, s, l] = hexToHsl(hex)
+  return hslToHex(h, s, Math.min(100, l + amount * 100))
+}
+
 function CurvedText({ text, mode, bend, style }) {
   const pathId = `fontwow-path-${mode}`
   const curve = Math.max(-90, Math.min(90, bend))
@@ -211,6 +248,7 @@ const defaultState = {
 const defaultAppSettings = {
   lang: 'fa',
   themeColor: '#8b5cf6',
+  retroTheme: false,
 }
 
 function Sheet({ title, onClose, tall, children }) {
@@ -510,6 +548,14 @@ export default function App() {
     document.documentElement.dir = appSettings.lang === 'en' ? 'ltr' : 'rtl'
     document.documentElement.lang = appSettings.lang
   }, [appSettings.lang])
+
+  useEffect(() => {
+    if (appSettings.retroTheme) {
+      document.documentElement.classList.add('theme-retro16')
+    } else {
+      document.documentElement.classList.remove('theme-retro16')
+    }
+  }, [appSettings.retroTheme])
 
   const updateLayer = useCallback((id, patch) => {
     update((current) => ({
@@ -1207,6 +1253,23 @@ export default function App() {
     effectStyle = {
       textShadow: `0 0 6px ${state.color}, 0 0 14px ${state.color}, 0 0 28px ${state.color}, 0 0 48px ${state.color}`,
     }
+  } else if (state.effect === 'retro16') {
+    const darker = darkenColor(state.color, 0.4)
+    const lighter = lightenColor(state.color, 0.3)
+    effectStyle = {
+      textShadow: [
+        `-2px -2px 0px ${darker}`,
+        `2px -2px 0px ${darker}`,
+        `-2px 2px 0px ${darker}`,
+        `2px 2px 0px ${darker}`,
+        `0px -2px 0px ${darker}`,
+        `0px 2px 0px ${darker}`,
+        `-2px 0px 0px ${darker}`,
+        `2px 0px 0px ${darker}`,
+        `-1px -1px 0px ${lighter}`,
+        `1px 1px 2px rgba(0,0,0,0.5)`,
+      ].join(', '),
+    }
   }
 
   if (state.textMaskUrl) {
@@ -1715,6 +1778,14 @@ export default function App() {
             aria-label={t('settings')}
           >
             <I.IconSettings size={16} />
+          </button>
+          <button
+            className="theme-toggle"
+            onClick={() => setAppSettings((s) => ({ ...s, retroTheme: !s.retroTheme }))}
+            title={appSettings.retroTheme ? 'تم اصلی' : 'تم ۱۶ بیت'}
+            aria-label={appSettings.retroTheme ? 'Switch to original theme' : 'Switch to 16-bit theme'}
+          >
+            {appSettings.retroTheme ? '🎨' : '🎮'}
           </button>
           <button
             className="pill-btn ghost icon-only"

@@ -2288,3 +2288,170 @@
   word-break: break-all;
   overflow-x: auto;
 }
+
+/* ===== 16-bit SNES Theme Overrides ===== */
+.theme-retro16 .aurora {
+  display: none;
+}
+
+.theme-retro16 .brand-name {
+  font-weight: 400;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--snes-gold, #f0c040);
+  background: none;
+  -webkit-background-clip: unset;
+  background-clip: unset;
+  animation: none;
+}
+
+.theme-retro16 .pill-btn {
+  border-radius: var(--r-m);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.theme-retro16 .pill-btn:not(.soft):not(.ghost) {
+  background: linear-gradient(135deg, var(--snes-gold, #f0c040), var(--snes-orange, #e89848));
+  color: #0a0a14;
+  border: none;
+}
+
+.theme-retro16 .controls {
+  border-radius: var(--r-m) var(--r-m) 0 0;
+  border-top: 1px solid var(--border-1);
+}
+
+.theme-retro16 .chip {
+  border-radius: var(--r-s);
+  border-width: 1px;
+}
+
+.theme-retro16 .chip.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+
+.theme-retro16 .swatch {
+  border-radius: var(--r-s);
+}
+
+.theme-retro16 .toggle {
+  border-radius: var(--r-s);
+}
+
+.theme-retro16 .sheet {
+  border-radius: var(--r-l) var(--r-l) 0 0;
+  border: 1px solid var(--border-1);
+}
+
+.theme-retro16 .sheet-grab span {
+  border-radius: var(--r-s);
+}
+
+.theme-retro16 .text-input {
+  border-radius: var(--r-s);
+}
+
+.theme-retro16 .toast {
+  border-radius: var(--r-m);
+}
+
+.theme-retro16 .code-block {
+  border-radius: var(--r-s);
+}
+
+.theme-retro16 .stage::before {
+  border-radius: var(--r-m);
+}
+
+.theme-retro16 .stage-inner {
+  border-radius: var(--r-m);
+}
+
+.theme-retro16 .spinner {
+  border-radius: 50%;
+}
+
+.theme-retro16 .startup-loader {
+  background: linear-gradient(145deg, var(--bg-0), var(--bg-1));
+}
+
+.theme-retro16 .startup-loader__mark::before {
+  border-radius: var(--r-l);
+  background: linear-gradient(135deg, var(--snes-gold, #f0c040), var(--snes-orange, #e89848));
+  border: none;
+  box-shadow: 0 4px 20px rgba(240, 192, 64, 0.3);
+  transform: none;
+}
+
+.theme-retro16 .startup-loader__orbit,
+.theme-retro16 .startup-loader__spark {
+  display: none;
+}
+
+.theme-retro16 .startup-loader__logo path {
+  fill: var(--snes-black, #0a0a14);
+  stroke: var(--snes-black, #0a0a14);
+}
+
+.theme-retro16 .startup-loader__wordmark {
+  font-family: 'Press Start 2P', monospace;
+  font-size: clamp(16px, 4vw, 22px);
+  font-weight: 400;
+  letter-spacing: 1px;
+}
+
+.theme-retro16 .startup-loader__wordmark strong {
+  background: none;
+  color: var(--snes-gold, #f0c040);
+  -webkit-background-clip: unset;
+  background-clip: unset;
+  font-weight: 400;
+}
+
+.theme-retro16 .startup-loader__progress {
+  border-radius: var(--r-s);
+  border: 1px solid var(--border-1);
+}
+
+.theme-retro16 .startup-loader__progress span {
+  background: linear-gradient(90deg, var(--snes-gold, #f0c040), var(--snes-orange, #e89848));
+  border-radius: var(--r-s);
+  box-shadow: 0 0 8px rgba(240, 192, 64, 0.4);
+}
+
+/* Theme toggle button */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--border-1);
+  background: var(--surface-2);
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+  font-size: 16px;
+  padding: 0;
+}
+
+.theme-toggle:hover {
+  background: var(--surface-3);
+  color: var(--text-1);
+  border-color: var(--border-2);
+}
+
+.theme-retro16 .theme-toggle {
+  border-radius: var(--r-s);
+  border: 1px solid var(--snes-gold, #f0c040);
+  color: var(--snes-gold, #f0c040);
+  background: transparent;
+}
+
+.theme-retro16 .theme-toggle:hover {
+  background: rgba(240, 192, 64, 0.15);
+}
