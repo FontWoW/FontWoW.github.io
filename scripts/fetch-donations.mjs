@@ -12,10 +12,18 @@ if (!TOKEN) {
 
 const AMOUNT_KEY_RE = /amount|price|mablagh/i
 const DATE_KEY_RE = /date|time|created/i
+const DONOR_KEY_RE = /donator_?id|donor_?id|user_?id|username|email/i
 
 function pick(item, re) {
+  if (!item || typeof item !== 'object') return undefined
   const key = Object.keys(item).find(k => re.test(k))
   return key ? item[key] : undefined
+}
+
+function donorKey(item) {
+  const nested = item?.donator_data || item?.donor || item
+  const key = pick(nested, DONOR_KEY_RE)
+  return key === undefined || key === null || key === '' ? null : String(key)
 }
 
 const res = await fetch('https://daramet.com/api/Donates/Messages', {
@@ -37,17 +45,27 @@ if (!Array.isArray(list)) {
 }
 
 // Only keep amount + date — never publish donor name, message, phone, or tracking code.
-const donations = list
-  .map(item => ({
+const normalized = list
+  .map((item, index) => ({
     amount: Number(pick(item, AMOUNT_KEY_RE)),
     date: pick(item, DATE_KEY_RE) ?? null,
+    donorKey: donorKey(item) || `donation:${index}`,
+    hasDonorKey: donorKey(item) !== null,
   }))
   .filter(d => Number.isFinite(d.amount) && d.amount > 0)
-  .slice(0, 15)
+
+const donations = normalized.slice(0, 15).map(({ amount, date }) => ({ amount, date }))
+const totalAmount = normalized.reduce((sum, donation) => sum + donation.amount, 0)
+const donorKeys = new Set(normalized.map(donation => donation.donorKey))
+const hasCompleteDonorKeys = normalized.length > 0 && normalized.every(donation => donation.hasDonorKey)
 
 const output = {
   project: 'FontWoW',
   updatedAt: new Date().toISOString(),
+  donationCount: normalized.length,
+  totalAmount,
+  supporterCount: donorKeys.size,
+  supporterCountMode: hasCompleteDonorKeys ? 'unique-donors' : 'donations',
   donations,
 }
 
