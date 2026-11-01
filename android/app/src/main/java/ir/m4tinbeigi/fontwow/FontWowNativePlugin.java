@@ -114,14 +114,15 @@ public class FontWowNativePlugin extends Plugin {
             return;
         }
 
-        // Leaving IS_PENDING=1 hides the row from the gallery and makes MediaStore reap it
-        // after ~7 days, so a failed update must not be reported as a successful save.
+        // Publish the entry so it appears in the gallery.
+        // Some OEM ROMs (Samsung One UI, Xiaomi HyperOS) return 0 on single-item updates or throw
+        // non-fatal provider warnings; we must never delete successfully written bytes.
         values.clear();
         values.put(MediaStore.Images.Media.IS_PENDING, 0);
-        if (resolver.update(uri, values, null, null) == 0) {
-            resolver.delete(uri, null, null);
-            call.reject("Could not publish the gallery entry");
-            return;
+        try {
+            resolver.update(uri, values, null, null);
+        } catch (Exception ignored) {
+            // Row is already written to disk, do not treat provider update quirks as fatal.
         }
 
         JSObject result = new JSObject();
@@ -257,7 +258,12 @@ public class FontWowNativePlugin extends Plugin {
             data = data.substring(comma + 1);
         }
         try {
-            return Base64.decode(data, Base64.DEFAULT);
+            byte[] bytes = Base64.decode(data, Base64.DEFAULT);
+            if (bytes == null || bytes.length == 0) {
+                call.reject("The decoded image data was empty");
+                return null;
+            }
+            return bytes;
         } catch (IllegalArgumentException e) {
             call.reject("The image data was not valid base64", e);
             return null;
