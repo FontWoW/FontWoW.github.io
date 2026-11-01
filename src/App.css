@@ -1262,6 +1262,47 @@
   transition: background var(--dur-fast) var(--ease-out);
 }
 
+.about-sheet {
+  padding-bottom: 12px;
+}
+
+.about-sheet .media-supporters-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 6px;
+  margin-block-end: 14px;
+}
+
+.about-sheet .media-supporter {
+  min-height: 48px;
+  padding: 6px 10px;
+  border-radius: 12px;
+}
+
+.about-sheet .media-supporter-profile img {
+  width: 32px;
+  height: 32px;
+  flex-basis: 32px;
+}
+
+.about-sheet .media-supporter-meta h3 {
+  font-size: 12px;
+}
+
+.about-sheet .media-supporter-meta span {
+  font-size: 9.5px;
+}
+
+.about-sheet .media-social-btn {
+  width: 25px;
+  height: 25px;
+  border-radius: 6px;
+}
+
+.about-sheet .media-social-icon svg {
+  width: 12px;
+  height: 12px;
+}
+
 .sheet-item {
   display: flex;
   align-items: center;
