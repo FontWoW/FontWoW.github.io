@@ -21,7 +21,7 @@ const PERSIAN_GOOGLE_FONT_STYLESHEETS = [
   'https://fonts.googleapis.com/css2?family=Estedad:wght@400;700&display=swap',
   'https://fonts.googleapis.com/css2?family=Parastoo:wght@400;700&display=swap',
   'https://fonts.googleapis.com/css2?family=Lalezar:wght@400&display=swap',
-  'https://fonts.googleapis.com/css2?family=Rubik+Arabic:wght@400;700&display=swap',
+  'https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap',
   'https://fonts.googleapis.com/css2?family=Readex+Pro:wght@400;700&display=swap',
   'https://fonts.googleapis.com/css2?family=Katibeh:wght@400&display=swap',
   'https://fonts.googleapis.com/css2?family=Jomhuria:wght@400&display=swap',
@@ -35,6 +35,9 @@ const PERSIAN_GOOGLE_FONT_STYLESHEETS = [
   'https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&display=swap',
   'https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400;700&display=swap',
   'https://fonts.googleapis.com/css2?family=Oi:wght@400&display=swap',
+  'https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;700&display=swap',
+  'https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@500;700&display=swap',
+  'https://fonts.googleapis.com/css2?family=Vibes:wght@400&display=swap',
 ]
 
 // Persian fonts hosted outside Google Fonts (see src/index.css @font-face rules).

@@ -897,6 +897,11 @@ export default function App() {
       return loadFontNative(f)
     }
 
+    if (typeof document !== 'undefined' && document.fonts?.check && document.fonts.check(`1em ${f.family}`)) {
+      setLoadedFontIds((prev) => new Set(prev).add(f.id))
+      return Promise.resolve()
+    }
+
     const linkId = `google-font-${f.id}`
     const existing = document.getElementById(linkId)
     if (existing) {
@@ -904,7 +909,14 @@ export default function App() {
       return Promise.resolve()
     }
     const url = googleFontsUrlForFont(f)
-    if (!url) return Promise.resolve()
+    if (!url) {
+      if (typeof document !== 'undefined' && document.fonts?.load) {
+        document.fonts.load(`1em ${f.family}`).then(() => {
+          setLoadedFontIds((prev) => new Set(prev).add(f.id))
+        }).catch(() => {})
+      }
+      return Promise.resolve()
+    }
     setLoadingFontId(f.id)
     return new Promise((resolve) => {
       const link = document.createElement('link')
@@ -918,7 +930,9 @@ export default function App() {
         clearTimeout(timer)
         link.remove()
         setLoadingFontId((id) => (id === f.id ? null : id))
-        setToast({ text: t('fontError'), type: 'error' })
+        if (typeof document !== 'undefined' && document.fonts?.check && !document.fonts.check(`1em ${f.family}`)) {
+          setToast({ text: t('fontError'), type: 'error' })
+        }
         resolve()
       }
       const timer = setTimeout(fail, 8000)
@@ -928,6 +942,9 @@ export default function App() {
         clearTimeout(timer)
         setLoadedFontIds((prev) => new Set(prev).add(f.id))
         setLoadingFontId((id) => (id === f.id ? null : id))
+        if (typeof document !== 'undefined' && document.fonts?.load) {
+          document.fonts.load(`1em ${f.family}`).catch(() => {})
+        }
         resolve()
       }
       link.onerror = fail
@@ -1562,12 +1579,15 @@ export default function App() {
   }
 
   async function ensureFontPainted() {
-    try {
-      await loadFont(font)
-    } catch {}
-    try {
-      await document.fonts?.load(`${state.fontSize}px ${font.family}`)
-    } catch {}
+    const fontsToPaint = [font, ...state.layers.map((l) => allFonts.find((x) => x.id === l.fontId)).filter(Boolean)]
+    for (const f of fontsToPaint) {
+      try {
+        await loadFont(f)
+      } catch {}
+      try {
+        await document.fonts?.load(`${state.fontSize}px ${f.family}`)
+      } catch {}
+    }
     try {
       await document.fonts?.ready
     } catch {}
@@ -2283,8 +2303,13 @@ export default function App() {
                 {visibleFonts.map((f) => (
                   <button
                     key={f.id}
-                    className={`chip font-chip ${state.fontId === f.id ? 'selected' : ''} ${loadingFontId === f.id ? 'loading' : ''}`}
+                    className={`chip font-chip ${(activeTextLayer ? activeTextLayer.fontId === f.id : state.fontId === f.id) ? 'selected' : ''} ${loadingFontId === f.id ? 'loading' : ''}`}
                     onClick={() => {
+                      if (activeTextLayer) {
+                        updateLayer(activeTextLayer.id, { fontId: f.id })
+                        loadFont(f)
+                        return
+                      }
                       update({ fontId: f.id, direction: f.rtl ? 'rtl' : 'ltr' })
                       loadFont(f)
                     }}
