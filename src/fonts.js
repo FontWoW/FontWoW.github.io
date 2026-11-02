@@ -316,20 +316,20 @@ export function getThemeStageGradient(themeColor) {
 }
 
 export const TEXT_EFFECTS = [
-  { id: 'none', label: 'بدون افکت' },
-  { id: 'neon', label: 'نئون سایبر' },
-  { id: 'gradient', label: 'گرادیان زنده' },
-  { id: 'pop3d', label: 'سه‌بعدی ۳D' },
-  { id: 'glitch', label: 'گلیچ دیجیتال' },
-  { id: 'retro', label: 'پاپ‌آرت رترو' },
-  { id: 'soft-bloom', label: 'درخشش رویایی' },
-  { id: 'emboss', label: 'برجسته / پِرِس' },
-  { id: 'glass', label: 'شیشه‌ای لکوئید' },
-  { id: 'outline', label: 'توخالی مدرن' },
-  { id: 'fire', label: 'آتشین و گدازه' },
-  { id: 'duo-stroke', label: 'کانتور دوگانه' },
-  { id: 'chrome', label: 'کروم طلایی' },
-  { id: 'shadow-cast', label: 'سایه سینمایی' },
+  { id: 'none', label: 'بدون افکت', labelEn: 'None' },
+  { id: 'neon', label: 'نئون سایبر', labelEn: 'Cyber Neon' },
+  { id: 'gradient', label: 'گرادیان زنده', labelEn: 'Vibrant Gradient' },
+  { id: 'pop3d', label: 'سه‌بعدی ۳D', labelEn: '3D Pop' },
+  { id: 'glitch', label: 'گلیچ دیجیتال', labelEn: 'Digital Glitch' },
+  { id: 'retro', label: 'پاپ‌آرت رترو', labelEn: 'Retro Pop Art' },
+  { id: 'soft-bloom', label: 'درخشش رویایی', labelEn: 'Soft Bloom' },
+  { id: 'emboss', label: 'برجسته / پِرِس', labelEn: 'Emboss' },
+  { id: 'glass', label: 'شیشه‌ای لکوئید', labelEn: 'Liquid Glass' },
+  { id: 'outline', label: 'توخالی مدرن', labelEn: 'Outline' },
+  { id: 'fire', label: 'آتشین و گدازه', labelEn: 'Fire & Lava' },
+  { id: 'duo-stroke', label: 'کانتور دوگانه', labelEn: 'Dual Stroke' },
+  { id: 'chrome', label: 'کروم طلایی', labelEn: 'Golden Chrome' },
+  { id: 'shadow-cast', label: 'سایه سینمایی', labelEn: 'Cinema Shadow' },
 ]
 
 export const TEXT_GRADIENTS = [
