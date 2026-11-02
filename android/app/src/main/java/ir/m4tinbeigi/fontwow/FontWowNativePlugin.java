@@ -144,8 +144,10 @@ public class FontWowNativePlugin extends Plugin {
         }
 
         // Publish the entry so it appears in the gallery.
+        // Some OEM ROMs (Samsung One UI, Xiaomi HyperOS) return 0 on single-item updates or throw
+        // non-fatal provider warnings; we must never delete successfully written bytes.
         values.clear();
-        values.put(MediaStore.MediaColumns.IS_PENDING, 0);
+        values.put(MediaStore.Images.Media.IS_PENDING, 0);
         try {
             resolver.update(uri, values, null, null);
         } catch (Exception ignored) {

@@ -102,6 +102,41 @@ function fileToDataUrl(file) {
   })
 }
 
+function imageFileToDataUrl(file, maxDimension = 1920) {
+  return new Promise((resolve, reject) => {
+    if (!file?.type || !file.type.startsWith('image/') || file.type.includes('svg')) {
+      return fileToDataUrl(file).then(resolve, reject)
+    }
+    const reader = new FileReader()
+    reader.onerror = reject
+    reader.onload = () => {
+      const img = new Image()
+      img.onerror = () => resolve(reader.result)
+      img.onload = () => {
+        let { width, height } = img
+        if (!width || !height || (width <= maxDimension && height <= maxDimension)) {
+          return resolve(reader.result)
+        }
+        if (width > height) {
+          height = Math.round((height * maxDimension) / width)
+          width = maxDimension
+        } else {
+          width = Math.round((width * maxDimension) / height)
+          height = maxDimension
+        }
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, 0, 0, width, height)
+        resolve(canvas.toDataURL(file.type === 'image/png' ? 'image/png' : 'image/jpeg', 0.88))
+      }
+      img.src = reader.result
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
 function imageFromUrl(src) {
   return new Promise((resolve, reject) => {
     const image = new Image()
@@ -262,9 +297,20 @@ function CurvedText({ text, mode, bend, style }) {
   )
 }
 
+function isLightColor(hex) {
+  if (!hex || typeof hex !== 'string' || !hex.startsWith('#')) return false
+  const r = parseInt(hex.slice(1, 3), 16) || 0
+  const g = parseInt(hex.slice(3, 5), 16) || 0
+  const b = parseInt(hex.slice(5, 7), 16) || 0
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000
+  return yiq > 175
+}
+
 function boxStyleFor(styleId, color, custom = {}) {
   const { boxBgColor, boxOpacity = 85, boxRadius, boxPadding } = custom
   const alpha = Math.max(0.1, Math.min(1, (boxOpacity ?? 85) / 100))
+  const lightBoxStyles = ['mac', 'tweet', 'note', 'notif', 'retro-sticker']
+  const autoContrast = lightBoxStyles.includes(styleId) && isLightColor(boxBgColor || color) ? { color: '#18181b' } : {}
 
   const getCustomBg = (defaultBg) => {
     if (!boxBgColor) return defaultBg
@@ -344,13 +390,14 @@ function boxStyleFor(styleId, color, custom = {}) {
       }
     case 'quote':
       return {
-        background: getCustomBg(`rgba(255, 255, 255, ${Math.min(0.2, alpha * 0.14)})`),
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        borderInlineStart: `4px solid ${color}`,
-        borderRadius: boxRadius !== null && boxRadius !== undefined ? `${boxRadius}px` : '14px',
-        padding: boxPadding ? `${boxPadding}px ${Math.round(boxPadding * 1.6)}px` : '18px 30px',
-        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.15)',
+        background: getCustomBg(`linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%)`),
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+        border: '1px solid rgba(255, 255, 255, 0.14)',
+        borderInlineStart: `4px solid ${color || '#8b5cf6'}`,
+        borderRadius: boxRadius !== null && boxRadius !== undefined ? `${boxRadius}px` : '16px',
+        padding: boxPadding ? `${boxPadding}px ${Math.round(boxPadding * 1.6)}px` : '20px 28px',
+        boxShadow: '0 12px 32px rgba(0, 0, 0, 0.25)',
       }
     case 'mac':
       return {
@@ -363,27 +410,27 @@ function boxStyleFor(styleId, color, custom = {}) {
       }
     case 'terminal':
       return {
-        background: getCustomBg(`rgba(20, 20, 28, ${alpha * 0.96})`),
-        border: '1px solid rgba(80, 80, 100, 0.5)',
-        borderRadius: boxRadius !== null && boxRadius !== undefined ? `${boxRadius}px` : '14px',
-        padding: boxPadding ? `${boxPadding + 26}px ${boxPadding}px ${boxPadding}px` : '42px 24px 18px',
+        background: getCustomBg(`rgba(15, 23, 42, ${alpha * 0.96})`),
+        border: '1px solid rgba(255, 255, 255, 0.14)',
+        borderRadius: boxRadius !== null && boxRadius !== undefined ? `${boxRadius}px` : '16px',
+        padding: boxPadding ? `${boxPadding + 26}px ${boxPadding}px ${boxPadding}px` : '44px 24px 20px',
         boxShadow: '0 20px 50px rgba(0, 0, 0, 0.4)',
       }
     case 'note':
       return {
-        background: getCustomBg(`rgba(254, 253, 246, ${alpha * 0.98})`),
-        border: '1px solid rgba(220, 215, 195, 0.7)',
-        borderRadius: boxRadius !== null && boxRadius !== undefined ? `${boxRadius}px` : '16px',
-        padding: boxPadding ? `${boxPadding + 22}px ${boxPadding}px ${boxPadding}px` : '38px 24px 20px',
-        boxShadow: '0 12px 32px rgba(0, 0, 0, 0.12)',
+        background: getCustomBg(`linear-gradient(180deg, rgba(254, 253, 247, ${alpha}) 0%, rgba(250, 248, 238, ${alpha}) 100%)`),
+        border: '1px solid rgba(217, 119, 6, 0.15)',
+        borderRadius: boxRadius !== null && boxRadius !== undefined ? `${boxRadius}px` : '20px',
+        padding: boxPadding ? `${boxPadding + 22}px ${boxPadding}px ${boxPadding}px` : '56px 26px 24px',
+        boxShadow: '0 14px 34px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.05)',
         color: !boxBgColor && color === '#ffffff' ? '#2c2c2e' : color,
       }
     case 'sms':
       return {
-        background: getCustomBg(`rgba(10, 132, 255, ${alpha * 0.92})`),
+        background: getCustomBg(`linear-gradient(180deg, #10b981 0%, #059669 100%)`),
         borderRadius: boxRadius !== null && boxRadius !== undefined ? `${boxRadius}px` : '22px',
         padding: boxPadding ? `${boxPadding}px ${Math.round(boxPadding * 1.4)}px` : '14px 24px',
-        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)',
+        boxShadow: '0 8px 24px rgba(5, 150, 105, 0.35)',
       }
     case 'highlight':
       return {
@@ -401,11 +448,58 @@ function boxStyleFor(styleId, color, custom = {}) {
         padding: boxPadding ? `${boxPadding}px ${Math.round(boxPadding * 1.5)}px` : '16px 26px',
         boxShadow: '0 8px 24px rgba(0, 0, 0, 0.22)',
       }
+    case 'cyber':
+      return {
+        background: getCustomBg('rgba(10, 14, 24, 0.92)'),
+        border: '1.5px solid #00f0ff',
+        borderRadius: boxRadius !== null && boxRadius !== undefined ? `${boxRadius}px` : '8px',
+        clipPath: 'polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px)',
+        padding: boxPadding ? `${boxPadding}px ${Math.round(boxPadding * 1.6)}px` : '18px 30px',
+        boxShadow: '0 0 24px rgba(0, 240, 255, 0.35), inset 0 0 16px rgba(0, 240, 255, 0.12)',
+      }
+    case 'retro-sticker':
+      return {
+        background: getCustomBg('#ffffff'),
+        border: '3px solid #111111',
+        borderRadius: boxRadius !== null && boxRadius !== undefined ? `${boxRadius}px` : '16px',
+        padding: boxPadding ? `${boxPadding}px ${Math.round(boxPadding * 1.5)}px` : '14px 26px',
+        boxShadow: '5px 5px 0px #111111',
+      }
+    case 'gold-luxury':
+      return {
+        background: getCustomBg('linear-gradient(135deg, rgba(28, 22, 10, 0.92) 0%, rgba(15, 12, 6, 0.96) 100%)'),
+        border: '1.5px solid rgba(234, 179, 8, 0.8)',
+        borderRadius: boxRadius !== null && boxRadius !== undefined ? `${boxRadius}px` : '18px',
+        padding: boxPadding ? `${boxPadding}px ${Math.round(boxPadding * 1.6)}px` : '18px 30px',
+        boxShadow: '0 12px 36px rgba(0, 0, 0, 0.5), 0 0 24px rgba(234, 179, 8, 0.25), inset 0 1px 0 rgba(254, 240, 138, 0.4)',
+      }
+    case 'notif':
+      return {
+        background: getCustomBg('rgba(255, 255, 255, 0.94)'),
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderRadius: boxRadius !== null && boxRadius !== undefined ? `${boxRadius}px` : '22px',
+        padding: boxPadding ? `${boxPadding + 28}px ${boxPadding}px ${boxPadding}px` : '56px 22px 20px',
+        boxShadow: '0 16px 36px rgba(0, 0, 0, 0.14)',
+        border: '1px solid rgba(255, 255, 255, 0.8)',
+      }
+    case 'tweet':
+      return {
+        background: getCustomBg('#ffffff'),
+        border: '1px solid rgba(0, 0, 0, 0.08)',
+        borderRadius: boxRadius !== null && boxRadius !== undefined ? `${boxRadius}px` : '20px',
+        padding: boxPadding ? `${boxPadding + 32}px ${boxPadding}px ${boxPadding + 16}px` : '68px 24px 46px',
+        boxShadow: '0 14px 36px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.04)',
+      }
     case 'box':
       return {
-        background: getCustomBg(`rgba(0, 0, 0, ${alpha * 0.65})`),
-        padding: boxPadding ? `${boxPadding}px ${Math.round(boxPadding * 1.5)}px` : '12px 24px',
-        borderRadius: boxRadius !== null && boxRadius !== undefined ? `${boxRadius}px` : '12px',
+        background: getCustomBg('linear-gradient(135deg, rgba(20, 20, 30, 0.82) 0%, rgba(10, 10, 18, 0.9) 100%)'),
+        border: '1px solid rgba(255, 255, 255, 0.12)',
+        padding: boxPadding ? `${boxPadding}px ${Math.round(boxPadding * 1.5)}px` : '16px 26px',
+        borderRadius: boxRadius !== null && boxRadius !== undefined ? `${boxRadius}px` : '16px',
+        boxShadow: '0 12px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.12)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
       }
     case 'underline':
       return {
@@ -417,7 +511,7 @@ function boxStyleFor(styleId, color, custom = {}) {
     }
   })()
 
-  return styleId !== 'none' && Object.keys(style).length > 0 ? { ...style, boxSizing: 'border-box' } : style
+  return { ...style, ...autoContrast }
 }
 
 const BASE_DIMENSIONS = {
@@ -472,6 +566,7 @@ const defaultState = {
   activeLayerId: null,
   textX: 50,
   textY: 50,
+  mainTextOnTop: false,
 }
 
 const defaultAppSettings = {
@@ -554,11 +649,14 @@ function SliderRow({ label, value, display, min, max, step, onChange }) {
   )
 }
 
-// Shared duplicate/reorder toolbar rendered above the active layer, used by all three layer
-// kinds (text, image, label).
-function LayerToolbar({ layer, onMoveLayer, onDuplicateLayer, t }) {
+function LayerToolbar({ layer, onMoveLayer, onDuplicateLayer, onEditText, t }) {
   return (
     <div className="layer-toolbar" onPointerDown={(e) => e.stopPropagation()}>
+      {onEditText && (layer.type === 'text' || layer.type === 'label') && (
+        <button onClick={() => onEditText(layer)} aria-label={t('editLayerText')}>
+          <I.IconEdit size={12} />
+        </button>
+      )}
       <button onClick={() => onMoveLayer(layer.id, -1)} aria-label={t('sendBackward')}>
         <I.IconArrowDown size={12} />
       </button>
@@ -1083,11 +1181,7 @@ export default function App() {
 
       setLoadingFontId(f.id)
 
-      const res = await fetch(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        }
-      })
+      const res = await fetch(url)
       if (!res.ok) throw new Error('Failed to fetch stylesheet')
       const cssText = await res.text()
 
@@ -1443,7 +1537,7 @@ export default function App() {
     logger.info('Background', `شروع بارگذاری پس‌زمینه سفارشی: ${file.name}`)
     logger.preflightCheck('upload_bg')
     try {
-      const dataUrl = await fileToDataUrl(file)
+      const dataUrl = await imageFileToDataUrl(file, 1920)
       update({ bgId: 'custom-image', customBgUrl: dataUrl })
       logger.info('Background', 'پس‌زمینه سفارشی با موفقیت اعمال شد.')
       setToast(t('bgAdded'))
@@ -1458,7 +1552,7 @@ export default function App() {
     e.target.value = ''
     if (!file) return
     try {
-      update({ textMaskUrl: await fileToDataUrl(file), warpMode: 'none' })
+      update({ textMaskUrl: await imageFileToDataUrl(file, 1920), warpMode: 'none' })
       setToast(t('textMaskAdded'))
     } catch {
       setToast({ text: t('bgError'), type: 'error' })
@@ -1524,6 +1618,7 @@ export default function App() {
       fontSize: 28,
     }
     update({ layers: [...state.layers, newLayer], activeLayerId: id })
+    setPromptState({ layerId: id, initialText: t('newLayerText'), promptKey: 'editLayerText' })
   }
 
   function applyMagicLayout() {
@@ -1602,9 +1697,11 @@ export default function App() {
     e.target.value = ''
     if (!file) return
     try {
-      const dataUrl = await fileToDataUrl(file)
+      const dataUrl = await imageFileToDataUrl(file, 1280)
       const id = `layer-${Date.now()}`
-      const newLayer = { id, type: 'image', src: dataUrl, x: 50, y: 50, rotation: 0, width: 120 }
+      const canvasWidth = previewRef.current ? previewRef.current.clientWidth : 360
+      const initialWidth = Math.min(360, Math.max(200, Math.round(canvasWidth * 0.45)))
+      const newLayer = { id, type: 'image', src: dataUrl, x: 50, y: 50, rotation: 0, width: initialWidth }
       update({ layers: [...state.layers, newLayer], activeLayerId: id })
     } catch {
       setToast({ text: t('bgError'), type: 'error' })
@@ -2020,7 +2117,7 @@ export default function App() {
           touchAction: 'none',
         }
       : {}),
-    zIndex: 1,
+    zIndex: state.mainTextOnTop ? 15 : 1,
     boxSizing: 'border-box',
     wordBreak: 'normal',
     overflowWrap: 'break-word',
@@ -2176,11 +2273,16 @@ export default function App() {
   }
 
   async function ensureFontPainted() {
-    await loadFont(font)
+    try {
+      await loadFont(font)
+    } catch {}
     try {
       const weight = state.bold ? '700' : '400'
       const style = state.italic ? 'italic' : 'normal'
       await document.fonts?.load(`${style} ${weight} ${state.fontSize}px ${font.family}`)
+    } catch {}
+    try {
+      await document.fonts?.ready
     } catch {}
     try {
       await document.fonts?.ready
@@ -2455,7 +2557,6 @@ export default function App() {
         }
 
         if (!copied) {
-          // If clipboard write is restricted in iframe/browser environment, automatically download the image
           const url = URL.createObjectURL(targetBlob)
           const link = document.createElement('a')
           link.download = `fontwow-${Date.now()}.png`
@@ -2502,6 +2603,16 @@ export default function App() {
     setShowSave(false)
   }
 
+  function persistSavedGallery(items) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
+    } catch {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(items.slice(0, 15)))
+      } catch {}
+    }
+  }
+
   function saveToGallery() {
     if (!state.text.trim()) {
       setToast({ text: t('writeFirst'), type: 'error' })
@@ -2521,7 +2632,7 @@ export default function App() {
       }
       const next = saved.map(e => (e.id === existing.id ? updated : e))
       setSaved(next)
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+      persistSavedGallery(next)
       logger.info('Gallery', `نسخه جدید برای طرح ${existing.id} ذخیره شد.`)
       setToast(t('versionAdded'))
     } else {
@@ -2533,7 +2644,7 @@ export default function App() {
       }
       const next = [entry, ...saved].slice(0, 40)
       setSaved(next)
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+      persistSavedGallery(next)
       logger.info('Gallery', `طرح با شناسه ${entry.id} در گالری داخلی برنامه ذخیره شد.`)
       setToast(t('savedToGallery'))
     }
@@ -2664,7 +2775,8 @@ export default function App() {
           <CurvedText text={displayText || t('placeholder')} mode={state.warpMode} bend={state.warpBend} style={curvedTextStyle} />
         </div>
       )}
-      {state.layers.map((layer) => {
+      {state.layers.map((layer, index) => {
+        const layerZIndex = state.activeLayerId === layer.id ? 25 : 2 + index
         if (layer.type === 'label') {
           const layerFont = allFonts.find((f) => f.id === layer.fontId) ?? font
           return (
@@ -2677,6 +2789,7 @@ export default function App() {
                 width: `${layer.width}px`,
                 aspectRatio: layer.aspectRatio ?? '16 / 9',
                 transform: `translate(-50%, -50%) rotate(${layer.rotation}deg)`,
+                zIndex: layerZIndex,
               }}
               onPointerDown={(e) => handleLayerDrag(e, layer)}
               onClick={(e) => e.stopPropagation()}
@@ -2698,7 +2811,7 @@ export default function App() {
               </span>
               {state.activeLayerId === layer.id && (
                 <>
-                  <LayerToolbar layer={layer} onMoveLayer={moveLayer} onDuplicateLayer={duplicateLayer} t={t} />
+                  <LayerToolbar layer={layer} onMoveLayer={moveLayer} onDuplicateLayer={duplicateLayer} onEditText={(l) => setPromptState({ layerId: l.id, initialText: l.text, promptKey: 'editLabelText' })} t={t} />
                   <span className="layer-del" onPointerDown={(e) => e.stopPropagation()} onClick={() => deleteLayer(layer.id)}>
                     <I.IconX size={11} />
                   </span>
@@ -2723,6 +2836,7 @@ export default function App() {
                 top: `${layer.y}%`,
                 width: `${layer.width}px`,
                 transform: `translate(-50%, -50%) rotate(${layer.rotation}deg)`,
+                zIndex: layerZIndex,
               }}
               onPointerDown={(e) => handleLayerDrag(e, layer)}
               onClick={(e) => e.stopPropagation()}
@@ -2768,6 +2882,7 @@ export default function App() {
               fontSize: `${layer.fontSize}px`,
               color: layer.color,
               direction: layerFont.rtl ? 'rtl' : 'ltr',
+              zIndex: layerZIndex,
             }}
             onPointerDown={(e) => handleLayerDrag(e, layer)}
             onClick={(e) => e.stopPropagation()}
@@ -2778,7 +2893,7 @@ export default function App() {
             {layer.text}
             {state.activeLayerId === layer.id && (
               <>
-                <LayerToolbar layer={layer} onMoveLayer={moveLayer} onDuplicateLayer={duplicateLayer} t={t} />
+                <LayerToolbar layer={layer} onMoveLayer={moveLayer} onDuplicateLayer={duplicateLayer} onEditText={(l) => setPromptState({ layerId: l.id, initialText: l.text, promptKey: 'editLayerText' })} t={t} />
                 <span
                   className="layer-del"
                   onPointerDown={(e) => e.stopPropagation()}
@@ -2897,14 +3012,13 @@ export default function App() {
               }}
             >
               <div
-                className="stage-inner is-artboard"
                 ref={previewRef}
+                className={`preview-card ${state.animationType !== 'none' ? 'animated' : ''}`}
                 style={{
                   ...previewStyle,
                   width: `${baseArtboardDim.width}px`,
                   height: `${baseArtboardDim.height}px`,
                 }}
-                onClick={() => state.activeLayerId && update({ activeLayerId: null }, { record: false })}
               >
                 {renderCanvasInner()}
               </div>
@@ -2950,6 +3064,16 @@ export default function App() {
           >
             <I.IconUnderline size={14} />
           </button>
+          {state.layers.length > 0 && (
+            <button
+              className={`quick-bar-btn ${state.mainTextOnTop ? 'on' : ''}`}
+              onClick={() => update({ mainTextOnTop: !state.mainTextOnTop })}
+              aria-label={state.mainTextOnTop ? t('mainTextBackward') : t('mainTextForward')}
+              title={state.mainTextOnTop ? t('mainTextBackward') : t('mainTextForward')}
+            >
+              <I.IconLayers size={14} />
+            </button>
+          )}
           <button
             className={`quick-bar-btn ${state.direction === 'rtl' ? 'on' : ''}`}
             onClick={() =>
@@ -3522,7 +3646,7 @@ export default function App() {
                           <span className="mini-text">Aa</span>
                         </div>
                       </div>
-                      <span className="box-chip-label">{s.label}</span>
+                      <span className="box-chip-label">{appSettings.lang === 'en' && s.labelEn ? s.labelEn : s.label}</span>
                     </button>
                   )
                 })}

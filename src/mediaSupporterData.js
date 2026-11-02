@@ -109,29 +109,38 @@ export const MEDIA_SUPPORTERS = [
     },
   },
   {
-    id: 'amirmokhtari',
-    name: 'امیر مختاری',
-    handle: 'amirmokhtaritv',
-    avatar: 'media-supporters/amirmokhtari.jpg',
+    id: 'adelkhaan',
+    name: 'عادل خان',
+    handle: 'adelkhaan',
+    avatar: 'media-supporters/adelkhaan.jpg',
     socials: {
+      website: {
+        label: 'وب‌سایت',
+        handle: 'adelkhaan.com',
+        url: 'https://adelkhaan.com/',
+        noAt: true,
+      },
       instagram: {
-        handle: 'amirmokhtaritv',
-        url: 'https://www.instagram.com/amirmokhtaritv/',
-        audience: '۱۶۱K',
+        handle: 'adelkhaan',
+        url: 'https://www.instagram.com/adelkhaan/',
+        audience: '۷۷۰K',
+      },
+      telegram: {
+        handle: 'adelkhaan',
+        url: 'https://t.me/adelkhaan',
+        audience: '۵۳K',
       },
       youtube: {
         handle: 'کانال یوتیوب',
-        url: 'https://www.youtube.com/channel/UC1A9jDZ6EhRlW3TOU6mD20Q',
-        audience: '۱۱K',
+        url: 'https://www.youtube.com/@adelkhaan',
         noAt: true,
       },
-      linkedin: {
-        handle: 'amir-mokhtari',
-        url: 'https://ir.linkedin.com/in/amir-mokhtari-536a99317',
-      },
-      tiktok: {
-        handle: 'amirmokhtarihd',
-        url: 'https://www.tiktok.com/@amirmokhtarihd',
+      aparat: {
+        label: 'آپارات',
+        handle: 'adelkhaan',
+        url: 'https://www.aparat.com/adelkhaan',
+        audience: '۴۲K',
+        noAt: true,
       },
     },
   },
@@ -156,7 +165,7 @@ export const MEDIA_SUPPORTERS = [
     id: 'ricksanchez',
     name: 'ریک سانچز',
     handle: 'm4tinbeigi',
-    avatar: 'media-supporters/rick-sanchez.png',
+    avatar: 'media-supporters/rick-sanchez.jpg',
     socials: {
       twitter: {
         handle: 'm4tinbeigi',

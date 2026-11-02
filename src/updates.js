@@ -6,7 +6,7 @@
 export const UPDATES = [
   {
     version: '2.0.0',
-    date: '2026-09-18',
+    date: '2026-11-02',
     fa: {
       title: 'نسل دوم فونت‌واو (FontWoW 2.0 Studio): جهش بزرگ تایپوگرافی، افکت‌های بصری و ارگونومی مدرن',
       changes: [
@@ -37,6 +37,32 @@ export const UPDATES = [
         'Magnetic canvas text dragging with crosshair snap guides and visual grab handles in background mode.',
         'Edge-to-edge native mobile studio with automatic footer removal on mobile devices.',
         'Refined indigo-violet stage gradient for higher contrast and richer text glow.'
+      ]
+    }
+  },
+  {
+    version: '1.7.0',
+    date: '2026-11-01',
+    fa: {
+      title: 'جعبه‌های متنی جذاب، فونت‌های جدید، نسبت‌های ابعاد و بهبود ذخیره اندروید',
+      changes: [
+        'افزودن و بازطراحی ۱۹ استایل جعبه متنی متنوع و شیک شامل شیشه‌ای شفاف، اولد تاریک، پنجره مک، ترمینال، یادداشت، سایبرپانک، استیکر رترو، طلایی لوکس و کپسولی.',
+        'حل مشکل پنهان‌شدن متن روی جعبه‌های با پس‌زمینه روشن با سیستم هوشمند تشخیص کنتراست رنگی.',
+        'افزودن نسبت‌های ابعاد کادر ۳:۴ کاروسل اینستاگرام و ۳:۱ بنر عریض به همراه رفع باگ پرش نشانگر تایپ دوزبانه فارسی و انگلیسی.',
+        'افزودن ۵ فونت آزاد و زیبای گوگل شامل نوتو کوفی، بالو ۲، وایبز، اسکندریه و زین.',
+        'رفع مشکل ذخیره در گالری گوشی‌های سامسونگ و شیائومی و جلوگیری از کرش حافظه در خروجی‌های سنگین.',
+        'به‌روزرسانی فهرست حامیان رسانه‌ای و افزودن عادل خان به همراه تمامی شبکه‌های ارتباطی.'
+      ]
+    },
+    en: {
+      title: 'Enhanced Text Boxes, New Google Fonts, Aspect Ratios, and Android Export Fixes',
+      changes: [
+        'Added and redesigned 19 stylish text box styles including Liquid Glass, OLED Dark Glass, macOS Window, Terminal, Notes, Cyber HUD, Retro Sticker, Royal Gold, and Floating Pill.',
+        'Fixed text invisibility on bright backgrounds with automatic high-contrast color detection.',
+        'Added 3:4 Instagram Carousel and 3:1 Wide Banner aspect ratios, plus BiDi mixed-language cursor stability.',
+        'Added 5 free Google Fonts: Noto Kufi Arabic, Baloo Bhaijaan 2, Vibes, Alexandria, and Zain.',
+        'Resolved Android gallery save issues on Samsung One UI and Xiaomi HyperOS devices, preventing memory limits.',
+        'Updated media supporters showcase by welcoming Adelkhaan with all social platforms.'
       ]
     }
   },
