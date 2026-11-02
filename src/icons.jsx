@@ -73,6 +73,10 @@ export const IconTextSize = icon(
 export const IconAlignRight = icon(<path d="M21 6H3M21 12H9M21 18H7" />)
 export const IconAlignCenter = icon(<path d="M21 6H3M17 12H7M19 18H5" />)
 export const IconAlignLeft = icon(<path d="M21 6H3M15 12H3M17 18H3" />)
+export const IconAlignJustify = icon(<path d="M21 6H3M21 12H3M21 18H3" />)
+export const IconAlignTop = icon(<path d="M4 4h16M12 9v11M8 13l4-4 4 4" />)
+export const IconAlignMiddle = icon(<path d="M4 12h16M12 4v5M12 15v5M9 7l3-3 3 3M9 17l3 3 3-3" />)
+export const IconAlignBottom = icon(<path d="M4 20h16M12 15V4M8 11l4 4 4-4" />)
 export const IconUnderline = icon(
   <>
     <path d="M6 4v6a6 6 0 0 0 12 0V4" />
