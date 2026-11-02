@@ -210,6 +210,28 @@ export const TEXT_BOX_STYLES = [
   { id: 'frame', label: 'قاب مدرن', labelEn: 'Frame' },
   { id: 'double-frame', label: 'قاب دوبل', labelEn: 'Double Frame' },
   { id: 'underline', label: 'زیرخط ضخیم', labelEn: 'Underline' },
+  // مدل‌های جدید و ترند جعبه متن
+  { id: 'music-card', label: 'استوری موزیک پلیر', labelEn: 'Music Player' },
+  { id: 'telegram', label: 'حباب پیام تلگرام', labelEn: 'Telegram Bubble' },
+  { id: 'search-bar', label: 'جستجوی گوگل', labelEn: 'Search Bar' },
+  { id: 'cinema', label: 'کلاپر سینمایی', labelEn: 'Cinema Clapper' },
+  { id: 'holo-glass', label: 'شیشه هولوگرافیک', labelEn: 'Holographic' },
+  { id: 'ticket', label: 'بلیت سینما', labelEn: 'Cinema Ticket' },
+  { id: 'typewriter', label: 'کاغذ کاهی کهنه', labelEn: 'Vintage Paper' },
+  { id: 'sticky-note', label: 'یادداشت چسبان', labelEn: 'Sticky Note' },
+  { id: 'win95', label: 'ویندوز رترو ۹۵', labelEn: 'Retro Win95' },
+  { id: 'code-box', label: 'ادیتور کد', labelEn: 'Code Editor' },
+  { id: 'receipt', label: 'رسید و فاکتور', labelEn: 'Receipt Paper' },
+  { id: 'highlighter', label: 'مارکر فسفری', labelEn: 'Highlighter' },
+  { id: 'red-neon', label: 'نئون بار قرمز', labelEn: 'Red Neon' },
+  { id: 'chalkboard', label: 'تخته‌سیاه گچی', labelEn: 'Chalkboard' },
+  { id: 'obsidian-gold', label: 'طلایی مخملی', labelEn: 'Obsidian Gold' },
+  { id: 'ios-widget', label: 'ویجت مات iOS', labelEn: 'iOS Widget' },
+  { id: 'ribbon', label: 'روبان پرچمی', labelEn: 'Ribbon Banner' },
+  { id: 'badge-stamp', label: 'تمبر پستی', labelEn: 'Postal Stamp' },
+  { id: 'comic-speech', label: 'حباب کمیک', labelEn: 'Comic Speech' },
+  { id: 'minimal-card', label: 'کارت مینیمال سفید', labelEn: 'Minimal Card' },
+  { id: 'gradient-border', label: 'کادر گرادیان نئونی', labelEn: 'Gradient Border' },
 ]
 
 export const TEXT_COLORS = [

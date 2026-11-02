@@ -2136,6 +2136,540 @@
   color: #ffffff !important;
 }
 
+/* ===== New Trending Text Box Models ===== */
+
+/* 1. Music Player Card */
+.tb-music-card {
+  background: linear-gradient(135deg, rgba(24, 24, 37, 0.94) 0%, rgba(12, 12, 20, 0.98) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 22px;
+  padding: 52px 26px 48px 26px !important;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  min-width: 270px;
+  position: relative;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.tb-music-card::before {
+  content: "01:24 ━━━●──────── -02:18";
+  position: absolute;
+  top: 16px;
+  left: 20px;
+  right: 20px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.65);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.tb-music-card::after {
+  content: "⏮    ▶    ⏭";
+  position: absolute;
+  bottom: 14px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 14px;
+  letter-spacing: 16px;
+  color: var(--accent, #a855f7);
+  opacity: 0.9;
+}
+
+/* 2. Telegram Message Bubble */
+.tb-telegram {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px 18px 4px 18px;
+  padding: 16px 24px 34px 24px !important;
+  color: #f8fafc !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  min-width: 190px;
+  position: relative;
+}
+[dir="ltr"] .tb-telegram {
+  border-radius: 18px 18px 18px 4px;
+}
+.tb-telegram::after {
+  content: "۱۲:۳۴  ✓✓";
+  position: absolute;
+  bottom: 10px;
+  left: 18px;
+  font-size: 11px;
+  font-family: inherit;
+  color: #38bdf8;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+[dir="ltr"] .tb-telegram::after {
+  left: auto;
+  right: 18px;
+  content: "12:34  ✓✓";
+}
+
+/* 3. Google Style Search Bar */
+.tb-search-bar {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 9999px;
+  padding: 16px 52px 16px 52px !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04);
+  min-width: 260px;
+  position: relative;
+}
+.tb-search-bar::before {
+  content: "🔍";
+  position: absolute;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  font-size: 16px;
+  opacity: 0.65;
+}
+[dir="ltr"] .tb-search-bar::before {
+  right: auto;
+  left: 20px;
+}
+.tb-search-bar::after {
+  content: "🎙";
+  position: absolute;
+  top: 50%;
+  left: 20px;
+  transform: translateY(-50%);
+  font-size: 16px;
+  opacity: 0.75;
+}
+[dir="ltr"] .tb-search-bar::after {
+  left: auto;
+  right: 20px;
+}
+
+/* 4. Cinema Clapper */
+.tb-cinema {
+  background: #090a0f;
+  border: 2px solid #27272a;
+  border-radius: 14px;
+  padding: 48px 26px 20px 26px !important;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.7);
+  position: relative;
+  overflow: hidden;
+}
+.tb-cinema::before {
+  content: "/// SCENE 01 • TAKE 01 ///";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 28px;
+  background: repeating-linear-gradient(
+    -45deg,
+    #18181b,
+    #18181b 10px,
+    #f4f4f5 10px,
+    #f4f4f5 20px
+  );
+  border-bottom: 2px solid #27272a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: monospace;
+  font-size: 10px;
+  font-weight: 800;
+  color: #000000;
+  letter-spacing: 2px;
+}
+
+/* 5. Holographic Prism Glass */
+.tb-holo-glass {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0%, rgba(168, 85, 247, 0.15) 35%, rgba(6, 182, 212, 0.15) 70%, rgba(249, 115, 22, 0.15) 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.45);
+  border-radius: 20px;
+  padding: 18px 30px !important;
+  box-shadow: 0 16px 42px rgba(124, 58, 237, 0.22), inset 0 1px 2px rgba(255, 255, 255, 0.75), inset 0 -1px 2px rgba(249, 115, 22, 0.35);
+  backdrop-filter: blur(22px) saturate(210%);
+  -webkit-backdrop-filter: blur(22px) saturate(210%);
+  position: relative;
+}
+
+/* 6. Vintage Ticket */
+.tb-ticket {
+  background: #fdfaf3;
+  border: 2px dashed #d1c7b7;
+  border-radius: 16px;
+  padding: 44px 28px 40px 28px !important;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.12);
+  min-width: 250px;
+  position: relative;
+}
+.tb-ticket::before {
+  content: "★ ADMIT ONE • بلیت اختصاصی ★";
+  position: absolute;
+  top: 14px;
+  left: 0; right: 0;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #92400e;
+}
+.tb-ticket::after {
+  content: "|||| | ||| || ||||| | || ||||";
+  position: absolute;
+  bottom: 12px;
+  left: 0; right: 0;
+  text-align: center;
+  font-family: monospace;
+  font-size: 14px;
+  letter-spacing: 4px;
+  color: #78716c;
+}
+
+/* 7. Vintage Typewriter / Parchment */
+.tb-typewriter {
+  background: linear-gradient(180deg, #f6f1e5 0%, #ebe2ce 100%);
+  border: 1px solid #d6c6a8;
+  border-radius: 10px;
+  padding: 26px 32px !important;
+  box-shadow: inset 0 0 50px rgba(180, 140, 90, 0.18), 0 12px 32px rgba(0, 0, 0, 0.14);
+  position: relative;
+}
+.tb-typewriter::before {
+  content: "No. 042 //";
+  position: absolute;
+  top: 8px;
+  right: 14px;
+  font-family: monospace;
+  font-size: 10px;
+  color: #8c7b64;
+}
+[dir="ltr"] .tb-typewriter::before {
+  right: auto;
+  left: 14px;
+}
+
+/* 8. Sticky Note */
+.tb-sticky-note {
+  background: linear-gradient(180deg, #fffde7 0%, #fff9c4 100%);
+  border: 1px solid #fff59d;
+  border-radius: 2px 2px 18px 2px;
+  padding: 42px 26px 24px 26px !important;
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12), 4px 10px 18px rgba(0, 0, 0, 0.08);
+  position: relative;
+}
+.tb-sticky-note::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70px;
+  height: 22px;
+  background: rgba(245, 158, 11, 0.35);
+  border-radius: 2px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(2px);
+}
+
+/* 9. Retro Windows 95 */
+.tb-win95 {
+  background: #c0c0c0;
+  border-top: 3px solid #ffffff;
+  border-left: 3px solid #ffffff;
+  border-right: 3px solid #404040;
+  border-bottom: 3px solid #404040;
+  border-radius: 0 !important;
+  padding: 44px 22px 18px 22px !important;
+  box-shadow: 4px 4px 0px #000000;
+  position: relative;
+}
+.tb-win95::before {
+  content: "FontWoW.exe";
+  position: absolute;
+  top: 4px; left: 4px; right: 4px;
+  height: 24px;
+  background: linear-gradient(90deg, #000080 0%, #1084d0 100%);
+  color: #ffffff;
+  font-family: sans-serif;
+  font-size: 11px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+.tb-win95::after {
+  content: "✕";
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  width: 18px;
+  height: 18px;
+  background: #c0c0c0;
+  border-top: 1.5px solid #ffffff;
+  border-left: 1.5px solid #ffffff;
+  border-right: 1.5px solid #404040;
+  border-bottom: 1.5px solid #404040;
+  color: #000000;
+  font-size: 10px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+[dir="rtl"] .tb-win95::after {
+  right: auto;
+  left: 8px;
+}
+
+/* 10. Code Editor */
+.tb-code-box {
+  background: #181824;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 46px 24px 20px 24px !important;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  position: relative;
+}
+.tb-code-box::before {
+  content: "script.js  •  style.css";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 28px;
+  background: rgba(18, 18, 30, 0.98);
+  border-radius: 16px 16px 0 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 11px;
+  color: #94a3b8;
+}
+.tb-code-box::after {
+  content: "";
+  position: absolute;
+  top: 11px;
+  right: 14px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+[dir="rtl"] .tb-code-box::after {
+  right: auto;
+  left: 14px;
+}
+
+/* 11. Receipt Paper */
+.tb-receipt {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px 8px 0 0;
+  padding: 24px 26px 48px 26px !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.14);
+  position: relative;
+}
+.tb-receipt::after {
+  content: "||| | |||| | ||| || |||";
+  position: absolute;
+  bottom: 14px;
+  left: 0; right: 0;
+  text-align: center;
+  font-family: monospace;
+  font-size: 16px;
+  letter-spacing: 5px;
+  color: #334155;
+  border-top: 1px dashed #cbd5e1;
+  padding-top: 8px;
+}
+
+/* 12. Highlighter Marker */
+.tb-highlighter {
+  background: rgba(254, 240, 138, 0.4);
+  border-radius: 8px;
+  padding: 10px 22px !important;
+  box-shadow: 0 0 24px rgba(250, 204, 21, 0.28);
+  position: relative;
+}
+
+/* 13. Red Neon Lounge */
+.tb-red-neon {
+  background: rgba(24, 6, 12, 0.92);
+  border: 2px solid #ff1744;
+  border-radius: 16px;
+  padding: 18px 28px !important;
+  box-shadow: 0 0 28px rgba(255, 23, 68, 0.55), inset 0 0 16px rgba(255, 23, 68, 0.25), 0 12px 36px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* 14. Chalkboard */
+.tb-chalkboard {
+  background: #17241e;
+  border: 2px dashed rgba(255, 255, 255, 0.42);
+  border-radius: 12px;
+  padding: 22px 32px !important;
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.6), 0 12px 32px rgba(0, 0, 0, 0.35);
+  position: relative;
+}
+
+/* 15. Obsidian Gold */
+.tb-obsidian-gold {
+  background: radial-gradient(ellipse at top, #1a160f 0%, #080705 100%);
+  border: 1.5px solid rgba(212, 175, 55, 0.85);
+  border-radius: 18px;
+  padding: 22px 34px !important;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.65), 0 0 25px rgba(212, 175, 55, 0.22), inset 0 1px 0 rgba(255, 236, 179, 0.5);
+  position: relative;
+}
+
+/* 16. iOS Widget */
+.tb-ios-widget {
+  background: rgba(30, 36, 52, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 28px;
+  padding: 44px 28px 22px 28px !important;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  position: relative;
+}
+.tb-ios-widget::before {
+  content: "FontWoW";
+  position: absolute;
+  top: 14px;
+  right: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.5px;
+}
+[dir="ltr"] .tb-ios-widget::before {
+  right: auto;
+  left: 20px;
+}
+
+/* 17. Ribbon Banner */
+.tb-ribbon {
+  background: linear-gradient(90deg, #7c3aed 0%, #a855f7 100%);
+  border-radius: 6px;
+  padding: 14px 38px !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 28px rgba(124, 58, 237, 0.42);
+  position: relative;
+}
+.tb-ribbon::before {
+  content: "★";
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  color: #fde047;
+  font-size: 14px;
+}
+[dir="ltr"] .tb-ribbon::before {
+  right: auto;
+  left: 14px;
+}
+.tb-ribbon::after {
+  content: "★";
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  transform: translateY(-50%);
+  color: #fde047;
+  font-size: 14px;
+}
+[dir="ltr"] .tb-ribbon::after {
+  left: auto;
+  right: 14px;
+}
+
+/* 18. Postal Stamp */
+.tb-badge-stamp {
+  background: #ffffff;
+  border: 2px dashed #94a3b8;
+  border-radius: 8px;
+  padding: 24px 32px !important;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+.tb-badge-stamp::after {
+  content: "OFFICIAL ★ POST";
+  position: absolute;
+  bottom: 8px;
+  right: 12px;
+  border: 1.5px solid #dc2626;
+  border-radius: 50%;
+  padding: 4px 6px;
+  font-size: 8px;
+  font-weight: 800;
+  color: #dc2626;
+  transform: rotate(-12deg);
+  opacity: 0.8;
+}
+[dir="ltr"] .tb-badge-stamp::after {
+  right: auto;
+  left: 12px;
+}
+
+/* 19. Comic Speech Bubble */
+.tb-comic-speech {
+  background: #ffffff;
+  border: 3.5px solid #000000;
+  border-radius: 26px;
+  padding: 18px 30px !important;
+  box-shadow: 6px 6px 0px #000000;
+  position: relative;
+}
+.tb-comic-speech::after {
+  content: "";
+  position: absolute;
+  bottom: -16px;
+  right: 28px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 16px 14px 0 0;
+  border-color: #000000 transparent transparent transparent;
+}
+[dir="ltr"] .tb-comic-speech::after {
+  right: auto;
+  left: 28px;
+  border-width: 0 14px 16px 0;
+  border-color: transparent #000000 transparent transparent;
+}
+
+/* 20. Minimal White Card */
+.tb-minimal-card {
+  background: #ffffff;
+  border: 1px solid #f1f5f9;
+  border-radius: 22px;
+  padding: 24px 34px !important;
+  box-shadow: 0 20px 42px -12px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.04);
+  position: relative;
+}
+
+/* 21. Gradient Border */
+.tb-gradient-border {
+  background: rgba(13, 16, 26, 0.94);
+  border-radius: 20px;
+  padding: 20px 32px !important;
+  box-shadow: 0 0 28px rgba(124, 58, 237, 0.35), 0 14px 40px rgba(0, 0, 0, 0.5);
+  position: relative;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.tb-gradient-border::before {
+  content: "";
+  position: absolute;
+  top: -2px; left: -2px; right: -2px; bottom: -2px;
+  background: linear-gradient(135deg, #7c3aed, #f76800, #06b6d4, #10b981);
+  border-radius: 22px;
+  z-index: -1;
+}
+
 /* ===== Topbar Mobile Responsiveness ===== */
 @media (max-width: 600px) {
   .brand-name {

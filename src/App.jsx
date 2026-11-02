@@ -194,7 +194,11 @@ function isLightColor(hex) {
 }
 
 function boxStyleFor(styleId, color) {
-  const lightBoxStyles = ['mac', 'tweet', 'note', 'notif', 'retro-sticker']
+  const lightBoxStyles = [
+    'mac', 'tweet', 'note', 'notif', 'retro-sticker',
+    'search-bar', 'typewriter', 'sticky-note', 'win95', 'receipt',
+    'minimal-card', 'comic-speech', 'badge-stamp', 'ticket'
+  ]
   const autoContrast = lightBoxStyles.includes(styleId) && isLightColor(color) ? { color: '#18181b' } : {}
 
   switch (styleId) {
@@ -315,6 +319,27 @@ function boxStyleFor(styleId, color) {
     case 'tweet':
     case 'note':
     case 'notif':
+    case 'music-card':
+    case 'telegram':
+    case 'search-bar':
+    case 'cinema':
+    case 'holo-glass':
+    case 'ticket':
+    case 'typewriter':
+    case 'sticky-note':
+    case 'win95':
+    case 'code-box':
+    case 'receipt':
+    case 'highlighter':
+    case 'red-neon':
+    case 'chalkboard':
+    case 'obsidian-gold':
+    case 'ios-widget':
+    case 'ribbon':
+    case 'badge-stamp':
+    case 'comic-speech':
+    case 'minimal-card':
+    case 'gradient-border':
       return autoContrast
     default:
       return {}
