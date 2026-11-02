@@ -144,10 +144,15 @@ function clearAnimationProgress(node) {
   node.style.removeProperty('--animation-reveal')
 }
 
+// Persian/Arabic characters that connect to the left:
+const leftJoiners = '[\u0628\u067E\u062A\u062B\u062C\u0686\u062D\u062E\u0633\u0634\u0635\u0636\u0637\u0638\u0639\u063A\u0641\u0642\u06A9\u06AF\u0644\u0645\u0646\u0647\u06CC\u064A\u0626]'
+// Persian/Arabic letters that connect from the right:
+const rightJoiners = '[\u0621-\u064A\u067E\u0686\u0698\u06AF\u06CC]'
+const kashidaRegex = new RegExp(`(${leftJoiners})(?=${rightJoiners})`, 'g')
+
 function applyKashida(text, amount) {
-  if (!amount) return text
-  const joins = /([\u0626-\u063A\u0641-\u064A])(?=[\u0626-\u064A])/g
-  return text.replace(joins, `$1${'ـ'.repeat(amount)}`)
+  if (!amount || !text) return text
+  return text.replace(kashidaRegex, `$1${'ـ'.repeat(amount)}`)
 }
 
 function longShadow(color, depth, angle) {
@@ -173,7 +178,7 @@ function CurvedText({ text, mode, bend, style }) {
     <svg className="curved-text" viewBox="0 0 300 210" role="img" aria-label={text}>
       <defs><path id={pathId} d={paths[mode] ?? paths.arc} /></defs>
       <text style={style} textAnchor="middle">
-        <textPath href={`#${pathId}`} startOffset="50%" textLength={mode === 'circle' ? 430 : 255} lengthAdjust="spacingAndGlyphs">{text}</textPath>
+        <textPath href={`#${pathId}`} startOffset="50%">{text}</textPath>
       </text>
     </svg>
   )
@@ -1077,21 +1082,23 @@ export default function App() {
   }
 
   function applyMagicLayout() {
+    const isRtl = state.direction === 'rtl'
     const variants = [
-      { fontSize: 64, align: 'center', margin: 28, letterSpacing: -1, lineHeight: 1.15, textBoxStyle: 'none' },
-      { fontSize: 52, align: 'right', margin: 34, letterSpacing: 1, lineHeight: 1.35, textBoxStyle: 'glass' },
-      { fontSize: 72, align: 'center', margin: 18, letterSpacing: 2, lineHeight: 1.05, textBoxStyle: 'frame' },
-      { fontSize: 46, align: 'left', margin: 40, letterSpacing: 0, lineHeight: 1.5, textBoxStyle: 'box' },
+      { fontSize: 56, align: 'center', margin: 24, letterSpacing: 0, lineHeight: 1.35, textBoxStyle: 'none' },
+      { fontSize: 50, align: isRtl ? 'right' : 'left', margin: 28, letterSpacing: 0, lineHeight: 1.4, textBoxStyle: 'glass' },
+      { fontSize: 60, align: 'center', margin: 20, letterSpacing: 0, lineHeight: 1.3, textBoxStyle: 'frame' },
+      { fontSize: 48, align: isRtl ? 'right' : 'center', margin: 28, letterSpacing: 0, lineHeight: 1.4, textBoxStyle: 'quote' },
+      { fontSize: 52, align: 'center', margin: 24, letterSpacing: 0, lineHeight: 1.35, textBoxStyle: 'dark-glass' },
     ]
-    const current = variants.findIndex((variant) => variant.fontSize === state.fontSize && variant.align === state.align)
+    const current = variants.findIndex((variant) => variant.fontSize === state.fontSize && variant.textBoxStyle === state.textBoxStyle)
     const variant = variants[(current + 1) % variants.length]
     const layers = state.layers.map((layer, index) => ({
       ...layer,
-      x: index % 2 === 0 ? 25 : 75,
-      y: Math.min(82, 24 + index * 18),
-      rotation: index % 2 === 0 ? -4 : 4,
+      x: 50,
+      y: Math.min(85, 20 + (index + 1) * 16),
+      rotation: 0,
     }))
-    update({ ...variant, layers })
+    update({ ...variant, letterSpacing: 0, layers })
     setToast(t('magicLayoutApplied'))
   }
 
@@ -1354,6 +1361,28 @@ export default function App() {
     effectStyle = {
       textShadow: `0 0 6px ${state.color}, 0 0 14px ${state.color}, 0 0 28px ${state.color}, 0 0 48px ${state.color}`,
     }
+  } else if (state.effect === 'pop3d') {
+    effectStyle = {
+      textShadow: `1px 1px 0px rgba(0,0,0,0.6), 2px 2px 0px rgba(0,0,0,0.5), 3px 3px 0px rgba(0,0,0,0.4), 4px 4px 10px rgba(0,0,0,0.6)`,
+    }
+  } else if (state.effect === 'glow') {
+    effectStyle = {
+      textShadow: `0 0 12px rgba(255,255,255,0.7), 0 0 24px ${state.color || '#8b5cf6'}`,
+    }
+  } else if (state.effect === 'outline') {
+    effectStyle = {
+      color: 'transparent',
+      WebkitTextFillColor: 'transparent',
+      WebkitTextStroke: `2px ${state.color || '#ffffff'}`,
+    }
+  } else if (state.effect === 'retro') {
+    effectStyle = {
+      textShadow: `4px 4px 0px #000000, 6px 6px 0px rgba(0,0,0,0.3)`,
+    }
+  } else if (state.effect === 'cyber') {
+    effectStyle = {
+      textShadow: `-2px -2px 0px #00f0ff, 2px 2px 0px #ff0055`,
+    }
   }
 
   if (state.textMaskUrl) {
@@ -1371,6 +1400,9 @@ export default function App() {
   const depthShadow = longShadow(state.longShadowColor, state.longShadowDepth, state.longShadowAngle)
   const baseShadow = state.shadow ? '0 4px 18px rgba(0,0,0,0.55), 0 1px 0 rgba(0,0,0,0.3)' : ''
 
+  // Never break Persian cursive connections with positive/negative tracking
+  const effectiveLetterSpacing = state.direction === 'rtl' ? 0 : state.letterSpacing
+
   const textStyle = {
     fontFamily: font.family,
     fontSize: `${state.fontSize}px`,
@@ -1379,7 +1411,7 @@ export default function App() {
     textDecoration: state.underline ? 'underline' : 'none',
     color: state.color,
     textAlign: state.align,
-    letterSpacing: `${state.letterSpacing}px`,
+    letterSpacing: `${effectiveLetterSpacing}px`,
     lineHeight: state.lineHeight,
     direction: state.direction,
     opacity: state.opacity / 100,
@@ -1406,7 +1438,7 @@ export default function App() {
     fontStyle: state.italic ? 'italic' : 'normal',
     fill: state.color,
     opacity: state.opacity / 100,
-    letterSpacing: `${state.letterSpacing}px`,
+    letterSpacing: `${effectiveLetterSpacing}px`,
     textShadow: textStyle.textShadow,
     paintOrder: 'stroke fill',
     stroke: state.stroke ? strokeColor : 'none',
@@ -1423,7 +1455,7 @@ export default function App() {
         color: ${state.color};
         text-align: ${state.align};
         line-height: ${state.lineHeight};
-        letter-spacing: ${state.letterSpacing}px;
+        letter-spacing: ${effectiveLetterSpacing}px;
         opacity: ${state.opacity / 100};
         direction: ${state.direction};${state.shadow ? `text-shadow: 0 4px 18px rgba(0,0,0,.55);` : ''}${
           state.stroke ? `-webkit-text-stroke:${state.strokeWidth}px ${strokeColor};` : ''
@@ -1920,6 +1952,11 @@ export default function App() {
               dir={state.direction}
               data-placeholder={t('placeholder')}
               onInput={onTextInput}
+              onPaste={(e) => {
+                e.preventDefault()
+                const text = e.clipboardData?.getData('text/plain') || ''
+                document.execCommand('insertText', false, text)
+              }}
             />
           ) : (
             <CurvedText text={displayText || t('placeholder')} mode={state.warpMode} bend={state.warpBend} style={curvedTextStyle} />
@@ -2310,9 +2347,14 @@ export default function App() {
                   <button
                     key={fx.id}
                     className={`chip ${state.effect === fx.id ? 'selected' : ''}`}
-                    onClick={() => update({ effect: fx.id })}
+                    onClick={() =>
+                      update({
+                        effect: fx.id,
+                        ...(fx.id === 'none' ? { textMaskUrl: null, letterSpacing: 0 } : {}),
+                      })
+                    }
                   >
-                    <span className="chip-label">{fx.label}</span>
+                    <span className="chip-label">{appSettings.lang === 'en' && fx.labelEn ? fx.labelEn : fx.label}</span>
                   </button>
                 ))}
               </div>
@@ -2327,6 +2369,26 @@ export default function App() {
                       title={g.label}
                     />
                   ))}
+                </div>
+              )}
+              {(state.effect !== 'none' || state.shadow || state.stroke || state.textMaskUrl || state.letterSpacing !== 0) && (
+                <div style={{ marginTop: '10px' }}>
+                  <button
+                    className="sheet-item"
+                    style={{ padding: '8px 14px', fontSize: '13px', margin: '0' }}
+                    onClick={() => {
+                      update({
+                        effect: 'none',
+                        shadow: false,
+                        stroke: false,
+                        textMaskUrl: null,
+                        letterSpacing: 0,
+                      })
+                      setToast('استایل و افکت‌ها به حالت پیش‌فرض بازگشت')
+                    }}
+                  >
+                    <I.IconRefresh size={14} /> بازنشانی افکت‌ها و فواصل به حالت عادی
+                  </button>
                 </div>
               )}
             </>
@@ -2354,7 +2416,16 @@ export default function App() {
                 ))}
               </div>
               {state.warpMode !== 'none' && (
-                <SliderRow label={t('warpBend')} min={-90} max={90} value={state.warpBend} display={`${state.warpBend}°`} onChange={(event) => update({ warpBend: +event.target.value })} />
+                <>
+                  <SliderRow label={t('warpBend')} min={-90} max={90} value={state.warpBend} display={`${state.warpBend}°`} onChange={(event) => update({ warpBend: +event.target.value })} />
+                  <button
+                    className="chip"
+                    style={{ marginTop: '-4px', marginBottom: '8px', fontSize: '11.5px', padding: '4px 10px' }}
+                    onClick={() => update({ warpMode: 'none' })}
+                  >
+                    <I.IconX size={12} /> بازگشت به متن ساده (بدون خمیدگی)
+                  </button>
+                </>
               )}
 
               <p className="settings-label">{t('longShadow')}</p>
@@ -2377,6 +2448,15 @@ export default function App() {
 
               <p className="settings-label">{t('smartKashida')}</p>
               <SliderRow label={t('kashidaAmount')} min={0} max={4} value={state.kashidaAmount} onChange={(event) => update({ kashidaAmount: +event.target.value })} />
+              {state.kashidaAmount > 0 && (
+                <button
+                  className="chip"
+                  style={{ marginTop: '-4px', marginBottom: '8px', fontSize: '11.5px', padding: '4px 10px' }}
+                  onClick={() => update({ kashidaAmount: 0 })}
+                >
+                  <I.IconRefresh size={12} /> بازنشانی کشیده (حالت عادی)
+                </button>
+              )}
 
               {state.layers.some((layer) => layer.type === 'image') && (
                 <>
@@ -2639,6 +2719,15 @@ export default function App() {
                 value={state.letterSpacing}
                 onChange={(e) => update({ letterSpacing: +e.target.value })}
               />
+              {state.letterSpacing !== 0 && (
+                <button
+                  className="chip"
+                  style={{ marginTop: '-4px', marginBottom: '8px', fontSize: '11.5px', padding: '4px 10px' }}
+                  onClick={() => update({ letterSpacing: 0 })}
+                >
+                  <I.IconRefresh size={12} /> بازنشانی فاصله حروف (۰)
+                </button>
+              )}
               <SliderRow
                 label={t('lineHeight')}
                 min={0.8}

@@ -222,9 +222,14 @@ export const THEME_COLORS = [
 ]
 
 export const TEXT_EFFECTS = [
-  { id: 'none', label: 'بدون افکت' },
-  { id: 'gradient', label: 'گرادیان' },
-  { id: 'neon', label: 'نئون' },
+  { id: 'none', label: 'بدون افکت', labelEn: 'None' },
+  { id: 'gradient', label: 'گرادیان', labelEn: 'Gradient' },
+  { id: 'neon', label: 'نئون درخشان', labelEn: 'Neon Glow' },
+  { id: 'pop3d', label: 'سه‌بعدی ۳D', labelEn: '3D Pop' },
+  { id: 'glow', label: 'شفق نورانی', labelEn: 'Soft Glow' },
+  { id: 'outline', label: 'توخالی مدرن', labelEn: 'Outline' },
+  { id: 'retro', label: 'سایه رترو', labelEn: 'Retro Drop' },
+  { id: 'cyber', label: 'سایبرپانک', labelEn: 'Cyber Split' },
 ]
 
 export const TEXT_GRADIENTS = [
