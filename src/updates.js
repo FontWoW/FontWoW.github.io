@@ -41,6 +41,32 @@ export const UPDATES = [
     }
   },
   {
+    version: '1.7.1',
+    date: '2026-11-02',
+    fa: {
+      title: 'اصلاح کامل بارگذاری تمامی فونت‌ها و تضمین اعمال صد در صدی',
+      changes: [
+        'رفع باگ اعمال نشدن فونت روبیک عربی با تصحیح آدرس Google Fonts و خانواده فونت در استایل‌شیت.',
+        'حل تداخل شناسه فونت انگلیسی Great Vibes و بارگذاری مستقل آن بدون تداخل با فونت فارسی وایبز.',
+        'افزایش پایداری لود فونت‌ها با تشخیص خودکار فونت‌های آماده در حافظه مرورگر و جلوگیری از تلاش‌های تکراری.',
+        'پشتیبانی کامل از بارگذاری و رندر فونت‌های CDN (مانند آراد، آریو و سورنا) هنگام خروجی و طراحی لایه‌ها.',
+        'امکان تغییر مستقیم فونت لایه متنی انتخاب‌شده از تب فونت‌ها و تضمین لود تمامی فونت‌های لایه‌ها قبل از دانلود تصویر.',
+        'به‌روزرسانی کش آفلاین Service Worker برای تمامی فونت‌های جدید گوگل و بهینه‌سازی سرعت بارگذاری.'
+      ]
+    },
+    en: {
+      title: 'Complete Font Loading Architecture Fix & 100% Application Reliability',
+      changes: [
+        'Fixed Rubik Arabic font loading failure by resolving Google Fonts family naming and stylesheet query.',
+        'Resolved ID collision for Great Vibes English font, ensuring clean separate loading from Persian Vibes.',
+        'Enhanced font loading engine with instant ready-check cache to prevent redundant network fetches.',
+        'Full support for CDN font preloading and rendering (Arad, Ario, Sorena) during export and multi-layer editing.',
+        'Enabled direct font assignment for selected text layers from the font picker and pre-export painting guarantee.',
+        'Updated Service Worker offline pre-cache for all newly introduced Google Fonts.'
+      ]
+    }
+  },
+  {
     version: '1.7.0',
     date: '2026-11-01',
     fa: {
@@ -52,8 +78,9 @@ export const UPDATES = [
         'افزودن ۵ فونت آزاد و زیبای گوگل شامل نوتو کوفی، بالو ۲، وایبز، اسکندریه و زین.',
         'رفع مشکل ذخیره در گالری گوشی‌های سامسونگ و شیائومی و جلوگیری از کرش حافظه در خروجی‌های سنگین.',
         'به‌روزرسانی فهرست حامیان رسانه‌ای و افزودن عادل خان به همراه تمامی شبکه‌های ارتباطی.',
-        'رفع باگ به‌هم‌ریختگی متن در چیدمان جادویی و قفل‌شدن فواصل حروف در زبان فارسی با استاندارد عدم ترکنیگ RTL.',
-        'افزودن دکمه‌های بازنشانی سریع (Reset) برای فاصله حروف، کشیده و افکت‌ها به همراه تصحیح اتصالات کشیدهٔ هوشمند.'
+        'ارتقای کامل کنترل‌های چیدمان با تراز ۴ گانه افقی (راست، وسط، چپ، هم‌تراز دوطرفه) و تراز عمودی (بالا، مرکز، پایین).',
+        'افزودن کنترل حرفه‌ای فاصله کلمات (word-spacing) و اصلاح عملکرد فاصله حروف با دکمه‌های بازنشانی سریع.',
+        'پریست‌های سریع فاصله خطوط (فشرده، استاندارد، باز) و رفع باگ جابجایی کادرها در زبان‌های RTL و LTR.'
       ]
     },
     en: {

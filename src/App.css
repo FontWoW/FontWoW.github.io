@@ -2024,9 +2024,51 @@ div.is-draggable:hover::after {
 }
 
 .align-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+
+.align-row .toggle {
+  flex: 1;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.layout-preset-chips {
+  display: flex;
+  gap: 6px;
+  margin-top: -4px;
+  margin-bottom: 8px;
+}
+
+.layout-preset-chip {
+  background: var(--surface-2);
+  border: 1px solid var(--border-1);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 11px;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all var(--dur-fast);
+}
+
+.layout-preset-chip:hover {
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.layout-preset-chip.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: #fff;
 }
 
 /* ===== Bottom sheets ===== */

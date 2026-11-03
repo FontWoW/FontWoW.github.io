@@ -527,6 +527,27 @@ const BASE_DIMENSIONS = {
   free: { width: 540, height: 810 },      // 2:3 (Balanced Proportion for Free Aspect)
 }
 
+function getBoxAlignment(align, direction) {
+  if (align === 'center') {
+    return { marginInline: 'auto' }
+  }
+  const isRtl = direction === 'rtl'
+  if (align === 'right') {
+    return isRtl
+      ? { marginInlineStart: '0', marginInlineEnd: 'auto' }
+      : { marginInlineStart: 'auto', marginInlineEnd: '0' }
+  }
+  if (align === 'left') {
+    return isRtl
+      ? { marginInlineStart: 'auto', marginInlineEnd: '0' }
+      : { marginInlineStart: '0', marginInlineEnd: 'auto' }
+  }
+  if (align === 'justify') {
+    return { width: '100%', maxWidth: '100%', marginInline: '0' }
+  }
+  return { marginInline: 'auto' }
+}
+
 const defaultState = {
   text: '',
   fontId: 'vazirmatn',
@@ -551,7 +572,9 @@ const defaultState = {
   customBgColor: '#8b5cf6',
   customBgGradient: 'linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%)',
   align: 'center',
+  valign: 'center',
   letterSpacing: 0,
+  wordSpacing: 0,
   lineHeight: 1.4,
   direction: 'rtl',
   effect: 'none',
@@ -1315,6 +1338,11 @@ export default function App() {
       return loadFontNative(f)
     }
 
+    if (typeof document !== 'undefined' && document.fonts?.check && document.fonts.check(`1em ${f.family}`)) {
+      setLoadedFontIds((prev) => new Set(prev).add(f.id))
+      return Promise.resolve()
+    }
+
     const linkId = `google-font-${f.id}`
     const existing = document.getElementById(linkId)
     if (existing) {
@@ -1323,8 +1351,13 @@ export default function App() {
     }
     const url = googleFontsUrlForFont(f)
     if (!url) {
-      // Local font (e.g. Arad, Ario, Sorena defined in CSS)
-      setLoadedFontIds((prev) => new Set(prev).add(f.id))
+      if (typeof document !== 'undefined' && document.fonts?.load) {
+        document.fonts.load(`1em ${f.family}`).then(() => {
+          setLoadedFontIds((prev) => new Set(prev).add(f.id))
+        }).catch(() => {})
+      } else {
+        setLoadedFontIds((prev) => new Set(prev).add(f.id))
+      }
       return Promise.resolve()
     }
 
@@ -1333,7 +1366,6 @@ export default function App() {
 
     return new Promise((resolve) => {
       let settled = false
-
       const succeed = () => {
         if (settled) return
         settled = true
@@ -1341,6 +1373,9 @@ export default function App() {
         loadingFontsRef.current.delete(f.id)
         setLoadedFontIds((prev) => new Set(prev).add(f.id))
         setLoadingFontId((id) => (id === f.id ? null : id))
+        if (typeof document !== 'undefined' && document.fonts?.load) {
+          document.fonts.load(`1em ${f.family}`).catch(() => {})
+        }
         resolve()
       }
 
@@ -1629,11 +1664,12 @@ export default function App() {
   function applyMagicLayout() {
     const isRtl = state.direction === 'rtl'
     const variants = [
-      { fontSize: 56, align: 'center', margin: 24, letterSpacing: 0, lineHeight: 1.35, textBoxStyle: 'none' },
-      { fontSize: 50, align: isRtl ? 'right' : 'left', margin: 28, letterSpacing: 0, lineHeight: 1.4, textBoxStyle: 'glass' },
-      { fontSize: 60, align: 'center', margin: 20, letterSpacing: 0, lineHeight: 1.3, textBoxStyle: 'frame' },
-      { fontSize: 48, align: isRtl ? 'right' : 'center', margin: 28, letterSpacing: 0, lineHeight: 1.4, textBoxStyle: 'quote' },
-      { fontSize: 52, align: 'center', margin: 24, letterSpacing: 0, lineHeight: 1.35, textBoxStyle: 'dark-glass' },
+      { fontSize: 54, align: 'center', valign: 'center', margin: 24, letterSpacing: 0, wordSpacing: 0, lineHeight: 1.4, textBoxStyle: 'none' },
+      { fontSize: 48, align: isRtl ? 'right' : 'left', valign: 'center', margin: 28, letterSpacing: 0, wordSpacing: 1, lineHeight: 1.45, textBoxStyle: 'glass' },
+      { fontSize: 58, align: 'center', valign: 'center', margin: 20, letterSpacing: 0, wordSpacing: 0, lineHeight: 1.3, textBoxStyle: 'frame' },
+      { fontSize: 46, align: isRtl ? 'right' : 'left', valign: 'top', margin: 32, letterSpacing: 0, wordSpacing: 2, lineHeight: 1.5, textBoxStyle: 'quote' },
+      { fontSize: 50, align: 'center', valign: 'center', margin: 24, letterSpacing: 0, wordSpacing: 0, lineHeight: 1.35, textBoxStyle: 'dark-glass' },
+      { fontSize: 44, align: 'justify', valign: 'center', margin: 30, letterSpacing: 0, wordSpacing: 1, lineHeight: 1.6, textBoxStyle: 'box' },
     ]
     const current = variants.findIndex((variant) => variant.fontSize === state.fontSize && variant.textBoxStyle === state.textBoxStyle)
     const variant = variants[(current + 1) % variants.length]
@@ -1643,7 +1679,7 @@ export default function App() {
       y: Math.min(85, 20 + (index + 1) * 16),
       rotation: 0,
     }))
-    update({ ...variant, letterSpacing: 0, layers })
+    update({ ...variant, layers })
     setToast(t('magicLayoutApplied'))
   }
 
@@ -2111,9 +2147,6 @@ export default function App() {
   const depthShadow = longShadow(state.longShadowColor, state.longShadowDepth, state.longShadowAngle)
   const baseShadow = state.shadow ? '0 4px 18px rgba(0,0,0,0.55), 0 1px 0 rgba(0,0,0,0.3)' : ''
 
-  // Never break Persian cursive connections with positive/negative tracking
-  const effectiveLetterSpacing = state.direction === 'rtl' ? 0 : state.letterSpacing
-
   const textStyle = {
     fontFamily: font.family,
     fontSize: `${state.fontSize}px`,
@@ -2121,8 +2154,10 @@ export default function App() {
     fontStyle: state.italic ? 'italic' : 'normal',
     textDecoration: state.underline ? 'underline' : 'none',
     color: state.color,
-    textAlign: state.align,
-    letterSpacing: `${effectiveLetterSpacing}px`,
+    textAlign: state.align === 'justify' ? 'justify' : state.align,
+    textJustify: state.align === 'justify' ? 'inter-word' : 'auto',
+    letterSpacing: `${state.letterSpacing}px`,
+    wordSpacing: `${state.wordSpacing || 0}px`,
     lineHeight: state.lineHeight,
     direction: state.direction,
     opacity: state.opacity / 100,
@@ -2153,9 +2188,10 @@ export default function App() {
     }),
     ...(state.textBoxStyle !== 'none' && !state.bgEnabled
       ? {
-          width: 'fit-content',
+          width: state.align === 'justify' ? '100%' : 'fit-content',
           maxWidth: '96%',
           boxSizing: 'border-box',
+          ...getBoxAlignment(state.align, state.direction),
         }
       : {}),
   }
@@ -2167,7 +2203,8 @@ export default function App() {
     fontStyle: state.italic ? 'italic' : 'normal',
     fill: state.color,
     opacity: state.opacity / 100,
-    letterSpacing: `${effectiveLetterSpacing}px`,
+    letterSpacing: `${state.letterSpacing}px`,
+    wordSpacing: `${state.wordSpacing || 0}px`,
     textShadow: textStyle.textShadow,
     paintOrder: 'stroke fill',
     stroke: state.stroke ? strokeColor : 'none',
@@ -2182,9 +2219,10 @@ export default function App() {
         font-style: ${state.italic ? 'italic' : 'normal'};
         text-decoration: ${state.underline ? 'underline' : 'none'};
         color: ${state.color};
-        text-align: ${state.align};
+        text-align: ${state.align === 'justify' ? 'justify' : state.align};
         line-height: ${state.lineHeight};
-        letter-spacing: ${effectiveLetterSpacing}px;
+        letter-spacing: ${state.letterSpacing}px;
+        word-spacing: ${state.wordSpacing || 0}px;
         opacity: ${state.opacity / 100};
         direction: ${state.direction};${state.shadow ? `text-shadow: 0 4px 18px rgba(0,0,0,.55);` : ''}${
           state.stroke ? `-webkit-text-stroke:${state.strokeWidth}px ${strokeColor};` : ''
@@ -2242,6 +2280,16 @@ export default function App() {
   const previewStyle = {
     padding: `${state.margin}px`,
     position: 'relative',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent:
+      state.valign === 'top'
+        ? 'flex-start'
+        : state.valign === 'bottom'
+        ? 'flex-end'
+        : 'center',
+    alignItems: 'stretch',
+    boxSizing: 'border-box',
   }
 
   const bgLayerStyle = state.bgEnabled
@@ -2295,17 +2343,17 @@ export default function App() {
   }
 
   async function ensureFontPainted() {
-    try {
-      await loadFont(font)
-    } catch {}
-    try {
-      const weight = state.bold ? '700' : '400'
-      const style = state.italic ? 'italic' : 'normal'
-      await document.fonts?.load(`${style} ${weight} ${state.fontSize}px ${font.family}`)
-    } catch {}
-    try {
-      await document.fonts?.ready
-    } catch {}
+    const fontsToPaint = [font, ...state.layers.map((l) => allFonts.find((x) => x.id === l.fontId)).filter(Boolean)]
+    for (const f of fontsToPaint) {
+      try {
+        await loadFont(f)
+      } catch {}
+      try {
+        const weight = state.bold ? '700' : '400'
+        const style = state.italic ? 'italic' : 'normal'
+        await document.fonts?.load(`${style} ${weight} ${state.fontSize}px ${f.family}`)
+      } catch {}
+    }
     try {
       await document.fonts?.ready
     } catch {}
@@ -2695,7 +2743,7 @@ export default function App() {
     textRef.current?.focus()
   }
 
-  const ALIGN_ORDER = ['right', 'center', 'left']
+  const ALIGN_ORDER = ['right', 'center', 'left', 'justify']
   function cycleAlign() {
     const next = ALIGN_ORDER[(ALIGN_ORDER.indexOf(state.align) + 1) % ALIGN_ORDER.length]
     update({ align: next })
@@ -3119,14 +3167,24 @@ export default function App() {
           <button className="quick-bar-btn" onClick={() => setShowLabelPicker(true)} aria-label={t('addLabel')} title={t('addLabel')}>
             <I.IconTag size={13} />
           </button>
-          {state.text && (
-            <>
-              <div className="quick-bar-divider" />
-              <button className="quick-bar-btn danger" onClick={clearAll} aria-label={t('clear')} title={t('clear')}>
-                <I.IconTrash size={14} />
-              </button>
-            </>
-          )}
+          <button
+            className={`quick-bar-btn ${state.bgEnabled ? 'on' : ''}`}
+            onClick={() => update({ bgEnabled: !state.bgEnabled })}
+            aria-label={t('bgMode')}
+            title={t('bgMode')}
+          >
+            <I.IconArtboard size={14} />
+          </button>
+          <div className="quick-bar-divider" />
+          <button className="quick-bar-btn" onClick={cycleAspectRatio} aria-label={t('aspectRatio')} title={`${t('aspectRatio')}: ${currentAspect.label}`}>
+            <span style={{ fontSize: '10px', fontWeight: 700 }}>{currentAspect.label}</span>
+          </button>
+          <button className="quick-bar-btn" onClick={cycleTextBoxStyle} aria-label={t('textBoxStyle')} title={t('textBoxStyle')}>
+            <I.IconBox size={14} />
+          </button>
+          <button className="quick-bar-btn danger" onClick={clearAll} aria-label={t('clear')} title={t('clear')}>
+            <I.IconTrash size={14} />
+          </button>
         </div>
 
         {/* Vertical Transparent Font Size Slider on the Left */}
@@ -3252,11 +3310,17 @@ export default function App() {
               <HorizontalScroll trackClassName="chip-row" ariaLabel="فهرست فونت‌ها">
                 {visibleFonts.map((f) => {
                   const isPinned = pinnedFontIds.includes(f.id)
+                  const isSelected = activeTextLayer ? activeTextLayer.fontId === f.id : state.fontId === f.id
                   return (
                     <button
                       key={f.id}
-                      className={`chip font-chip ${state.fontId === f.id ? 'selected' : ''} ${isPinned ? 'is-pinned' : ''} ${loadingFontId === f.id ? 'loading' : ''}`}
+                      className={`chip font-chip ${isSelected ? 'selected' : ''} ${isPinned ? 'is-pinned' : ''} ${loadingFontId === f.id ? 'loading' : ''}`}
                       onClick={() => {
+                        if (activeTextLayer) {
+                          updateLayer(activeTextLayer.id, { fontId: f.id })
+                          loadFont(f)
+                          return
+                        }
                         update({ fontId: f.id, direction: f.rtl ? 'rtl' : 'ltr' })
                         loadFont(f)
                       }}
@@ -4386,13 +4450,24 @@ export default function App() {
                   <span>{t('textAlign')}</span>
                 </div>
                 <div className="align-row">
-                  {['right', 'center', 'left'].map((a) => (
+                  {['right', 'center', 'left', 'justify'].map((a) => (
                     <button
                       key={a}
                       className={`toggle ${state.align === a ? 'on' : ''}`}
                       onClick={() => update({ align: a })}
                     >
                       {t(`align_${a}`)}
+                    </button>
+                  ))}
+                </div>
+                <div className="align-row" style={{ marginTop: '8px' }}>
+                  {['top', 'center', 'bottom'].map((v) => (
+                    <button
+                      key={v}
+                      className={`toggle ${state.valign === v ? 'on' : ''}`}
+                      onClick={() => update({ valign: v })}
+                    >
+                      {t(`valign_${v}`)}
                     </button>
                   ))}
                 </div>
@@ -4444,18 +4519,28 @@ export default function App() {
                 </div>
                 <div className="layout-sliders-group">
                   <SliderRow
+                    label={t('wordSpacing') || 'فاصله کلمات'}
+                    min={-6}
+                    max={36}
+                    value={state.wordSpacing || 0}
+                    display={`${state.wordSpacing || 0}px`}
+                    onChange={(e) => update({ wordSpacing: +e.target.value })}
+                  />
+                  <SliderRow
                     label={t('letterSpacing')}
                     min={-4}
                     max={20}
                     value={state.letterSpacing}
+                    display={`${state.letterSpacing}px`}
                     onChange={(e) => update({ letterSpacing: +e.target.value })}
                   />
                   <SliderRow
                     label={t('lineHeight')}
                     min={0.8}
-                    max={2.4}
-                    step={0.1}
+                    max={2.6}
+                    step={0.05}
                     value={state.lineHeight}
+                    display={Number(state.lineHeight).toFixed(2)}
                     onChange={(e) => update({ lineHeight: +e.target.value })}
                   />
                   <SliderRow
@@ -4469,17 +4554,19 @@ export default function App() {
                   <SliderRow
                     label={t('margin')}
                     min={0}
-                    max={60}
+                    max={80}
                     value={state.margin}
+                    display={`${state.margin}px`}
                     onChange={(e) => update({ margin: +e.target.value })}
                   />
                   {state.stroke && (
                     <SliderRow
                       label={t('strokeWidth')}
                       min={0.5}
-                      max={6}
+                      max={8}
                       step={0.5}
                       value={state.strokeWidth}
+                      display={`${state.strokeWidth}px`}
                       onChange={(e) => update({ strokeWidth: +e.target.value })}
                     />
                   )}

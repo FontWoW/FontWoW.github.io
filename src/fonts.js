@@ -17,7 +17,7 @@ export const FONTS = [
   { id: 'estedad', label: 'استعداد', family: "'Estedad', sans-serif", rtl: true, lang: 'fa', google: 'Estedad:wght@400;700', license: 'OFL-1.1', creator: 'Amin Abedi' },
   { id: 'parastoo', label: 'پرستو', family: "'Parastoo', sans-serif", rtl: true, lang: 'fa', google: 'Parastoo:wght@400;700', license: 'OFL-1.1', creator: 'Saber Rastikerdar' },
   { id: 'lalezar', label: 'لاله‌زار', family: "'Lalezar', cursive", rtl: true, lang: 'fa', google: 'Lalezar:wght@400', license: 'OFL-1.1', creator: 'Borna Izadpanah' },
-  { id: 'rubikarabic', label: 'روبیک عربی', family: "'Rubik Arabic', sans-serif", rtl: true, lang: 'fa', google: 'Rubik+Arabic:wght@400;700', license: 'OFL-1.1', creator: 'Philipp Hubert, Sebastian Fischer' },
+  { id: 'rubikarabic', label: 'روبیک عربی', family: "'Rubik', sans-serif", rtl: true, lang: 'fa', google: 'Rubik:wght@400;700', license: 'OFL-1.1', creator: 'Philipp Hubert, Sebastian Fischer' },
   { id: 'readexpro', label: 'ریدکس پرو', family: "'Readex Pro', sans-serif", rtl: true, lang: 'fa', google: 'Readex+Pro:wght@400;700', license: 'OFL-1.1', creator: 'Thomas Jockin, Nadine Chahine' },
   { id: 'katibeh', label: 'کتیبه', family: "'Katibeh', cursive", rtl: true, lang: 'fa', google: 'Katibeh:wght@400', license: 'OFL-1.1', creator: 'Kief Type Foundry' },
   { id: 'jomhuria', label: 'جمهوریا', family: "'Jomhuria', serif", rtl: true, lang: 'fa', google: 'Jomhuria:wght@400', license: 'OFL-1.1', creator: 'Kief Type Foundry' },
@@ -55,7 +55,7 @@ export const FONTS = [
   { id: 'righteous', label: 'Righteous', family: "'Righteous', cursive", rtl: false, lang: 'en', google: 'Righteous:wght@400', license: 'OFL-1.1', creator: 'Astigmatic' },
   { id: 'playfair', label: 'Playfair Display', family: "'Playfair Display', serif", rtl: false, lang: 'en', google: 'Playfair+Display:wght@400;700', license: 'OFL-1.1', creator: 'Claus Eggers Sørensen' },
   { id: 'poppins', label: 'Poppins', family: "'Poppins', sans-serif", rtl: false, lang: 'en', google: 'Poppins:wght@400;700', license: 'OFL-1.1', creator: 'Indian Type Foundry' },
-  { id: 'vibes', label: 'Great Vibes', family: "'Great Vibes', cursive", rtl: false, lang: 'en', google: 'Great+Vibes:wght@400', license: 'OFL-1.1', creator: 'TypeSETit' },
+  { id: 'greatvibes', label: 'Great Vibes', family: "'Great Vibes', cursive", rtl: false, lang: 'en', google: 'Great+Vibes:wght@400', license: 'OFL-1.1', creator: 'TypeSETit' },
   { id: 'marker', label: 'Permanent Marker', family: "'Permanent Marker', cursive", rtl: false, lang: 'en', google: 'Permanent+Marker:wght@400', license: 'OFL-1.1', creator: 'Font Diner' },
   { id: 'pixel', label: 'Press Start 2P', family: "'Press Start 2P', cursive", rtl: false, lang: 'en', google: 'Press+Start+2P:wght@400', license: 'OFL-1.1', creator: 'CodeMan38' },
   { id: 'roboto', label: 'Roboto', family: "'Roboto', sans-serif", rtl: false, lang: 'en', google: 'Roboto:wght@400;700', license: 'Apache-2.0', creator: 'Christian Robertson' },
@@ -116,7 +116,7 @@ export const FONTS = [
 
 // builds a single Google Fonts stylesheet URL that loads every font belonging to a category
 export function googleFontsUrlFor(categoryId) {
-  const families = FONTS.filter(f => f.lang === categoryId).map(f => `family=${f.google}`)
+  const families = FONTS.filter(f => f.lang === categoryId && f.google).map(f => `family=${f.google}`)
   if (!families.length) return null
   return `https://fonts.googleapis.com/css2?${families.join('&')}&display=swap`
 }
