@@ -41,6 +41,45 @@ export const UPDATES = [
     }
   },
   {
+    version: '1.8.0',
+    date: '2026-11-02',
+    fa: {
+      title: 'افزودن ۲۱ مدل جدید و حرفه‌ای به جعبه‌های متنی (مجموعاً ۴۰ استایل)',
+      changes: [
+        'افزودن استایل استوری موزیک پلیر با نوار پیشرفت، زمان آهنگ و کنترل‌های پخش.',
+        'افزودن حباب پیام تلگرام با ساعت و دو تیک آبی و سبز.',
+        'افزودن کادر جستجوی گوگل با آیکون ذره‌بین و میکروفون صوتی.',
+        'افزودن کلاپر سینمایی با نوار راه‌راه مورب کلاپ و پس‌زمینه تیره استودیو.',
+        'افزودن شیشه هولوگرافیک با بازتاب منشوری طیف هفت‌رنگ.',
+        'افزودن بلیت سینما با حاشیه دندانه‌دار، نشان ADMIT ONE و بارکد پرفراژ.',
+        'افزودن کاغذ کاهی کهنه و تایپ‌رایتر نوستالژیک برای متن‌های ادبی.',
+        'افزودن یادداشت چسبان زرد (Post-It) با نوار چسب مات طبیعی.',
+        'افزودن پنجره کلاسیک ویندوز ۹۵ با نوار آبی گرادیان و دکمه ضربدر.',
+        'افزودن ادیتور کد VS Code با تب‌های برنامه و نشانگر سبز وضعیت.',
+        'افزودن رسید و فاکتور خرید مدرن با خط‌چین و بارکد.',
+        'افزودن مارکر فسفری هایلایتر، نئون قرمز بار، تخته‌سیاه گچی، طلایی مخملی آبسیدین، ویجت مات iOS، روبان پرچمی، تمبر پستی، حباب کمیک و کادر گرادیان نئونی.',
+        'پشتیبانی کامل از کنتراست خودکار رنگ متن روی تمام مدل‌های پس‌زمینه روشن.'
+      ]
+    },
+    en: {
+      title: '21 Brand New Pro Text Box Models (40 Total Styles)',
+      changes: [
+        'Added Music Player Story Card with progress track, duration counters and playback controls.',
+        'Added Telegram Chat Bubble with timestamp and double checkmark indicators.',
+        'Added Google Search Bar card with magnifying glass and mic icons.',
+        'Added Cinema Clapperboard slate with diagonal stripes header.',
+        'Added Holographic Prism Glass with rainbow chromatic dispersion.',
+        'Added Cinema Ticket stub with perforated borders and barcode.',
+        'Added Vintage Parchment / Typewriter texture for literary poetry and quotes.',
+        'Added Sticky Note with realistic translucent washi tape accent.',
+        'Added Retro Windows 95 classic 3D beveled window with blue titlebar.',
+        'Added Code Editor card with file tabs and live status indicator.',
+        'Added Receipt Paper, Highlighter Marker, Red Neon Lounge, Chalkboard, Obsidian Gold, iOS Frosted Widget, Ribbon Banner, Postal Stamp, Comic Speech Bubble, and Gradient Border models.',
+        'Full automatic text color contrast protection across all new light models.'
+      ]
+    }
+  },
+  {
     version: '1.7.1',
     date: '2026-11-02',
     fa: {

@@ -314,7 +314,11 @@ function isLightColor(hex) {
 function boxStyleFor(styleId, color, custom = {}) {
   const { boxBgColor, boxOpacity = 85, boxRadius, boxPadding } = custom
   const alpha = Math.max(0.1, Math.min(1, (boxOpacity ?? 85) / 100))
-  const lightBoxStyles = ['mac', 'tweet', 'note', 'notif', 'retro-sticker']
+  const lightBoxStyles = [
+    'mac', 'tweet', 'note', 'notif', 'retro-sticker',
+    'search-bar', 'typewriter', 'sticky-note', 'win95', 'receipt',
+    'minimal-card', 'comic-speech', 'badge-stamp', 'ticket'
+  ]
   const autoContrast = lightBoxStyles.includes(styleId) && isLightColor(boxBgColor || color) ? { color: '#18181b' } : {}
 
   const getCustomBg = (defaultBg) => {
@@ -511,6 +515,32 @@ function boxStyleFor(styleId, color, custom = {}) {
         borderBottom: `4px solid ${color}`,
         paddingBottom: boxPadding ? `${boxPadding}px` : '8px',
       }
+    case 'mac':
+    case 'tweet':
+    case 'note':
+    case 'notif':
+    case 'music-card':
+    case 'telegram':
+    case 'search-bar':
+    case 'cinema':
+    case 'holo-glass':
+    case 'ticket':
+    case 'typewriter':
+    case 'sticky-note':
+    case 'win95':
+    case 'code-box':
+    case 'receipt':
+    case 'highlighter':
+    case 'red-neon':
+    case 'chalkboard':
+    case 'obsidian-gold':
+    case 'ios-widget':
+    case 'ribbon':
+    case 'badge-stamp':
+    case 'comic-speech':
+    case 'minimal-card':
+    case 'gradient-border':
+      return autoContrast
     default:
       return {}
     }
