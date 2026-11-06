@@ -20,6 +20,7 @@
   --dur-slow: 0.55s;
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --stage-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #6462ea 100%);
 }
 
 * {
