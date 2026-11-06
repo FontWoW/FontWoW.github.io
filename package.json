@@ -15,7 +15,7 @@
     "@capacitor/cli": "^8.5.0",
     "@capacitor/clipboard": "^8.0.1",
     "@capacitor/core": "^8.5.0",
-    "@capacitor/filesystem": "^8.1.2",
+    "@capacitor/filesystem": "^8.1.3",
     "@capacitor/ios": "^8.5.0",
     "@capacitor/share": "^8.0.1",
     "gifenc": "^1.0.3",
