@@ -142,9 +142,16 @@ export function fontAttributionUrlFor(font) {
 
 export const BACKGROUNDS = [
   { id: 'none', label: 'بدون پس‌زمینه', css: 'transparent' },
-  { id: 'solid-1', label: 'قرمز', css: '#c0392b' },
-  { id: 'solid-2', label: 'مشکی', css: '#111111' },
-  { id: 'solid-3', label: 'سفید', css: '#ffffff' },
+  { id: 'solid-1', label: 'قرمز مات', css: '#c0392b' },
+  { id: 'solid-2', label: 'مشکی عمیق', css: '#09090b' },
+  { id: 'solid-3', label: 'سفید خالص', css: '#ffffff' },
+  { id: 'solid-4', label: 'زغالی سربی', css: '#18181b' },
+  { id: 'solid-5', label: 'کرم نود', css: '#f5f0eb' },
+  { id: 'solid-6', label: 'سرمه‌ای اقیانوس', css: '#0f172a' },
+  { id: 'solid-7', label: 'زرشکی لوکس', css: '#450a0a' },
+  { id: 'solid-8', label: 'سبز زمردی تیره', css: '#064e3b' },
+  { id: 'solid-9', label: 'شکلاتی تیره', css: '#291a10' },
+  { id: 'solid-10', label: 'بنفش موقر', css: '#1e1035' },
   { id: 'grad-1', label: 'گرادیان قرمز', css: 'linear-gradient(135deg,#ff5f6d,#8b0000)' },
   { id: 'grad-2', label: 'گرادیان بنفش', css: 'linear-gradient(135deg,#8e2de2,#4a00e0)' },
   { id: 'grad-3', label: 'گرادیان آبی', css: 'linear-gradient(135deg,#2193b0,#6dd5ed)' },
@@ -154,12 +161,59 @@ export const BACKGROUNDS = [
 ]
 
 export const BG_CATEGORIES = [
-  { id: 'colors', label: 'رنگ‌ها' },
-  { id: 'questions', label: 'سوالات' },
-  { id: 'post', label: 'پست جدید' },
-  { id: 'work', label: 'کار' },
-  { id: 'fantasy', label: 'فانتزی' },
+  { id: 'solid', label: 'رنگ‌های ساده' },
+  { id: 'gradients', label: 'گرادیان استوری' },
+  { id: 'dark', label: 'تیره و دارک‌مود' },
+  { id: 'pastel', label: 'پاستلی و لایت' },
+  { id: 'mesh', label: 'بافت و مِش استودیو' },
 ]
+
+export const BG_COLLECTIONS = {
+  solid: [
+    { id: 'solid-2', label: 'مشکی عمیق', css: '#09090b' },
+    { id: 'solid-3', label: 'سفید خالص', css: '#ffffff' },
+    { id: 'solid-4', label: 'زغالی تیره', css: '#18181b' },
+    { id: 'solid-5', label: 'کرم خنثی', css: '#f5f0eb' },
+    { id: 'solid-6', label: 'سرمه‌ای شب', css: '#0f172a' },
+    { id: 'solid-1', label: 'قرمز سلطنتی', css: '#c0392b' },
+    { id: 'solid-7', label: 'زرشکی مات', css: '#450a0a' },
+    { id: 'solid-8', label: 'یشمی تیره', css: '#064e3b' },
+    { id: 'solid-9', label: 'شکلاتی موکا', css: '#291a10' },
+    { id: 'solid-10', label: 'بنفش سلطنتی', css: '#1e1035' },
+  ],
+  gradients: [
+    { id: 'g-insta', label: 'غروب اینستاگرام', css: 'linear-gradient(135deg, #833ab4 0%, #fd1d1d 50%, #fcb045 100%)' },
+    { id: 'g-rose', label: 'رز نئون', css: 'linear-gradient(135deg, #f43f5e 0%, #fb7185 50%, #fda4af 100%)' },
+    { id: 'g-sky', label: 'آبی اقیانوسی', css: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)' },
+    { id: 'g-gold', label: 'طلایی لوکس', css: 'linear-gradient(135deg, #d97706 0%, #fbbf24 50%, #fef3c7 100%)' },
+    { id: 'g-emerald', label: 'شفق زمردی', css: 'linear-gradient(135deg, #059669 0%, #34d399 50%, #6ee7b7 100%)' },
+    { id: 'g-violet', label: 'بنفش کیهانی', css: 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 50%, #c4b5fd 100%)' },
+    { id: 'g-amber', label: 'سان‌ست پرتقالی', css: 'linear-gradient(135deg, #ea580c 0%, #f97316 50%, #fed7aa 100%)' },
+    { id: 'g-ruby', label: 'یاقوت سرخ', css: 'linear-gradient(135deg, #be123c 0%, #fb7185 100%)' },
+  ],
+  dark: [
+    { id: 'd-metal', label: 'مشکی متالیک', css: 'linear-gradient(145deg, #18181b 0%, #09090b 100%)' },
+    { id: 'd-midnight', label: 'آبنوس شب', css: 'linear-gradient(145deg, #0f172a 0%, #020617 100%)' },
+    { id: 'd-cyber', label: 'سایبر دارک', css: 'linear-gradient(145deg, #1e112a 0%, #09090b 100%)' },
+    { id: 'd-emerald', label: 'زمرد شبانه', css: 'linear-gradient(145deg, #06241b 0%, #03110d 100%)' },
+    { id: 'd-navy', label: 'سرمه‌ای عمیق', css: 'linear-gradient(145deg, #172554 0%, #0b1120 100%)' },
+    { id: 'd-espresso', label: 'اسپرسو لوکس', css: 'linear-gradient(145deg, #271711 0%, #0f0907 100%)' },
+  ],
+  pastel: [
+    { id: 'pas-cream', label: 'کرم وانیلی', css: 'linear-gradient(135deg, #fefce8 0%, #fef08a 100%)' },
+    { id: 'pas-rose', label: 'رز پاستلی', css: 'linear-gradient(135deg, #fff1f2 0%, #fecdd3 100%)' },
+    { id: 'pas-mint', label: 'نعنایی ملایم', css: 'linear-gradient(135deg, #f0fdf4 0%, #bbf7d0 100%)' },
+    { id: 'pas-lavender', label: 'لاوندر روشن', css: 'linear-gradient(135deg, #faf5ff 0%, #e9d5ff 100%)' },
+    { id: 'pas-sky', label: 'آبی ابری', css: 'linear-gradient(135deg, #f0f9ff 0%, #bae6fd 100%)' },
+    { id: 'pas-peach', label: 'هلویی لطیف', css: 'linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%)' },
+  ],
+  mesh: [
+    { id: 'm-neon', label: 'مِش بنفش و رز', css: 'radial-gradient(at 0% 0%, #7c3aed 0px, transparent 55%), radial-gradient(at 100% 100%, #ec4899 0px, transparent 55%), #09090b' },
+    { id: 'm-cyan', label: 'مِش سایبر بلو', css: 'radial-gradient(at 100% 0%, #0284c7 0px, transparent 55%), radial-gradient(at 0% 100%, #10b981 0px, transparent 55%), #09090b' },
+    { id: 'm-sunset', label: 'مِش آفتابی', css: 'radial-gradient(at 20% 20%, #f59e0b 0px, transparent 50%), radial-gradient(at 80% 80%, #dc2626 0px, transparent 50%), #18181b' },
+    { id: 'm-grid', label: 'شطرنجی استودیو', css: 'repeating-conic-gradient(#27272a 0% 25%, #18181b 0% 50%) 50% / 22px 22px' },
+  ],
+}
 
 export const BG_TEMPLATES = {
   questions: [
@@ -188,50 +242,56 @@ export const BG_TEMPLATES = {
   ],
 }
 
-export const ALL_BACKGROUNDS = [...BACKGROUNDS, ...Object.values(BG_TEMPLATES).flat()]
+export const ALL_BACKGROUNDS = [
+  ...BACKGROUNDS,
+  ...Object.values(BG_COLLECTIONS).flat(),
+  ...Object.values(BG_TEMPLATES).flat(),
+]
 
 export const TEXT_BOX_STYLES = [
-  { id: 'none', label: 'ساده', labelEn: 'None' },
-  { id: 'glass', label: 'شیشه‌ای شفاف', labelEn: 'Glass' },
-  { id: 'dark-glass', label: 'شیشه تاریک', labelEn: 'Dark Glass' },
-  { id: 'box', label: 'جعبه تیره', labelEn: 'Dark Box' },
-  { id: 'quote', label: 'نقل‌قول', labelEn: 'Quote' },
-  { id: 'neon-box', label: 'نئونی', labelEn: 'Neon Box' },
-  { id: 'cyber', label: 'سایبرپانک', labelEn: 'Cyber' },
-  { id: 'retro-sticker', label: 'استیکر رترو', labelEn: 'Retro Sticker' },
-  { id: 'gold-luxury', label: 'طلایی لوکس', labelEn: 'Gold Luxury' },
-  { id: 'pill', label: 'کپسولی', labelEn: 'Pill' },
-  { id: 'mac', label: 'پنجره مک', labelEn: 'macOS Window' },
-  { id: 'terminal', label: 'ترمینال', labelEn: 'Terminal' },
-  { id: 'sms', label: 'پیامک', labelEn: 'SMS Bubble' },
-  { id: 'notif', label: 'نوتیفیکیشن', labelEn: 'Notification' },
-  { id: 'tweet', label: 'توییت', labelEn: 'Tweet Post' },
-  { id: 'note', label: 'یادداشت', labelEn: 'Notes' },
-  { id: 'frame', label: 'قاب مدرن', labelEn: 'Frame' },
-  { id: 'double-frame', label: 'قاب دوبل', labelEn: 'Double Frame' },
-  { id: 'underline', label: 'زیرخط ضخیم', labelEn: 'Underline' },
-  // مدل‌های جدید و ترند جعبه متن
-  { id: 'music-card', label: 'استوری موزیک پلیر', labelEn: 'Music Player' },
-  { id: 'telegram', label: 'حباب پیام تلگرام', labelEn: 'Telegram Bubble' },
-  { id: 'search-bar', label: 'جستجوی گوگل', labelEn: 'Search Bar' },
-  { id: 'cinema', label: 'کلاپر سینمایی', labelEn: 'Cinema Clapper' },
-  { id: 'holo-glass', label: 'شیشه هولوگرافیک', labelEn: 'Holographic' },
-  { id: 'ticket', label: 'بلیت سینما', labelEn: 'Cinema Ticket' },
-  { id: 'typewriter', label: 'کاغذ کاهی کهنه', labelEn: 'Vintage Paper' },
-  { id: 'sticky-note', label: 'یادداشت چسبان', labelEn: 'Sticky Note' },
-  { id: 'win95', label: 'ویندوز رترو ۹۵', labelEn: 'Retro Win95' },
-  { id: 'code-box', label: 'ادیتور کد', labelEn: 'Code Editor' },
-  { id: 'receipt', label: 'رسید و فاکتور', labelEn: 'Receipt Paper' },
-  { id: 'highlighter', label: 'مارکر فسفری', labelEn: 'Highlighter' },
-  { id: 'red-neon', label: 'نئون بار قرمز', labelEn: 'Red Neon' },
-  { id: 'chalkboard', label: 'تخته‌سیاه گچی', labelEn: 'Chalkboard' },
-  { id: 'obsidian-gold', label: 'طلایی مخملی', labelEn: 'Obsidian Gold' },
-  { id: 'ios-widget', label: 'ویجت مات iOS', labelEn: 'iOS Widget' },
-  { id: 'ribbon', label: 'روبان پرچمی', labelEn: 'Ribbon Banner' },
-  { id: 'badge-stamp', label: 'تمبر پستی', labelEn: 'Postal Stamp' },
-  { id: 'comic-speech', label: 'حباب کمیک', labelEn: 'Comic Speech' },
-  { id: 'minimal-card', label: 'کارت مینیمال سفید', labelEn: 'Minimal Card' },
-  { id: 'gradient-border', label: 'کادر گرادیان نئونی', labelEn: 'Gradient Border' },
+  { id: 'none', label: '????', labelEn: 'None', icon: 'none' },
+  { id: 'story', label: '?????? ??????', labelEn: 'Instagram Story', icon: 'story' },
+  { id: 'glass', label: '??????? ????', labelEn: 'Glass', icon: 'glass' },
+  { id: 'dark-glass', label: '???? ?????', labelEn: 'Dark Glass', icon: 'dark-glass' },
+  { id: 'box', label: '???? ????', labelEn: 'Dark Box', icon: 'box' },
+  { id: 'quote', label: '???? ???????', labelEn: 'Quote', icon: 'quote' },
+  { id: 'neon-box', label: '???? ?????', labelEn: 'Neon Box', icon: 'neon' },
+  { id: 'cyber', label: '?????????', labelEn: 'Cyber', icon: 'cyber' },
+  { id: 'retro-sticker', label: '?????? ????', labelEn: 'Retro Sticker', icon: 'retro-sticker' },
+  { id: 'gold-luxury', label: '????? ????', labelEn: 'Gold Luxury', icon: 'gold-luxury' },
+  { id: 'pill', label: '?????? ????', labelEn: 'Pill', icon: 'pill' },
+  { id: 'mac', label: '????? ??', labelEn: 'macOS Window', icon: 'mac' },
+  { id: 'terminal', label: '??????? ??', labelEn: 'Terminal', icon: 'terminal' },
+  { id: 'sms', label: '???? ????', labelEn: 'SMS Bubble', icon: 'sms' },
+  { id: 'notif', label: '??????????', labelEn: 'Notification', icon: 'notif' },
+  { id: 'tweet', label: '?????', labelEn: 'Tweet Post', icon: 'tweet' },
+  { id: 'note', label: '???????', labelEn: 'Notes', icon: 'note' },
+  { id: 'highlight', label: '????????', labelEn: 'Highlighter', icon: 'highlight' },
+  { id: 'ticket', label: '???? ?????', labelEn: 'Ticket Card', icon: 'ticket' },
+  { id: 'frame', label: '??? ???', labelEn: 'Frame', icon: 'frame' },
+  { id: 'double-frame', label: '??? ??????', labelEn: 'Double Frame', icon: 'double-frame' },
+  { id: 'underline', label: '????? ????', labelEn: 'Underline', icon: 'underline' },
+  // ??????? ???? ? ???? ???? ???
+  { id: 'music-card', label: '?????? ????? ????', labelEn: 'Music Player', icon: 'music-card' },
+  { id: 'telegram', label: '???? ???? ??????', labelEn: 'Telegram Bubble', icon: 'telegram' },
+  { id: 'search-bar', label: '?????? ????', labelEn: 'Search Bar', icon: 'search-bar' },
+  { id: 'cinema', label: '????? ???????', labelEn: 'Cinema Clapper', icon: 'cinema' },
+  { id: 'holo-glass', label: '???? ??????????', labelEn: 'Holographic', icon: 'holo-glass' },
+  { id: 'typewriter', label: '???? ???? ????', labelEn: 'Vintage Paper', icon: 'typewriter' },
+  { id: 'sticky-note', label: '??????? ?????', labelEn: 'Sticky Note', icon: 'sticky-note' },
+  { id: 'win95', label: '?????? ???? ??', labelEn: 'Retro Win95', icon: 'win95' },
+  { id: 'code-box', label: '?????? ??', labelEn: 'Code Editor', icon: 'code-box' },
+  { id: 'receipt', label: '???? ? ??????', labelEn: 'Receipt Paper', icon: 'receipt' },
+  { id: 'highlighter', label: '????? ?????', labelEn: 'Highlighter', icon: 'highlighter' },
+  { id: 'red-neon', label: '???? ??? ????', labelEn: 'Red Neon', icon: 'red-neon' },
+  { id: 'chalkboard', label: '????????? ???', labelEn: 'Chalkboard', icon: 'chalkboard' },
+  { id: 'obsidian-gold', label: '????? ?????', labelEn: 'Obsidian Gold', icon: 'obsidian-gold' },
+  { id: 'ios-widget', label: '???? ??? iOS', labelEn: 'iOS Widget', icon: 'ios-widget' },
+  { id: 'ribbon', label: '????? ?????', labelEn: 'Ribbon Banner', icon: 'ribbon' },
+  { id: 'badge-stamp', label: '???? ????', labelEn: 'Postal Stamp', icon: 'badge-stamp' },
+  { id: 'comic-speech', label: '???? ????', labelEn: 'Comic Speech', icon: 'comic-speech' },
+  { id: 'minimal-card', label: '???? ??????? ????', labelEn: 'Minimal Card', icon: 'minimal-card' },
+  { id: 'gradient-border', label: '???? ??????? ?????', labelEn: 'Gradient Border', icon: 'gradient-border' },
 ]
 
 export const TEXT_COLORS = [
@@ -240,37 +300,81 @@ export const TEXT_COLORS = [
 ]
 
 export const THEME_COLORS = [
-  '#8b5cf6', '#f43f5e', '#f97316', '#eab308', '#10b981', '#0ea5e9', '#ec4899', '#ff5c5c',
+  '#8b5cf6',
+  '#000000',
+  '#ffffff',
+  '#f43f5e',
+  '#f97316',
+  '#eab308',
+  '#10b981',
+  '#0ea5e9',
+  '#ec4899',
+  '#3b82f6',
 ]
+
+export const THEME_STAGE_GRADIENTS = {
+  '#8b5cf6': 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #6462ea 100%)',
+  '#000000': '#000000',
+  '#09090b': '#000000',
+  '#ffffff': '#ffffff',
+  '#f43f5e': 'linear-gradient(135deg, #e11d48 0%, #f43f5e 50%, #fda4af 100%)',
+  '#f97316': 'linear-gradient(135deg, #ea580c 0%, #f97316 50%, #fde047 100%)',
+  '#eab308': 'linear-gradient(135deg, #ca8a04 0%, #eab308 50%, #fef08a 100%)',
+  '#10b981': 'linear-gradient(135deg, #059669 0%, #10b981 50%, #6ee7b7 100%)',
+  '#0ea5e9': 'linear-gradient(135deg, #0284c7 0%, #0ea5e9 50%, #38bdf8 100%)',
+  '#ec4899': 'linear-gradient(135deg, #be185d 0%, #ec4899 50%, #f472b6 100%)',
+  '#3b82f6': 'linear-gradient(135deg, #1d4ed8 0%, #3b82f6 50%, #93c5fd 100%)',
+}
+
+export function getThemeStageGradient(themeColor) {
+  if (!themeColor) return THEME_STAGE_GRADIENTS['#8b5cf6']
+  const normalized = themeColor.toLowerCase()
+  if (normalized === '#ffffff' || normalized === '#fff' || normalized === 'white') return '#ffffff'
+  if (normalized === '#000000' || normalized === '#000' || normalized === '#09090b' || normalized === 'black') return '#000000'
+  if (THEME_STAGE_GRADIENTS[normalized]) return THEME_STAGE_GRADIENTS[normalized]
+  if (THEME_STAGE_GRADIENTS[themeColor]) return THEME_STAGE_GRADIENTS[themeColor]
+  return `linear-gradient(135deg, color-mix(in srgb, ${themeColor} 80%, #000) 0%, ${themeColor} 50%, color-mix(in srgb, ${themeColor} 70%, #fff) 100%)`
+}
 
 export const TEXT_EFFECTS = [
   { id: 'none', label: 'بدون افکت', labelEn: 'None' },
-  { id: 'gradient', label: 'گرادیان', labelEn: 'Gradient' },
-  { id: 'neon', label: 'نئون درخشان', labelEn: 'Neon Glow' },
+  { id: 'neon', label: 'نئون سایبر', labelEn: 'Cyber Neon' },
+  { id: 'gradient', label: 'گرادیان زنده', labelEn: 'Vibrant Gradient' },
   { id: 'pop3d', label: 'سه‌بعدی ۳D', labelEn: '3D Pop' },
-  { id: 'glow', label: 'شفق نورانی', labelEn: 'Soft Glow' },
+  { id: 'glitch', label: 'گلیچ دیجیتال', labelEn: 'Digital Glitch' },
+  { id: 'retro', label: 'پاپ‌آرت رترو', labelEn: 'Retro Pop Art' },
+  { id: 'soft-bloom', label: 'درخشش رویایی', labelEn: 'Soft Bloom' },
+  { id: 'emboss', label: 'برجسته / پِرِس', labelEn: 'Emboss' },
+  { id: 'glass', label: 'شیشه‌ای لکوئید', labelEn: 'Liquid Glass' },
   { id: 'outline', label: 'توخالی مدرن', labelEn: 'Outline' },
-  { id: 'retro', label: 'سایه رترو', labelEn: 'Retro Drop' },
-  { id: 'cyber', label: 'سایبرپانک', labelEn: 'Cyber Split' },
+  { id: 'fire', label: 'آتشین و گدازه', labelEn: 'Fire & Lava' },
+  { id: 'duo-stroke', label: 'کانتور دوگانه', labelEn: 'Dual Stroke' },
+  { id: 'chrome', label: 'کروم طلایی', labelEn: 'Golden Chrome' },
+  { id: 'shadow-cast', label: 'سایه سینمایی', labelEn: 'Cinema Shadow' },
 ]
 
 export const TEXT_GRADIENTS = [
-  { id: 'g1', label: 'طلایی', css: 'linear-gradient(90deg,#f7971e,#ffd200)' },
-  { id: 'g2', label: 'صورتی', css: 'linear-gradient(90deg,#ff5f6d,#ffc371)' },
-  { id: 'g3', label: 'بنفش', css: 'linear-gradient(90deg,#8e2de2,#4a00e0)' },
-  { id: 'g4', label: 'آبی', css: 'linear-gradient(90deg,#00c6ff,#0072ff)' },
-  { id: 'g5', label: 'سبز', css: 'linear-gradient(90deg,#11998e,#38ef7d)' },
-  { id: 'g6', label: 'رنگین‌کمان', css: 'linear-gradient(90deg,#ff0000,#ff9900,#33cc33,#0066ff,#9900cc)' },
+  { id: 'g1', label: 'طلایی لوکس', css: 'linear-gradient(135deg, #f7971e 0%, #ffd200 100%)' },
+  { id: 'g2', label: 'سان‌ست صورتی', css: 'linear-gradient(135deg, #ff5f6d 0%, #ffc371 100%)' },
+  { id: 'g3', label: 'بنفش کیهانی', css: 'linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%)' },
+  { id: 'g4', label: 'آبی سایبری', css: 'linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)' },
+  { id: 'g5', label: 'امرالد نئون', css: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)' },
+  { id: 'g6', label: 'هولوگرافیک', css: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
+  { id: 'g7', label: 'سیلور تیتانیوم', css: 'linear-gradient(135deg, #e0e0e0 0%, #ffffff 50%, #9e9e9e 100%)' },
+  { id: 'g8', label: 'آتشفشانی', css: 'linear-gradient(135deg, #f12711 0%, #f5af19 100%)' },
+  { id: 'g9', label: 'سایبرپانک', css: 'linear-gradient(135deg, #f72585 0%, #7209b7 50%, #4cc9f0 100%)' },
+  { id: 'g10', label: 'رزگلد', css: 'linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)' },
+  { id: 'g11', label: 'رنگین‌کمان', css: 'linear-gradient(90deg,#ff0000,#ff9900,#33cc33,#0066ff,#9900cc)' },
 ]
 
 export const ASPECT_RATIOS = [
-  { id: 'free', label: 'آزاد', value: null },
-  { id: 'story', label: 'استوری ۹:۱۶', value: '9 / 16' },
-  { id: 'square', label: 'مربعی ۱:۱', value: '1 / 1' },
-  { id: 'portrait', label: 'پست عمودی ۴:۵', value: '4 / 5' },
-  { id: 'carousel', label: 'کاروسل ۳:۴', value: '3 / 4' },
-  { id: 'landscape', label: 'لندسکیپ ۱۶:۹', value: '16 / 9' },
-  { id: 'banner', label: 'بنر ۳:۱', value: '3 / 1' },
+  { id: 'free', label: 'تناسب آزاد', shortLabel: 'آزاد', value: null },
+  { id: 'story', label: 'استوری ۹:۱۶', shortLabel: '9:16', value: '9 / 16' },
+  { id: 'square', label: 'مربعی ۱:۱', shortLabel: '1:1', value: '1 / 1' },
+  { id: 'portrait', label: 'پست عمودی ۴:۵', shortLabel: '4:5', value: '4 / 5' },
+  { id: 'carousel', label: 'کاروسل ۳:۴', shortLabel: '3:4', value: '3 / 4' },
+  { id: 'landscape', label: 'افقی ۱۶:۹', shortLabel: '16:9', value: '16 / 9' },
+  { id: 'banner', label: 'بنر ۳:۱', shortLabel: '3:1', value: '3 / 1' }
 ]
 
 // designer-editable styles: edit templates.json directly, or use the in-app "Style Studio"

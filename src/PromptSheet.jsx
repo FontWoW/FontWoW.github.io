@@ -37,7 +37,7 @@ export default function PromptSheet({
   }
 
   function handleKeyDown(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault()
       handleConfirm()
     }
@@ -66,15 +66,23 @@ export default function PromptSheet({
           <span />
         </div>
         <div style={{ padding: '4px 0 20px' }}>
-          <input
+          <textarea
             ref={inputRef}
             className="text-input"
-            type="text"
+            rows={3}
             value={value}
             placeholder={placeholder}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            style={{ marginBottom: '12px' }}
+            style={{
+              marginBottom: '12px',
+              minHeight: '84px',
+              maxHeight: '200px',
+              resize: 'vertical',
+              lineHeight: '1.6',
+              fontFamily: 'inherit',
+              padding: '12px 14px',
+            }}
           />
           <div style={{ display: 'flex', gap: '10px' }}>
             <button
